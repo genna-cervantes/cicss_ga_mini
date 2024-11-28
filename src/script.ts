@@ -5,11 +5,11 @@ dotenv.config();
 
 // GA
 // chromosome generation
-const SCHOOL_DAYS = ['M', 'T', 'W', 'TH', 'F', 'S'];
+const SCHOOL_DAYS = ["M", "T", "W", "TH", "F", "S"];
 const SCHOOL_HOURS = {
-    start: "0700",
-    end: "2100"
-}
+  start: "0700",
+  end: "2100",
+};
 
 const DB_HOST = "localhost";
 const DB_PORT = 5432;
@@ -58,92 +58,220 @@ const generateClassGene = async ({
     const curriculum = res.rows[0];
     const specialization = curriculum.specialization;
     const courses = curriculum.courses;
-    const yearLevelRestrictions = {
-      M: {
-        start: "1700",
-        end: "2100",
-      },
-      T: {
-        start: "1700",
-        end: "2100",
-      },
-      W: {
-        start: "1700",
-        end: "2100",
-      },
-      TH: {
-        start: "1700",
-        end: "2100",
-      },
-      F: {
-        start: "1700",
-        end: "2100",
-      },
-      S: {
-        start: "0700",
-        end: "2100",
-      },
+    const yearLevelConstraints = {
+      M: [
+        {
+          start: "1600",
+          end: "2100",
+        },
+      ],
+      T: [
+        {
+          start: "0700",
+          end: "2100",
+        },
+      ],
+      W: [
+        {
+          start: "1600",
+          end: "2100",
+        },
+      ],
+      TH: [
+        {
+          start: "0700",
+          end: "2100",
+        },
+      ],
+      F: [
+        {
+          start: "0700",
+          end: "2100",
+        },
+      ],
+      S: [
+        {
+          start: "0700",
+          end: "2100",
+        },
+      ],
     };
 
-    console.log(curriculum);
-    console.log(specialization);
-    console.log(courses);
+    // track course units
+    let weeklyCourseUnits: any = {};
 
-    // track course units 
-    let weeklyCourseUnits: any = {}
-    
-    // track prof units 
-    let weeklyProfUnits = {}
+    // track prof units
+    let weeklyProfUnits: any = {};
+
+    // track time blocks
+    let weeklyRoomUnits: any = {}; // max 14
+
+    // track time blocks
+    let weeklyTimeBlockConstraints: any = {
+      M: [],
+      T: [],
+      W: [],
+      TH: [],
+      F: [],
+      S: [],
+    };
+
+    let weeklyUnits: any = {};
 
     // loop through sections
-    for (let i = 0; i < sections; i++) {
-        // let classSchedule = {
-        //     'M': null,
-        //     'T': null,
-        //     'W': null,
-        //     'TH': null,
-        //     'F': null,
-        //     'S': null,
-        // };
+    loop1: for (let i = 0; i < sections; i++) {
+      // loop thru school days
+      loop2: for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+        let schoolDay = SCHOOL_DAYS[j];
+        let courseAssigned = false;
+        let scheduleBlock;
+        let tries = 0;
+        
+        console.log("SCHOOL DAY: ", schoolDay);
+        
+        // Try to assign a valid course for the current day
+        // habang may avail time pa mag assign pa ng course
+        
+        // while keri pa ng time
+        let availableTime = weeklyUnits[schoolDay] || 9;
+        console.log(availableTime)
+        while (availableTime > 2) {
+            // courseDetails.units
+          loop4: while (!courseAssigned) {
+            tries++;
 
-        // loop thru school days
-        for (let j = 0; j < SCHOOL_DAYS.length; j++){
-            let scheduleBlock;
-            let courseAssigned = false;
-
-            // Try to assign a valid course for the current day
-            while (!courseAssigned) {
-                // get random course
-                let course = courses[Math.floor(Math.random() * courses.length)];
-                // check if pwede pa from the course units
-                let assignedUnits = weeklyCourseUnits[course]?.units || 0;
-                if (assignedUnits >= course.units){
-                    // choose another random course not continue kasi its the next school day na if continue
-                    continue;
-                }
-
-                courseAssigned = true;
-                let courseDetails = await getCourseDetails(course);
-                console.log('cousre details: ', courseDetails);
-
-                // add sa units nung prof
-                weeklyCourseUnits[course].units += courseDetails.units;
-
-                // get prof for course
-                let prof = await getProfFromCourse({courseDetails, weeklyProfUnits, dept});
-                console.log('profs: ', prof);
-
-                
-                // get room for course
-                let room = getRoomFromCourse({course});
-                
-                // get random time slot for course
-                let timeBlock = getTimeBlockFromCourse({course});
+            // wala n tlga beh
+            if (tries >= 10000) {
+              break loop1;
             }
-            
-            // assign everything to that section
-            // add to yearlevel gene
+            let courseDetails;
+            let profDetails;
+            let roomDetails;
+
+            // get random course
+            let course = courses[Math.floor(Math.random() * courses.length)];
+
+            // check if pwede pa from the course units
+
+            courseAssigned = true;
+            courseDetails = await getCourseDetails(course);
+
+            let assignedUnits = weeklyCourseUnits[course]?.units || 0;
+            // console.log("as", assignedUnits);
+            // console.log("cs", courseDetails.units);
+            if (assignedUnits >= courseDetails.units) {
+              continue loop4;
+            }
+
+            // add sa units nung course
+            if (courseDetails) {
+              // console.log("course: ", courseDetails);
+
+              // handler for gened subjects
+              if (courseDetails.category === "gened") {
+                profDetails = { professor_id: "GENDED PROF" };
+              } else {
+                // get prof for course
+                profDetails = await getProfFromCourse({
+                  courseDetails,
+                  weeklyProfUnits,
+                  dept,
+                });
+
+                if (profDetails) {
+                  if (weeklyProfUnits[profDetails.professor_id]?.units) {
+                    weeklyProfUnits[profDetails.professor_id].units +=
+                      profDetails.units;
+                  } else {
+                    weeklyProfUnits = { units: profDetails.units };
+                  }
+                } else {
+                  console.log("no more prof possibilities");
+                  break loop2;
+                }
+              }
+              // console.log("prof: ", profDetails);
+
+              // handler for pathfit room
+              if (courseDetails.subject_code.startsWith("PATHFIT")) {
+                roomDetails = { room_id: "PE ROOM" };
+              } else {
+                // get room for course
+                roomDetails = await getRoomFromCourse({
+                  courseDetails,
+                  weeklyRoomUnits,
+                  dept,
+                });
+
+                // add sa units nung course
+                if (roomDetails) {
+                  if (weeklyRoomUnits[roomDetails.room_id]?.units) {
+                    // HARDCODED
+                    weeklyRoomUnits[roomDetails.room_id].units +=
+                      courseDetails.units;
+                  } else {
+                    weeklyRoomUnits[roomDetails.room_id] = {
+                      units: courseDetails.units,
+                    };
+                  }
+                } else {
+                  console.log("no more room possibilities");
+                  break loop2;
+                }
+              }
+              //  console.log("room: ", roomDetails);
+
+              // get random time slot for course
+              let timeBlock = getTimeBlockFromCourse({
+                courseDetails,
+                yearLevelConstraints,
+                weeklyTimeBlockConstraints,
+                schoolDay,
+              });
+              if (timeBlock) {
+                weeklyTimeBlockConstraints[schoolDay].push(timeBlock);
+              } else {
+                console.log("no more time block possibilities for school day");
+                continue loop2;
+              }
+              //   console.log("timeBlock: ", timeBlock);
+
+              if (weeklyUnits[schoolDay]?.units) {
+                weeklyUnits[schoolDay].units -= courseDetails.units;
+              } else {
+                weeklyUnits[schoolDay] = {
+                  units: 9 - courseDetails.units,
+                };
+              }
+
+              //   console.log(weeklyTimeBlockConstraints);
+
+              console.log({
+                course: courseDetails,
+                prof: profDetails,
+                room: roomDetails,
+                timeBlock: timeBlock,
+              });
+
+              if (weeklyCourseUnits[course]?.units) {
+                weeklyCourseUnits[course].units += courseDetails.units;
+              } else {
+                weeklyCourseUnits[course] = { units: courseDetails.units };
+              }
+
+              console.log("weekly course units", weeklyCourseUnits);
+            } else {
+              console.log("no more course possibilities");
+              break loop2;
+            }
+          }
+
+          courseAssigned = false;
         }
+
+        // assign everything to that section
+        // add to yearlevel gene
+      }
     }
   } catch (err) {
     console.error("Error executing query", err);
@@ -153,92 +281,312 @@ const generateClassGene = async ({
 generateClassGene({ dept: "CS", year: 1, sem: 1, sections: 2 });
 
 const getCourseDetails = async (course: string) => {
-    const query =
-      "SELECT * FROM courses WHERE subject_code = $1 LIMIT 1";
-    const res = await client.query(query, [course]);
-    return res.rows[0];
-}
+  const query = "SELECT * FROM courses WHERE subject_code = $1 LIMIT 1";
+  const res = await client.query(query, [course]);
+  return res.rows[0];
+};
 
-const getProfFromCourse = async ({courseDetails, weeklyProfUnits, dept}: {courseDetails: any, weeklyProfUnits: any, dept: string}) => {
-    // ung main dep lng muna kunin
-    const query =
-      "SELECT * FROM professors WHERE $1 = ANY(courses) AND main_department = $2";
-    const res = await client.query(query, [courseDetails.subject_code, dept]);
+const getProfFromCourse = async ({
+  courseDetails,
+  weeklyProfUnits,
+  dept,
+}: {
+  courseDetails: any;
+  weeklyProfUnits: any;
+  dept: string;
+}) => {
+  // ung main dep lng muna kunin
+  const query =
+    "SELECT * FROM professors WHERE $1 = ANY(courses) AND main_department = $2";
+  const res = await client.query(query, [courseDetails.subject_code, dept]);
 
-    const mainAvailableProfs = res.rows;
+  const mainAvailableProfs = res.rows;
 
-    let profAssigned = false;
-    let tries = 0;
-    // Try to assign a valid course for the current day
-    while (!profAssigned) {
-        // pick random don
-        let prof = mainAvailableProfs[Math.floor(Math.random() * mainAvailableProfs.length)];
-        tries++;
+  let profAssigned = false;
+  let tries = 0;
 
-        if (tries >= 10){
-            // wala n tlga beh
-            break;
-        }
-    
-        // check if pasok sa units nila
-        let assignedUnits = weeklyProfUnits[prof.professor_id]?.units || 0;
-        if (assignedUnits >= prof.units){
-            continue;
-        }
+  loop1: while (!profAssigned) {
+    // pick random don
+    let prof =
+      mainAvailableProfs[Math.floor(Math.random() * mainAvailableProfs.length)];
+    tries++;
 
-        // add sa units nung prof
-        weeklyProfUnits[prof.professor_id].units += courseDetails.units;
-
-        // return ung prof na un
-        return prof;
+    // wala n tlga beh
+    if (tries >= 10) {
+      break loop1;
     }
 
-    // pag wala sa main dep kuha sa iba except ung main dep para di maulit
-    const query2 =
-      "SELECT * FROM professors WHERE $1 = ANY(courses) AND main_department != $2";
-    const res2 = await client.query(query, [courseDetails.subject_code, dept]);
-
-    const subAvailableProfs = res2.rows;
-
-    let profAssigned2 = false;
-    let tries2 = 0;
-    // Try to assign a valid course for the current day
-    while (!profAssigned) {
-        // pick random don
-        let prof = mainAvailableProfs[Math.floor(Math.random() * mainAvailableProfs.length)];
-        tries2++;
-
-        if (tries2 >= 10){
-            // wala n tlga beh
-            break;
-        }
-    
-        // check if pasok sa units nila
-        let assignedUnits = weeklyProfUnits[prof.professor_id]?.units || 0;
-        if (assignedUnits >= prof.units){
-            continue;
-        }
-
-        // add sa units nung prof
-        weeklyProfUnits[prof.professor_id].units += courseDetails.units;
-
-        // return ung prof na un
-        return prof;
+    // check if pwede pa from the course units
+    let assignedUnits = weeklyProfUnits[prof.professor_id]?.units || 0;
+    if (assignedUnits >= prof.units) {
+      continue;
     }
 
+    // return ung prof na un
+    return prof;
+  }
+
+  // pag wala sa main dep kuha sa iba except ung main dep para di maulit
+  const query2 =
+    "SELECT * FROM professors WHERE $1 = ANY(courses) AND main_department != $2";
+  const res2 = await client.query(query, [courseDetails.subject_code, dept]);
+
+  const subAvailableProfs = res2.rows;
+
+  let profAssigned2 = false;
+  let tries2 = 0;
+  // Try to assign a valid course for the current day
+  loop2: while (!profAssigned2) {
+    // pick random don
+    let prof =
+      subAvailableProfs[Math.floor(Math.random() * subAvailableProfs.length)];
+    tries2++;
+
+    if (tries2 >= 10) {
+      // wala n tlga beh
+      break loop2;
+    }
+
+    // check if pwede pa from the course units
+    let assignedUnits = weeklyProfUnits[prof.professor_id]?.units || 0;
+    if (assignedUnits >= prof.units) {
+      continue;
+    }
+
+    // return ung prof na un
+    return prof;
+  }
+
+  return null;
+};
+
+const getRoomFromCourse = async ({
+  courseDetails,
+  weeklyRoomUnits,
+  dept,
+}: {
+  courseDetails: any;
+  weeklyRoomUnits: any;
+  dept: string;
+}) => {
+  const query = "SELECT * FROM rooms WHERE main_department = $1 AND type = $2";
+  const res = await client.query(query, [dept, courseDetails.type]);
+
+  const mainAvailableRooms = res.rows;
+
+  let roomAssigned = false;
+  let tries = 0;
+
+  loop1: while (!roomAssigned) {
+    // pick random don
+    let room =
+      mainAvailableRooms[Math.floor(Math.random() * mainAvailableRooms.length)];
+    tries++;
+
+    // wala n tlga beh
+    if (tries >= 10) {
+      break loop1;
+    }
+
+    // check if pwede pa from the course units
+    let assignedUnits = weeklyRoomUnits[room.room_id]?.units || 0;
+    if (assignedUnits >= 14) {
+      //HARD CODED PA UNG MAX UNITS NG ISANG ROOM
+      continue;
+    }
+
+    // return ung prof na un
+    return room;
+  }
+
+  // pag wala sa main dep kuha sa iba except ung main dep para di maulit
+  const query2 = "SELECT * FROM rooms WHERE main_department = $1";
+  const res2 = await client.query(query, [dept]);
+
+  const subAvailableRooms = res2.rows;
+
+  let roomAssigned2 = false;
+  let tries2 = 0;
+  // Try to assign a valid course for the current day
+  loop2: while (!roomAssigned2) {
+    // pick random don
+    let room =
+      subAvailableRooms[Math.floor(Math.random() * subAvailableRooms.length)];
+    tries2++;
+
+    if (tries2 >= 10) {
+      // wala n tlga beh
+      break loop2;
+    }
+
+    // check if pwede pa from the course units
+    let assignedUnits = weeklyRoomUnits[room.room_id]?.units || 0;
+    if (assignedUnits >= 14) {
+      continue;
+    }
+
+    // return ung prof na un
+    return room;
+  }
+
+  return null;
+};
+
+const getTimeBlockFromCourse = ({
+  courseDetails,
+  yearLevelConstraints,
+  weeklyTimeBlockConstraints,
+  schoolDay,
+}: {
+  courseDetails: any;
+  yearLevelConstraints: any;
+  weeklyTimeBlockConstraints: any;
+  schoolDay: string;
+}) => {
+  let availableRanges = getPossibleTimeRanges({
+    yearLevelConstraints,
+    weeklyTimeBlockConstraints,
+    schoolDay,
+  });
+
+  let timeBlockAssigned = false;
+  let tries = 0;
+
+  if (availableRanges.length > 0) {
+    loop1: while (!timeBlockAssigned) {
+      // pick random don
+      let timeBlock =
+        availableRanges[Math.floor(Math.random() * availableRanges.length)];
+
+      tries++;
+
+      if (tries >= 10) {
+        // wala n tlga beh
+        break loop1;
+      }
+
+      let availableMinutes = timeToMinutes(
+        parseInt(timeBlock.end) - parseInt(timeBlock.start)
+      );
+
+      if (courseDetails.units * 60 > availableMinutes) {
+        continue loop1;
+      }
+
+      return {
+        start: timeBlock.start,
+        end: minutesToTime(
+          timeToMinutes(timeBlock.start) + courseDetails.units * 60
+        ),
+      };
+    }
+  } else {
     return null;
-}
+  }
+};
 
-const getRoomFromCourse = ({course}: {course: any}) => {
+const minutesToTime = (totalMinutes: any) => {
+  const hours = Math.floor(totalMinutes / 60); // Calculate hours
+  const minutes = totalMinutes % 60; // Calculate remaining minutes
 
-}
+  // Format as a padded time string
+  return `${hours.toString().padStart(2, "0")}${minutes.toString().padStart(2, "0")}`;
+};
 
-const getTimeBlockFromCourse = ({course}: {course: any}) => {
+const timeToMinutes = (time: any) => {
+  // Pad the input to ensure it's at least 4 characters (e.g., '530' → '0530')
+  const paddedTime = time.toString().padStart(4, "0");
 
-}
+  // Extract hours and minutes
+  const hours = parseInt(paddedTime.substring(0, 2), 10); // First two characters as hours
+  const minutes = parseInt(paddedTime.substring(2, 4), 10); // Last two characters as minutes
+
+  // Convert to total minutes
+  return hours * 60 + minutes;
+};
+
+const getPossibleTimeRanges = ({
+  yearLevelConstraints,
+  weeklyTimeBlockConstraints,
+  schoolDay,
+}: {
+  yearLevelConstraints: any;
+  weeklyTimeBlockConstraints: any;
+  schoolDay: string;
+}) => {
+  const defaultRange = { start: "0700", end: "2100" };
+  const constraints = [
+    ...yearLevelConstraints[schoolDay],
+    ...weeklyTimeBlockConstraints[schoolDay],
+  ];
+
+  const timeToMinutesInternal = (time: any) => {
+    const hours = parseInt(time.substring(0, 2), 10);
+    const minutes = parseInt(time.substring(2, 4), 10);
+    return hours * 60 + minutes;
+  };
+
+  // Helper to convert minutes back to military time
+  const minutesToTimeInternal = (minutes: any) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return String(hours).padStart(2, "0") + String(mins).padStart(2, "0");
+  };
+
+  // Convert default range to minutes
+  const defaultStart = timeToMinutesInternal(defaultRange.start);
+  const defaultEnd = timeToMinutesInternal(defaultRange.end);
+
+  // Convert constraints to minutes
+  const occupiedRanges = constraints.map((constraint: any) => ({
+    start: timeToMinutesInternal(constraint.start),
+    end: timeToMinutesInternal(constraint.end),
+  }));
+
+  // Sort occupied ranges by start time
+  occupiedRanges.sort((a: any, b: any) => a.start - b.start);
+
+  // Merge overlapping constraints
+  const mergedRanges = [];
+  for (const range of occupiedRanges) {
+    if (
+      mergedRanges.length === 0 ||
+      range.start > mergedRanges[mergedRanges.length - 1].end
+    ) {
+      mergedRanges.push(range);
+    } else {
+      mergedRanges[mergedRanges.length - 1].end = Math.max(
+        mergedRanges[mergedRanges.length - 1].end,
+        range.end
+      );
+    }
+  }
+
+  // Calculate available ranges by subtracting occupied ranges from the default range
+  const availableRanges = [];
+  let currentStart = defaultStart;
+
+  for (const range of mergedRanges) {
+    if (range.start > currentStart) {
+      availableRanges.push({ start: currentStart, end: range.start });
+    }
+    currentStart = Math.max(currentStart, range.end);
+  }
+
+  if (currentStart < defaultEnd) {
+    availableRanges.push({ start: currentStart, end: defaultEnd });
+  }
+
+  // Convert available ranges back to military time
+  return availableRanges.map((range) => ({
+    start: minutesToTimeInternal(range.start),
+    end: minutesToTimeInternal(range.end),
+  }));
+};
 
 // mini gene
 
+// 1st year 2 days onli tapos 7-4 sila
 // cs it is - 1 year level muna and 2 sections per dept
 
 // 1cs - 3 subjects
