@@ -1,15 +1,12 @@
 import { Client } from 'pg';
 import dotenv from 'dotenv';
+import { SCHOOL_DAYS } from './constants';
+import { evaluateFitnessScore } from './fitnessFunctions';
 
 dotenv.config();
 
 // GA
 // chromosome generation
-const SCHOOL_DAYS = ['M', 'T', 'W', 'TH', 'F', 'S'];
-const SCHOOL_HOURS = {
-    start: '0700',
-    end: '2100'
-};
 
 const DB_HOST = 'localhost';
 const DB_PORT = 5432;
@@ -421,9 +418,17 @@ const generateChromosome = async () => {
         const value = Object.values(chromosome[i])[0];
         printYearGene(value);
     }
+
+    return chromosome;
 }
 
-generateChromosome();
+const runScript = async () => {
+    let ch = await generateChromosome();
+    let score = evaluateFitnessScore(ch);
+    console.log(score);
+}
+
+runScript()
 
 const printYearGene = (yearGene: any) => {
     for (let i = 0; i < yearGene.length; i++){
