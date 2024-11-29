@@ -81,7 +81,7 @@ const generateClassGene = async ({
             ],
             TH: [
                 {
-                    start: '0700',
+                    start: '1600',
                     end: '2100'
                 }
             ],
@@ -102,6 +102,7 @@ const generateClassGene = async ({
         // console.log(courses)
 
         // dapat per section i2
+
         // track course units
         let weeklyCourseUnits: any = {};
 
@@ -120,6 +121,16 @@ const generateClassGene = async ({
             F: [],
             S: []
         };
+
+        let weeklyGenedConstraints: any = {
+            M: [],
+            T: [],
+            W: [],
+            TH: [],
+            F: [],
+            S: []
+        };
+        // {M: [THY], T: [FELEC]}
 
         let weeklyUnits: any = {};
 
@@ -142,12 +153,14 @@ const generateClassGene = async ({
                 console.log('1', availableTime);
 
                 while (availableTime > 2) {
-                    // courseDetails.units
+                    // gap logic for gened subs
+                    
                     loop4: while (!courseAssigned) {
                         tries++;
 
                         // wala n tlga beh
-                        if (tries >= 100) {
+                        if (tries >= 100000) {
+                            console.log('enough tries')
                             break loop1;
                         }
                         let courseDetails;
@@ -163,6 +176,32 @@ const generateClassGene = async ({
                         courseAssigned = true;
                         // console.log('2', course);
                         courseDetails = await getCourseDetails(course);
+
+                        // check if gened and gap
+                        if (courseDetails.category === 'gened' && !courseDetails.subject_code.startsWith('PATHFIT')) {
+                            // need hanapin saang day siya naka assign if naka assign na siya
+                            // m
+                            if (weeklyGenedConstraints['M'].includes(courseDetails.subject_code)) {
+                                // make sure this is the gap day
+                                if (schoolDay != 'W'){
+                                    continue loop4;
+                                }
+                            } else if (weeklyGenedConstraints['T'].includes(courseDetails.subject_code)) {
+                                // make sure this is the gap day
+                                if (schoolDay != 'TH'){
+                                    continue loop4;
+                                }
+                            } else if (weeklyGenedConstraints['F'].includes(courseDetails.subject_code)) {
+                                // make sure this is the gap day
+                                if (schoolDay != 'S'){
+                                    continue loop4;
+                                }
+                            } else {
+                                // put it in there
+                                weeklyGenedConstraints[schoolDay].push(courseDetails.subject_code)
+                                console.log('eto ung naccal noh?')
+                            }
+                        }
 
                         let assignedUnits =
                             weeklyCourseUnits[course]?.units || 0;
@@ -251,11 +290,15 @@ const generateClassGene = async ({
                                 schoolDay
                             });
                             if (timeBlock) {
-                                if (courseDetails.subject_code.startsWith('PATHFIT')){
+                                if (
+                                    courseDetails.subject_code.startsWith(
+                                        'PATHFIT'
+                                    )
+                                ) {
                                     weeklyTimeBlockConstraints[schoolDay].push(
                                         timeBlock.allowance
                                     );
-                                }else{
+                                } else {
                                     weeklyTimeBlockConstraints[schoolDay].push(
                                         timeBlock.timeBlock
                                     );
