@@ -100,42 +100,52 @@ const generateClassGene = async ({
         };
 
         // console.log(courses)
-
-        // dapat per section i2
-
-        // track course units
-        let weeklyCourseUnits: any = {};
-
-        // track prof units
-        let weeklyProfUnits: any = {};
-
-        // track time blocks
-        let weeklyRoomUnits: any = {}; // max 14
-
-        // track time blocks
-        let weeklyTimeBlockConstraints: any = {
-            M: [],
-            T: [],
-            W: [],
-            TH: [],
-            F: [],
-            S: []
-        };
-
-        let weeklyGenedConstraints: any = {
-            M: [],
-            T: [],
-            W: [],
-            TH: [],
-            F: [],
-            S: []
-        };
-        // {M: [THY], T: [FELEC]}
-
-        let weeklyUnits: any = {};
-
+        let chromosome: any = [];
+        let gene;
+        let sectionNames = generateSectionNames({year, dept, sectionNumber: sections});
+        
         // loop through sections
-        loop1: for (let i = 0; i < sections; i++) {
+        loop1: for (let i = 0; i < sectionNames.length; i++) {
+            let sectionName = sectionNames[i];
+            let weeklyCourseUnits: any = {};
+    
+            // track prof units
+            let weeklyProfUnits: any = {};
+    
+            // track time blocks
+            let weeklyRoomUnits: any = {}; // max 14
+    
+            // track time blocks
+            let weeklyTimeBlockConstraints: any = {
+                M: [],
+                T: [],
+                W: [],
+                TH: [],
+                F: [],
+                S: []
+            };
+    
+            let weeklyGenedConstraints: any = {
+                M: [],
+                T: [],
+                W: [],
+                TH: [],
+                F: [],
+                S: []
+            };
+            // {M: [THY], T: [FELEC]}
+            
+            let weeklyUnits: any = {};
+            
+            let schedule: any = {
+                M: [],
+                T: [],
+                W: [],
+                TH: [],
+                F: [],
+                S: []
+            };
+
             // loop thru school days
             loop2: for (let j = 0; j < SCHOOL_DAYS.length; j++) {
                 let schoolDay = SCHOOL_DAYS[j];
@@ -152,16 +162,18 @@ const generateClassGene = async ({
                 let availableTime = weeklyUnits[schoolDay] || 9;
                 console.log('1', availableTime);
 
+                loop3:
                 while (availableTime > 2) {
                     // gap logic for gened subs
                     
                     loop4: while (!courseAssigned) {
                         tries++;
 
-                        // wala n tlga beh
-                        if (tries >= 100000) {
-                            console.log('enough tries')
-                            break loop1;
+                        // wala n tlga beh or check if puno na ung units
+                        let unitsComplete = await checkIfUnitsComplete({weeklyCourseUnits, courses});
+                        if (tries >= 1000 || unitsComplete) {
+                            console.log('enough tries || complete assignment')
+                            break loop3;
                         }
                         let courseDetails;
                         let profDetails;
@@ -199,7 +211,6 @@ const generateClassGene = async ({
                             } else {
                                 // put it in there
                                 weeklyGenedConstraints[schoolDay].push(courseDetails.subject_code)
-                                console.log('eto ung naccal noh?')
                             }
                         }
 
@@ -316,19 +327,25 @@ const generateClassGene = async ({
                                 weeklyUnits[schoolDay].units -=
                                     courseDetails.units_per_class;
                             } else {
-                                weeklyUnits[schoolDay] = {
+                                weeklyUnits[schoolDay] = { 
                                     units: 9 - courseDetails.units_per_class
                                 };
                             }
 
                             //   console.log(weeklyTimeBlockConstraints);
+                            // console.log({
+                            //     course: courseDetails,
+                            //     prof: profDetails,
+                            //     room: roomDetails,
+                            //     timeBlock: timeBlock.timeBlock
+                            // });
 
-                            console.log({
+                            schedule[schoolDay].push({
                                 course: courseDetails,
                                 prof: profDetails,
                                 room: roomDetails,
                                 timeBlock: timeBlock.timeBlock
-                            });
+                            })
 
                             // add course units to weekly tracker
                             if (weeklyCourseUnits[course]?.units) {
@@ -350,19 +367,73 @@ const generateClassGene = async ({
                         }
                     }
 
+                    
                     courseAssigned = false;
                 }
-
+                
+                // console.log('schedule', schedule)
                 // assign everything to that section
                 // add to yearlevel gene
             }
+
+            gene = {
+                [sectionName]: schedule
+            };
+
+            chromosome.push(gene);
         }
+
+        // console.log(chromosome);
+        printChromosomes(chromosome);
     } catch (err) {
         console.error('Error executing query', err);
     }
 };
 
 generateClassGene({ dept: 'CS', year: 1, sem: 1, sections: 2 });
+
+const printChromosomes = (chromosome: any) => {
+    for (let i = 0; i < chromosome.length; i++){
+        let gene = chromosome[i];
+        let geneKeys = Object.keys(gene);
+        for (let j = 0; j < geneKeys.length; j++){
+            console.log(geneKeys[j]);
+            let geneKey = geneKeys[j];
+
+            let geneKeySchedKeys = Object.keys(gene[geneKey]);
+            let section = gene[geneKey];
+            console.log(geneKeySchedKeys)
+            for (let k = 0; k < geneKeySchedKeys.length; k++){
+                let geneKeySchedKey: any = geneKeySchedKeys[k];
+                console.log(geneKeySchedKey);
+
+                console.log(section[geneKeySchedKey]);
+            }
+        }
+    }
+}
+
+const generateSectionNames = ({year, dept, sectionNumber}: {year: any, dept: any, sectionNumber: any}) => {
+    let sectionNames = [];
+    for (let i = 0; i < sectionNumber; i++){
+        sectionNames.push(`${year}${dept}${String.fromCharCode(65 + i)}`)
+    }
+    return sectionNames;
+}
+
+const checkIfUnitsComplete = async ({weeklyCourseUnits, courses}: {weeklyCourseUnits: any, courses: any}) => {
+    let query = "SELECT subject_code, total_units FROM courses WHERE subject_code = ANY($1)"
+    const res = await client.query(query, [courses]);
+    const courseTotalUnits = res.rows;
+
+    for (let i = 0; i < courseTotalUnits.length; i++){
+        let units = weeklyCourseUnits[courseTotalUnits[i].subject_code]?.units || 0
+        if (units < courseTotalUnits[i].total_units){
+            return false;
+        }
+    }
+    return true;
+}
 
 const getCourseDetails = async (course: string) => {
     const query = 'SELECT * FROM courses WHERE subject_code = $1 LIMIT 1';
