@@ -37,6 +37,9 @@ client
 
 let chromosomes = [];
 
+// fix ung sa pe
+// ung sa gened na gap
+
 const generateClassGene = async ({
     dept,
     year,
@@ -67,7 +70,7 @@ const generateClassGene = async ({
             ],
             T: [
                 {
-                    start: '0700',
+                    start: '1600',
                     end: '2100'
                 }
             ],
@@ -97,6 +100,9 @@ const generateClassGene = async ({
             ]
         };
 
+        // console.log(courses)
+
+        // dapat per section i2
         // track course units
         let weeklyCourseUnits: any = {};
 
@@ -134,41 +140,42 @@ const generateClassGene = async ({
 
                 // while keri pa ng time
                 let availableTime = weeklyUnits[schoolDay] || 9;
+                console.log('1', availableTime);
                 
                 while (availableTime > 2) {
                     // courseDetails.units
                     loop4: while (!courseAssigned) {
                         tries++;
-
+                        
                         // wala n tlga beh
-                        if (tries >= 10000) {
+                        if (tries >= 100) {
                             break loop1;
                         }
                         let courseDetails;
                         let profDetails;
                         let roomDetails;
-
+                        
                         // get random course
                         let course =
-                            courses[Math.floor(Math.random() * courses.length)];
-
+                        courses[Math.floor(Math.random() * courses.length)];
+                        
                         // check if pwede pa from the course units
-
+                        
                         courseAssigned = true;
+                        // console.log('2', course);
                         courseDetails = await getCourseDetails(course);
-
+                        
                         let assignedUnits =
-                            weeklyCourseUnits[course]?.units || 0;
-                        // console.log("as", assignedUnits);
-                        // console.log("cs", courseDetails.units);
-                        if (assignedUnits >= courseDetails.units) {
+                        weeklyCourseUnits[course]?.units || 0;
+                        
+                        if (assignedUnits >= courseDetails.total_units) {
                             continue loop4;
                         }
-
+                        
                         // add sa units nung course
                         if (courseDetails) {
                             // console.log("course: ", courseDetails);
-
+                            
                             // handler for gened subjects
                             if (courseDetails.category === 'gened') {
                                 profDetails = { professor_id: 'GENDED PROF' };
@@ -179,7 +186,7 @@ const generateClassGene = async ({
                                     weeklyProfUnits,
                                     dept
                                 });
-
+                                
                                 if (profDetails) {
                                     if (
                                         weeklyProfUnits[
@@ -213,20 +220,21 @@ const generateClassGene = async ({
                                     weeklyRoomUnits,
                                     dept
                                 });
-
+                                
                                 // add sa units nung course
                                 if (roomDetails) {
                                     if (
                                         weeklyRoomUnits[roomDetails.room_id]
-                                            ?.units
+                                        ?.units
                                     ) {
                                         // HARDCODED
                                         weeklyRoomUnits[
                                             roomDetails.room_id
-                                        ].units += courseDetails.units;
+                                        ].units +=
+                                        courseDetails.units_per_class;
                                     } else {
                                         weeklyRoomUnits[roomDetails.room_id] = {
-                                            units: courseDetails.units
+                                            units: courseDetails.units_per_class
                                         };
                                     }
                                 } else {
@@ -235,7 +243,7 @@ const generateClassGene = async ({
                                 }
                             }
                             //  console.log("room: ", roomDetails);
-
+                            
                             // get random time slot for course
                             let timeBlock = getTimeBlockFromCourse({
                                 courseDetails,
@@ -255,12 +263,13 @@ const generateClassGene = async ({
                             }
                             //   console.log("timeBlock: ", timeBlock);
 
+                            // add class units to weekly tracker
                             if (weeklyUnits[schoolDay]?.units) {
                                 weeklyUnits[schoolDay].units -=
-                                    courseDetails.units;
+                                    courseDetails.units_per_class;
                             } else {
                                 weeklyUnits[schoolDay] = {
-                                    units: 9 - courseDetails.units
+                                    units: 9 - courseDetails.units_per_class
                                 };
                             }
 
@@ -273,12 +282,13 @@ const generateClassGene = async ({
                                 timeBlock: timeBlock
                             });
 
+                            // add course units to weekly tracker
                             if (weeklyCourseUnits[course]?.units) {
                                 weeklyCourseUnits[course].units +=
-                                    courseDetails.units;
+                                    courseDetails.units_per_class;
                             } else {
                                 weeklyCourseUnits[course] = {
-                                    units: courseDetails.units
+                                    units: courseDetails.units_per_class
                                 };
                             }
 
@@ -323,7 +333,7 @@ const getProfFromCourse = async ({
 }) => {
     // ung main dep lng muna kunin
     const query =
-        'SELECT * FROM professors WHERE $1 = ANY(courses) AND main_department = $2';
+    'SELECT * FROM professors WHERE $1 = ANY(courses) AND main_department = $2';
     const res = await client.query(query, [courseDetails.subject_code, dept]);
 
     const mainAvailableProfs = res.rows;
@@ -356,8 +366,8 @@ const getProfFromCourse = async ({
 
     // pag wala sa main dep kuha sa iba except ung main dep para di maulit
     const query2 =
-        'SELECT * FROM professors WHERE $1 = ANY(courses) AND main_department != $2';
-    const res2 = await client.query(query, [courseDetails.subject_code, dept]);
+    'SELECT * FROM professors WHERE $1 = ANY(courses) AND main_department != $2';
+    const res2 = await client.query(query2, [courseDetails.subject_code, dept]);
 
     const subAvailableProfs = res2.rows;
 
@@ -399,10 +409,11 @@ const getRoomFromCourse = async ({
     weeklyRoomUnits: any;
     dept: string;
 }) => {
+    
     const query =
-        'SELECT * FROM rooms WHERE main_department = $1 AND type = $2';
+    'SELECT * FROM rooms WHERE main_department = $1 AND type = $2';
     const res = await client.query(query, [dept, courseDetails.type]);
-
+    
     const mainAvailableRooms = res.rows;
 
     let roomAssigned = false;
@@ -434,7 +445,7 @@ const getRoomFromCourse = async ({
 
     // pag wala sa main dep kuha sa iba except ung main dep para di maulit
     const query2 = 'SELECT * FROM rooms WHERE main_department = $1';
-    const res2 = await client.query(query, [dept]);
+    const res2 = await client.query(query2, [dept]);
 
     const subAvailableRooms = res2.rows;
 
@@ -478,7 +489,6 @@ const getTimeBlockFromCourse = ({
     weeklyTimeBlockConstraints: any;
     schoolDay: string;
 }) => {
-
     let availableRanges = getPossibleTimeRanges({
         yearLevelConstraints,
         weeklyTimeBlockConstraints,
@@ -501,39 +511,74 @@ const getTimeBlockFromCourse = ({
 
             tries++;
 
-            if (tries >= 10) {
+            if (tries >= 100) {
                 // wala n tlga beh
                 break loop1;
             }
 
             // random start in the available ranges
             const intervals: number[] = [];
-            for (let i = timeToMinutes(timeBlock.start); i < timeToMinutes(timeBlock.end); i += 30) {
+            for (
+                let i = timeToMinutes(timeBlock.start);
+                i < timeToMinutes(timeBlock.end);
+                i += 30
+            ) {
                 intervals.push(i);
             }
 
             // console.log(intervals);
-            
-            const randomInterval = intervals[Math.floor(Math.random() * intervals.length)];
+
+            const randomInterval =
+                intervals[Math.floor(Math.random() * intervals.length)];
 
             // console.log(randomInterval);
             let randomStart = minutesToTime(randomInterval);
-            // console.log(randomStart);
-            
-            let availableMinutes = timeToMinutes(
-                parseInt(timeBlock.end) - parseInt(randomStart)
-            );
+            // console.log(randomStart); 
 
-            if (courseDetails.units * 60 > availableMinutes) {
-                continue loop1;
+            let availableMinutes = timeToMinutes(timeBlock.end) - timeToMinutes(randomStart);
+
+            // console.log(randomStart)
+            // console.log(timeBlock.end)
+            // console.log('avail', availableMinutes);
+
+            if (courseDetails.subject_code.startsWith('PATHFIT')) {
+                if (timeToMinutes(randomStart) - timeToMinutes('0700') < 120){
+                    if (((courseDetails.units_per_class * 60) + 120) > availableMinutes){
+                        // console.log('oops sobra');
+                        continue loop1;
+                    }
+                }else{
+                    if (((courseDetails.units_per_class * 60) + 240) > availableMinutes){
+                        // console.log('oops sobra');
+                        continue loop1;
+                    }
+                }
+            }else{
+                if ((courseDetails.units_per_class * 60 )> availableMinutes) {
+                    // console.log('oops sobra');
+                    continue loop1;
+                }
             }
 
-            return {
-                start: randomStart,
-                end: minutesToTime(
-                    timeToMinutes(randomStart) + courseDetails.units * 60
-                )
-            };
+
+            if (courseDetails.subject_code.startsWith('PATHFIT')) {
+                return {
+                    start: minutesToTime(timeToMinutes(randomStart) - (2 * 60)),
+                    end: minutesToTime(
+                        (60 * 2) +
+                        timeToMinutes(randomStart) +
+                            courseDetails.units_per_class * 60
+                    )
+                };
+            }else{
+                return {
+                    start: randomStart,
+                    end: minutesToTime(
+                        timeToMinutes(randomStart) +
+                            courseDetails.units_per_class * 60
+                    )
+                };
+            }
         }
     } else {
         return null;
@@ -549,7 +594,7 @@ const minutesToTime = (totalMinutes: any) => {
 };
 
 const timeToMinutes = (time: any) => {
-    // Pad the input to ensure it's at least 4 characters (e.g., '530' → '0530')
+    // Ensure the time is at least 4 characters (e.g., '530' → '0530')
     const paddedTime = time.toString().padStart(4, '0');
 
     // Extract hours and minutes
