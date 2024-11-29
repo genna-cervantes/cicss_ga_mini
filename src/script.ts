@@ -101,16 +101,23 @@ const generateYearGene = async ({
         let gene;
         let sectionNames = generateSectionNames({year, dept, sectionNumber: sections});
         
+        // ung mga shared like profs and rooms is outside sa section loop para di mag reset per section
+        // track prof units
+        let weeklyProfUnits: any = {};
+        let weeklyRoomUnits: any = {}; // max 14
+        // rm 1806: {
+        //     M: [],
+        //     T: [],
+        //     W: [],
+        //     TH: [],
+        //     F: [],
+        //     S: []
+        // }
+
         // loop through sections
         loop1: for (let i = 0; i < sectionNames.length; i++) {
             let sectionName = sectionNames[i];
             let weeklyCourseUnits: any = {};
-    
-            // track prof units
-            let weeklyProfUnits: any = {};
-    
-            // track time blocks
-            let weeklyRoomUnits: any = {}; // max 14
     
             // track time blocks
             let weeklyTimeBlockConstraints: any = {
@@ -238,74 +245,6 @@ const generateYearGene = async ({
                         if (courseDetails) {
                             // console.log("course: ", courseDetails);
 
-                            // handler for gened subjects profs
-                            if (courseDetails.category === 'gened') {
-                                profDetails = { professor_id: 'GENDED PROF' };
-                            } else {
-                                // get prof for course
-                                profDetails = await getProfFromCourse({
-                                    courseDetails,
-                                    weeklyProfUnits,
-                                    dept
-                                });
-
-                                if (profDetails) {
-                                    if (
-                                        weeklyProfUnits[
-                                            profDetails.professor_id
-                                        ]?.units
-                                    ) {
-                                        weeklyProfUnits[
-                                            profDetails.professor_id
-                                        ].units += profDetails.units;
-                                    } else {
-                                        weeklyProfUnits = {
-                                            units: profDetails.units
-                                        };
-                                    }
-                                } else {
-                                    console.log('no more prof possibilities');
-                                    break loop2;
-                                }
-                            }
-                            // console.log("prof: ", profDetails);
-
-                            // handler for pathfit room
-                            if (
-                                courseDetails.subject_code.startsWith('PATHFIT')
-                            ) {
-                                roomDetails = { room_id: 'PE ROOM' };
-                            } else {
-                                // get room for course
-                                roomDetails = await getRoomFromCourse({
-                                    courseDetails,
-                                    weeklyRoomUnits,
-                                    dept
-                                });
-
-                                // add sa units nung course
-                                if (roomDetails) {
-                                    if (
-                                        weeklyRoomUnits[roomDetails.room_id]
-                                            ?.units
-                                    ) {
-                                        // HARDCODED
-                                        weeklyRoomUnits[
-                                            roomDetails.room_id
-                                        ].units +=
-                                            courseDetails.units_per_class;
-                                    } else {
-                                        weeklyRoomUnits[roomDetails.room_id] = {
-                                            units: courseDetails.units_per_class
-                                        };
-                                    }
-                                } else {
-                                    console.log('no more room possibilities');
-                                    break loop2;
-                                }
-                            }
-                            //  console.log("room: ", roomDetails);
-
                             // get random time slot for course
                             let timeBlock = getTimeBlockFromCourse({
                                 courseDetails,
@@ -335,6 +274,112 @@ const generateYearGene = async ({
                             }
                             //   console.log("timeBlock: ", timeBlock);
 
+                            // handler for gened subjects profs
+                            if (courseDetails.category === 'gened') {
+                                profDetails = { professor_id: 'GENDED PROF' };
+                            } else {
+                                // get prof for course
+                                profDetails = await getProfFromCourse({
+                                    courseDetails,
+                                    weeklyProfUnits,
+                                    dept,
+                                    schoolDay,
+                                    timeBlock: timeBlock.timeBlock
+                                });
+
+                                if (profDetails) {
+                                    if (
+                                        weeklyProfUnits[
+                                            profDetails.professor_id
+                                        ]
+                                    ) {
+                                        // insert the time block
+                                        weeklyProfUnits[profDetails.professor_id][schoolDay].push(
+                                            timeBlock.timeBlock
+                                        );
+
+                                        // weeklyProfUnits[
+                                        //     profDetails.professor_id
+                                        // ].units += profDetails.units;
+                                    } else {
+                                        weeklyProfUnits[profDetails.professor_id] = {
+                                            M: [],
+                                            T: [],
+                                            W: [],
+                                            TH: [],
+                                            F: [],
+                                            S: []
+                                        }
+                                        weeklyProfUnits[profDetails.professor_id][schoolDay].push(
+                                            timeBlock.timeBlock
+                                        );
+                                    }
+                                } else {
+                                    console.log('no more prof possibilities');
+                                    break loop2;
+                                }
+                            }
+                            // console.log("prof: ", profDetails);
+
+                            // handler for pathfit room
+                            if (
+                                courseDetails.subject_code.startsWith('PATHFIT')
+                            ) {
+                                roomDetails = { room_id: 'PE ROOM' };
+                            } else {
+                                // get room for course
+                                roomDetails = await getRoomFromCourse({
+                                    courseDetails,
+                                    weeklyRoomUnits,
+                                    dept,
+                                    schoolDay,
+                                    timeBlock: timeBlock.timeBlock
+                                });
+
+                                // add sa units nung course
+                                if (roomDetails) {
+                                    if (
+                                        // weeklyRoomUnits[roomDetails.room_id]
+                                        //     ?.units
+                                        weeklyRoomUnits[
+                                            roomDetails.room_id
+                                        ]
+                                    ) {
+                                        // insert the time block
+                                        weeklyRoomUnits[roomDetails.room_id][schoolDay].push(
+                                            timeBlock.timeBlock
+                                        );
+
+                                        // HARDCODED
+                                        // weeklyRoomUnits[
+                                        //     roomDetails.room_id
+                                        // ].units +=
+                                        //     courseDetails.units_per_class;
+                                    } else {
+                                        weeklyRoomUnits[roomDetails.room_id] = {
+                                            M: [],
+                                            T: [],
+                                            W: [],
+                                            TH: [],
+                                            F: [],
+                                            S: []
+                                        }
+                                        weeklyRoomUnits[roomDetails.room_id][schoolDay].push(
+                                            timeBlock.timeBlock
+                                        );
+
+                                        // weeklyRoomUnits[roomDetails.room_id] = {
+                                        //     units: courseDetails.units_per_class
+                                        // };
+                                    }
+                                } else {
+                                    console.log('no more room possibilities');
+                                    break loop2;
+                                }
+                            }
+                            //  console.log("room: ", roomDetails);
+
+                            
                             // add class units to weekly tracker
                             if (weeklyUnits[schoolDay]?.units) {
                                 weeklyUnits[schoolDay].units -=
@@ -482,11 +527,15 @@ const getCourseDetails = async (course: string) => {
 const getProfFromCourse = async ({
     courseDetails,
     weeklyProfUnits,
-    dept
+    dept,
+    schoolDay,
+    timeBlock
 }: {
     courseDetails: any;
     weeklyProfUnits: any;
     dept: string;
+    schoolDay: any;
+    timeBlock: any
 }) => {
     // ung main dep lng muna kunin
     const query =
@@ -511,11 +560,17 @@ const getProfFromCourse = async ({
             break loop1;
         }
 
-        // check if pwede pa from the course units
-        let assignedUnits = weeklyProfUnits[prof.professor_id]?.units || 0;
-        if (assignedUnits >= prof.units) {
-            continue;
+        // check if pwede pa by getting the time slots of the prof from the constraint and if nag ooverlap not na siya pwede
+        let profConstraints = weeklyProfUnits[prof.professor_id] ? weeklyProfUnits[prof.professor_id][schoolDay] : [];
+        if (!isTimeBlockValid({constraints: profConstraints, timeBlock})){
+            continue loop1;
         }
+
+        // check if pwede pa from the course units
+        // let assignedUnits = weeklyProfUnits[prof.professor_id]?.units || 0;
+        // if (assignedUnits >= prof.units) {
+        //     continue;
+        // }
 
         // return ung prof na un
         return prof;
@@ -545,10 +600,14 @@ const getProfFromCourse = async ({
         }
 
         // check if pwede pa from the course units
-        let assignedUnits = weeklyProfUnits[prof.professor_id]?.units || 0;
-        if (assignedUnits >= prof.units) {
-            continue;
+        let profConstraints = weeklyProfUnits[prof.professor_id] ? weeklyProfUnits[prof.professor_id][schoolDay] : [];
+        if (!isTimeBlockValid({constraints: profConstraints, timeBlock})){
+            continue loop2;
         }
+        // let assignedUnits = weeklyProfUnits[prof.professor_id]?.units || 0;
+        // if (assignedUnits >= prof.units) {
+        //     continue;
+        // }
 
         // return ung prof na un
         return prof;
@@ -557,14 +616,28 @@ const getProfFromCourse = async ({
     return null;
 };
 
+const isTimeBlockValid = ({constraints, timeBlock}: {constraints: any, timeBlock: any}) => {
+    if (constraints.length > 0){
+        return !constraints.some((constraint: any) => 
+          timeBlock.start < constraint.end && timeBlock.end > constraint.start
+        );
+    }else{
+        return true;
+    }
+  }
+
 const getRoomFromCourse = async ({
     courseDetails,
     weeklyRoomUnits,
-    dept
+    dept,
+    schoolDay,
+    timeBlock
 }: {
     courseDetails: any;
     weeklyRoomUnits: any;
     dept: string;
+    schoolDay: any;
+    timeBlock: any
 }) => {
     const query =
         'SELECT * FROM rooms WHERE main_department = $1 AND type = $2';
@@ -589,11 +662,15 @@ const getRoomFromCourse = async ({
         }
 
         // check if pwede pa from the course units
-        let assignedUnits = weeklyRoomUnits[room.room_id]?.units || 0;
-        if (assignedUnits >= 14) {
-            //HARD CODED PA UNG MAX UNITS NG ISANG ROOM
-            continue;
+        let roomConstraints = weeklyRoomUnits[room.room_id] ? weeklyRoomUnits[room.room_id][schoolDay] : [];
+        if (!isTimeBlockValid({constraints: roomConstraints, timeBlock})){
+            continue loop1;
         }
+        // let assignedUnits = weeklyRoomUnits[room.room_id]?.units || 0;
+        // if (assignedUnits >= 14) {
+        //     //HARD CODED PA UNG MAX UNITS NG ISANG ROOM
+        //     continue;
+        // }
 
         // return ung prof na un
         return room;
@@ -622,10 +699,14 @@ const getRoomFromCourse = async ({
         }
 
         // check if pwede pa from the course units
-        let assignedUnits = weeklyRoomUnits[room.room_id]?.units || 0;
-        if (assignedUnits >= 14) {
-            continue;
+        let roomConstraints = weeklyRoomUnits[room.room_id] ? weeklyRoomUnits[room.room_id][schoolDay] : [];
+        if (!isTimeBlockValid({constraints: roomConstraints, timeBlock})){
+            continue loop2;
         }
+        // let assignedUnits = weeklyRoomUnits[room.room_id]?.units || 0;
+        // if (assignedUnits >= 14) {
+        //     continue;
+        // }
 
         // return ung prof na un
         return room;
