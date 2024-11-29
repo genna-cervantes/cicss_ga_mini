@@ -39,7 +39,7 @@ let chromosomes = [];
 
 // ung sa gened na gap
 
-const generateClassGene = async ({
+const generateYearGene = async ({
     dept,
     year,
     sem,
@@ -100,7 +100,7 @@ const generateClassGene = async ({
         };
 
         // console.log(courses)
-        let chromosome: any = [];
+        let yearGene: any = [];
         let gene;
         let sectionNames = generateSectionNames({year, dept, sectionNumber: sections});
         
@@ -153,14 +153,14 @@ const generateClassGene = async ({
                 let scheduleBlock;
                 let tries = 0;
 
-                console.log('SCHOOL DAY: ', schoolDay);
+                // console.log('SCHOOL DAY: ', schoolDay);
 
                 // Try to assign a valid course for the current day
                 // habang may avail time pa mag assign pa ng course
 
                 // while keri pa ng time
                 let availableTime = weeklyUnits[schoolDay] || 9;
-                console.log('1', availableTime);
+                // console.log('1', availableTime);
 
                 loop3:
                 while (availableTime > 2) {
@@ -193,6 +193,7 @@ const generateClassGene = async ({
                         if (courseDetails.category === 'gened' && !courseDetails.subject_code.startsWith('PATHFIT')) {
                             // need hanapin saang day siya naka assign if naka assign na siya
                             // m
+                            // need ung opposite dito -- stricter more prone to incomplete 
                             if (weeklyGenedConstraints['M'].includes(courseDetails.subject_code)) {
                                 // make sure this is the gap day
                                 if (schoolDay != 'W'){
@@ -203,9 +204,24 @@ const generateClassGene = async ({
                                 if (schoolDay != 'TH'){
                                     continue loop4;
                                 }
+                            } else if (weeklyGenedConstraints['W'].includes(courseDetails.subject_code)) {
+                                // make sure this is the gap day
+                                if (schoolDay != 'M'){
+                                    continue loop4;
+                                }
+                            } else if (weeklyGenedConstraints['TH'].includes(courseDetails.subject_code)) {
+                                // make sure this is the gap day
+                                if (schoolDay != 'T'){
+                                    continue loop4;
+                                }
                             } else if (weeklyGenedConstraints['F'].includes(courseDetails.subject_code)) {
                                 // make sure this is the gap day
                                 if (schoolDay != 'S'){
+                                    continue loop4;
+                                }
+                            } else if (weeklyGenedConstraints['S'].includes(courseDetails.subject_code)) {
+                                // make sure this is the gap day
+                                if (schoolDay != 'F'){
                                     continue loop4;
                                 }
                             } else {
@@ -357,10 +373,10 @@ const generateClassGene = async ({
                                 };
                             }
 
-                            console.log(
-                                'weekly course units',
-                                weeklyCourseUnits
-                            );
+                            // console.log(
+                            //     'weekly course units',
+                            //     weeklyCourseUnits
+                            // );
                         } else {
                             console.log('no more course possibilities');
                             break loop2;
@@ -380,21 +396,38 @@ const generateClassGene = async ({
                 [sectionName]: schedule
             };
 
-            chromosome.push(gene);
+            yearGene.push(gene);
         }
 
         // console.log(chromosome);
-        printChromosomes(chromosome);
+        // printChromosomes(chromosome);
+        return yearGene;
     } catch (err) {
         console.error('Error executing query', err);
     }
 };
 
-generateClassGene({ dept: 'CS', year: 1, sem: 1, sections: 2 });
+const generateChromosome = async () => {
+    let chromosome = [];
 
-const printChromosomes = (chromosome: any) => {
+    let CSYearGene = await generateYearGene({ dept: 'CS', year: 1, sem: 1, sections: 2 });
+    chromosome.push({'cs_1st': CSYearGene});
+    let ITYearGene = await generateYearGene({ dept: 'IT', year: 1, sem: 1, sections: 2 });
+    chromosome.push({'it_1st': ITYearGene});
+    let ISYearGene = await generateYearGene({ dept: 'IS', year: 1, sem: 1, sections: 2 });
+    chromosome.push({'is_1st': ISYearGene});
+
     for (let i = 0; i < chromosome.length; i++){
-        let gene = chromosome[i];
+        const value = Object.values(chromosome[i])[0];
+        printYearGene(value);
+    }
+}
+
+generateChromosome();
+
+const printYearGene = (yearGene: any) => {
+    for (let i = 0; i < yearGene.length; i++){
+        let gene = yearGene[i];
         let geneKeys = Object.keys(gene);
         for (let j = 0; j < geneKeys.length; j++){
             console.log(geneKeys[j]);
@@ -614,7 +647,7 @@ const getTimeBlockFromCourse = ({
         schoolDay
     });
 
-    console.log(availableRanges);
+    // console.log(availableRanges);
 
     let timeBlockAssigned = false;
     let tries = 0;
