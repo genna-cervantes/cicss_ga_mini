@@ -1,4 +1,29 @@
+import { Client } from 'pg';
 import { SCHOOL_DAYS } from './constants';
+
+const DB_HOST = 'localhost';
+const DB_PORT = 5432;
+const DB_USER = 'postgres';
+const DB_PASSWORD = 'password';
+const DB_NAME = 'postgres';
+
+export const client = new Client({
+    host: DB_HOST,
+    port: DB_PORT, // Use a default port if not specified
+    user: DB_USER,
+    password: DB_PASSWORD,
+    database: DB_NAME
+});
+
+// Connect to PostgreSQL
+client
+    .connect()
+    .then(() => {
+        console.log('Connected to PostgreSQL database');
+    })
+    .catch((err) => {
+        console.error('Connection error', err.stack);
+    });
 
 // kkunin ko ung m ng bawat dept
 // so ang iccompare for example ay 1csa and 1csb or if may higher year kasama 2csa 2csb etc
@@ -105,8 +130,143 @@ const groupByDaySchedule = (chromosome: any) => {
     return dayBasedSchedule;
 };
 
-const checkRoomConstraints = (chromosome: any) => {
+const checkCurriculumConstraints = async (chromosome: any) => {
+    let hasConflict = false;
+    let semCurr = await getCoursesAndTotalUnitsPerCurriculum(1);
 
+    let CSYearGene = chromosome.find((gene: any) => gene.cs_1st)?.cs_1st;
+    for (let i = 0; i < CSYearGene.length; i++) {        
+        
+        const totalUnitsInSchedule: any = {};
+        let csSectionSched: any = Object.values(CSYearGene[i])[0];
+
+        // Iterate through the schedule for each day (M, T, W, TH, F, S)
+        for (const day in csSectionSched) {
+            csSectionSched[day].forEach((scheduleItem: any) => {
+                const { subject_code, units_per_class } = scheduleItem.course;
+                if (totalUnitsInSchedule[subject_code]) {
+                    totalUnitsInSchedule[subject_code] += units_per_class;
+                } else {
+                    totalUnitsInSchedule[subject_code] = units_per_class;
+                }
+            });
+        }
+        
+        const csCurr = semCurr.find(item => item['1CS']); // Find the curriculum for '1CS'
+        
+        if (csCurr) {
+            csCurr['1CS'].forEach((course: any) => {
+                const { subject_code, total_units } = course;
+                const totalUnitsScheduled = totalUnitsInSchedule[subject_code] ?? 0;
+                
+                // Check if the scheduled units match the curriculum units
+                if (totalUnitsScheduled !== total_units) {
+                    console.log(`Mismatch for ${subject_code}:`);
+                    console.log(`Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`);
+                    hasConflict = true;
+                }
+            });
+        }
+    }
+    
+    let ITYearGene = chromosome.find((gene: any) => gene.it_1st)?.it_1st;
+    for (let i = 0; i < ITYearGene.length; i++) {        
+        
+        const totalUnitsInSchedule: any = {};
+        let itSectionSched: any = Object.values(ITYearGene[i])[0];
+        
+        // Iterate through the schedule for each day (M, T, W, TH, F, S)
+        for (const day in itSectionSched) {
+            itSectionSched[day].forEach((scheduleItem: any) => {
+                const { subject_code, units_per_class } = scheduleItem.course;
+                if (totalUnitsInSchedule[subject_code]) {
+                    totalUnitsInSchedule[subject_code] += units_per_class;
+                } else {
+                    totalUnitsInSchedule[subject_code] = units_per_class;
+                }
+            });
+        }
+        
+        const itCurr = semCurr.find(item => item['1IT']); // Find the curriculum for '1CS'
+        
+        if (itCurr) {
+            itCurr['1IT'].forEach((course: any) => {
+                const { subject_code, total_units } = course;
+                const totalUnitsScheduled = totalUnitsInSchedule[subject_code] ?? 0;
+                
+                // Check if the scheduled units match the curriculum units
+                if (totalUnitsScheduled !== total_units) {
+                    console.log(`Mismatch for ${subject_code}:`);
+                    console.log(`Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`);
+                    hasConflict = true;
+                }
+            });
+        }
+    }
+    
+    let ISYearGene = chromosome.find((gene: any) => gene.is_1st)?.is_1st;
+    for (let i = 0; i < ISYearGene.length; i++) {        
+        
+        const totalUnitsInSchedule: any = {};
+        let isSectionSched: any = Object.values(ISYearGene[i])[0];
+        
+        // Iterate through the schedule for each day (M, T, W, TH, F, S)
+        for (const day in isSectionSched) {
+            isSectionSched[day].forEach((scheduleItem: any) => {
+                const { subject_code, units_per_class } = scheduleItem.course;
+                if (totalUnitsInSchedule[subject_code]) {
+                    totalUnitsInSchedule[subject_code] += units_per_class;
+                } else {
+                    totalUnitsInSchedule[subject_code] = units_per_class;
+                }
+            });
+        }
+        
+        const isCurr = semCurr.find(item => item['1IS']); // Find the curriculum for '1CS'
+        
+        if (isCurr) {
+            isCurr['1IS'].forEach((course: any) => {
+                const { subject_code, total_units } = course;
+                const totalUnitsScheduled = totalUnitsInSchedule[subject_code] ?? 0;
+
+                // Check if the scheduled units match the curriculum units
+                if (totalUnitsScheduled !== total_units) {
+                    console.log(`Mismatch for ${subject_code}:`);
+                    console.log(`Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`);
+                    hasConflict = true;
+                }
+            });
+        }
+    }
+
+    return !hasConflict;
+};
+
+const getCoursesAndTotalUnitsPerCurriculum = async (semester: number) => {
+    let coursesAndUnitsPerCurr = [];
+
+    const query = "SELECT * FROM curriculum WHERE semester = $1";
+    const res = await client.query(query, [semester]);
+    const curriculums = res.rows;
+    
+    for (let i = 0; i < curriculums.length; i++){
+        let curr = curriculums[i];
+        
+        const query2 = "SELECT subject_code, total_units FROM courses WHERE subject_code = ANY($1)";
+        const res2 = await client.query(query2, [curr.courses]);
+
+        let key = `${curr.year}${curr.department}`;
+
+        coursesAndUnitsPerCurr.push({
+            [key]: res2.rows
+        })
+
+    }
+
+    return coursesAndUnitsPerCurr;
+}
+
+const checkRoomConstraints = (chromosome: any) => {
     let dayBasedSchedule = groupByDaySchedule(chromosome);
 
     for (let i = 0; i < SCHOOL_DAYS.length; i++) {
@@ -159,7 +319,7 @@ const checkProfConstraints = (chromosome: any) => {
             return true;
         }
     }
-}
+};
 
 const isOverlap = ({ time1, time2 }: { time1: any; time2: any }) => {
     return time1.start < time2.end && time2.start < time1.end;
@@ -260,7 +420,30 @@ const findProfessorConflicts = (schedules: any) => {
     return conflicts;
 };
 
+// get constraints from db
+
 // check if curriculum is finished
+const findIncompleteUnits = async ({
+    weeklyCourseUnits,
+    courses
+}: {
+    weeklyCourseUnits: any;
+    courses: any;
+}) => {
+    let query =
+        'SELECT subject_code, total_units FROM courses WHERE subject_code = ANY($1)';
+    const res = await client.query(query, [courses]);
+    const courseTotalUnits = res.rows;
+
+    for (let i = 0; i < courseTotalUnits.length; i++) {
+        let units =
+            weeklyCourseUnits[courseTotalUnits[i].subject_code]?.units || 0;
+        if (units < courseTotalUnits[i].total_units) {
+            return false;
+        }
+    }
+    return true;
+};
 
 // check nice to have class gap constraint
 // check nice to have class start constraint
@@ -268,8 +451,7 @@ const findProfessorConflicts = (schedules: any) => {
 
 // check nice to have prof constraint
 
-
-export const evaluateFitnessScore = (chromosome: any) => {
+export const evaluateFitnessScore = async (chromosome: any) => {
     let score = 100;
 
     if (checkRoomConstraints(chromosome)) {
@@ -277,6 +459,11 @@ export const evaluateFitnessScore = (chromosome: any) => {
     }
 
     if (checkProfConstraints(chromosome)) {
+        score -= 10;
+    }
+    
+    let currConflicts = await checkCurriculumConstraints(chromosome);
+    if (!currConflicts){
         score -= 10;
     }
 

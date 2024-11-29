@@ -14,7 +14,7 @@ const DB_USER = 'postgres';
 const DB_PASSWORD = 'password';
 const DB_NAME = 'postgres';
 
-const client = new Client({
+export const client = new Client({
     host: DB_HOST,
     port: DB_PORT, // Use a default port if not specified
     user: DB_USER,
@@ -34,7 +34,7 @@ client
 
 let chromosomes = [];
 
-// ung sa gened na gap
+// ung prof units pag reg and irreg
 
 const generateYearGene = async ({
     dept,
@@ -469,7 +469,7 @@ const generateChromosome = async () => {
 
 const runScript = async () => {
     let ch = await generateChromosome();
-    let score = evaluateFitnessScore(ch);
+    let score = await evaluateFitnessScore(ch);
     console.log(score);
 }
 
