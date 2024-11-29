@@ -130,13 +130,132 @@ const groupByDaySchedule = (chromosome: any) => {
     return dayBasedSchedule;
 };
 
+// check nice to have class gap constraint
+const checkClassGapConstraint = async (chromosome: any) => {
+    let hasConflict = false;
+    let CSYearGene = chromosome.find((gene: any) => gene.cs_1st)?.cs_1st;
+    
+    // get min and max from db
+    const queryCS =
+        'SELECT class_gap_in_minutes_min, class_gap_in_minutes_max FROM class_gaps WHERE department = $1 AND year = $2';
+    const res = await client.query(queryCS, ['CS', 1]);
+    const classGapCS1st = res.rows[0];
+
+    for (let i = 0; i < CSYearGene.length; i++) {
+        let csSectionSched: any = Object.values(CSYearGene[i])[0];
+
+        for (const day in csSectionSched) {
+            hasConflict = checkClassGaps({
+                schedule: csSectionSched[day],
+                minGap: classGapCS1st.class_gap_in_minutes_min,
+                maxGap: classGapCS1st.class_gap_in_minutes_max
+            });
+        }
+    }
+
+    if (hasConflict){
+        return hasConflict;
+    }
+
+    // IT
+    let ITYearGene = chromosome.find((gene: any) => gene.it_1st)?.it_1st;
+    
+    // get min and max from db
+    const queryIT =
+        'SELECT class_gap_in_minutes_min, class_gap_in_minutes_max FROM class_gaps WHERE department = $1 AND year = $2';
+    const resIT = await client.query(queryIT, ['IT', 1]);
+    const classGapIT1st = resIT.rows[0];
+
+    for (let i = 0; i < ITYearGene.length; i++) {
+        let itSectionSched: any = Object.values(ITYearGene[i])[0];
+
+        for (const day in itSectionSched) {
+            hasConflict = checkClassGaps({
+                schedule: itSectionSched[day],
+                minGap: classGapIT1st.class_gap_in_minutes_min,
+                maxGap: classGapIT1st.class_gap_in_minutes_max
+            });
+        }
+    }
+
+    if (hasConflict){
+        return hasConflict;
+    }
+
+    // IS
+    let ISYearGene = chromosome.find((gene: any) => gene.it_1st)?.it_1st;
+    
+    // get min and max from db
+    const queryIS =
+        'SELECT class_gap_in_minutes_min, class_gap_in_minutes_max FROM class_gaps WHERE department = $1 AND year = $2';
+    const resIS = await client.query(queryIS, ['IS', 1]);
+    const classGapIS1st = resIS.rows[0];
+
+    for (let i = 0; i < ISYearGene.length; i++) {
+        let isSectionSched: any = Object.values(ISYearGene[i])[0];
+
+        for (const day in isSectionSched) {
+            hasConflict = checkClassGaps({
+                schedule: isSectionSched[day],
+                minGap: classGapIS1st.class_gap_in_minutes_min,
+                maxGap: classGapIS1st.class_gap_in_minutes_max
+            });
+        }
+    }
+
+    return hasConflict;
+};
+
+const checkClassGaps = ({
+    schedule,
+    minGap,
+    maxGap
+}: {
+    schedule: any;
+    minGap: any;
+    maxGap: any;
+}): boolean => {
+    // Sort schedule by start time
+    schedule.sort(
+        (a: any, b: any) =>
+            timeToMinutes(a.timeBlock.start) - timeToMinutes(b.timeBlock.start)
+    );
+
+    // Check gaps between each consecutive class
+    for (let i = 0; i < schedule.length - 1; i++) {
+        const currentClass = schedule[i];
+        const nextClass = schedule[i + 1];
+
+        // Calculate the gap between the current class's end time and the next class's start time
+        const endTime = timeToMinutes(currentClass.timeBlock.end);
+        const startTime = timeToMinutes(nextClass.timeBlock.start);
+        const gap = startTime - endTime;
+
+        // Check if the gap is within the allowed range
+        if (gap < minGap || gap > maxGap) {
+            console.log(
+                `Class gap between ${currentClass.course.subject_code} and ${nextClass.course.subject_code} is ${gap} minutes, which is outside the range.`
+            );
+            return true; // If any gap is out of range, return false
+        }
+    }
+
+    // If all gaps are valid
+    return false;
+};
+
+const timeToMinutes = (time: string): number => {
+    const hours = parseInt(time.substring(0, 2), 10);
+    const minutes = parseInt(time.substring(2), 10);
+    return hours * 60 + minutes;
+};
+
 const checkCurriculumConstraints = async (chromosome: any) => {
     let hasConflict = false;
     let semCurr = await getCoursesAndTotalUnitsPerCurriculum(1);
 
     let CSYearGene = chromosome.find((gene: any) => gene.cs_1st)?.cs_1st;
-    for (let i = 0; i < CSYearGene.length; i++) {        
-        
+    for (let i = 0; i < CSYearGene.length; i++) {
         const totalUnitsInSchedule: any = {};
         let csSectionSched: any = Object.values(CSYearGene[i])[0];
 
@@ -151,30 +270,32 @@ const checkCurriculumConstraints = async (chromosome: any) => {
                 }
             });
         }
-        
-        const csCurr = semCurr.find(item => item['1CS']); // Find the curriculum for '1CS'
-        
+
+        const csCurr = semCurr.find((item) => item['1CS']); // Find the curriculum for '1CS'
+
         if (csCurr) {
             csCurr['1CS'].forEach((course: any) => {
                 const { subject_code, total_units } = course;
-                const totalUnitsScheduled = totalUnitsInSchedule[subject_code] ?? 0;
-                
+                const totalUnitsScheduled =
+                    totalUnitsInSchedule[subject_code] ?? 0;
+
                 // Check if the scheduled units match the curriculum units
                 if (totalUnitsScheduled !== total_units) {
                     console.log(`Mismatch for ${subject_code}:`);
-                    console.log(`Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`);
+                    console.log(
+                        `Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`
+                    );
                     hasConflict = true;
                 }
             });
         }
     }
-    
+
     let ITYearGene = chromosome.find((gene: any) => gene.it_1st)?.it_1st;
-    for (let i = 0; i < ITYearGene.length; i++) {        
-        
+    for (let i = 0; i < ITYearGene.length; i++) {
         const totalUnitsInSchedule: any = {};
         let itSectionSched: any = Object.values(ITYearGene[i])[0];
-        
+
         // Iterate through the schedule for each day (M, T, W, TH, F, S)
         for (const day in itSectionSched) {
             itSectionSched[day].forEach((scheduleItem: any) => {
@@ -186,30 +307,32 @@ const checkCurriculumConstraints = async (chromosome: any) => {
                 }
             });
         }
-        
-        const itCurr = semCurr.find(item => item['1IT']); // Find the curriculum for '1CS'
-        
+
+        const itCurr = semCurr.find((item) => item['1IT']); // Find the curriculum for '1CS'
+
         if (itCurr) {
             itCurr['1IT'].forEach((course: any) => {
                 const { subject_code, total_units } = course;
-                const totalUnitsScheduled = totalUnitsInSchedule[subject_code] ?? 0;
-                
+                const totalUnitsScheduled =
+                    totalUnitsInSchedule[subject_code] ?? 0;
+
                 // Check if the scheduled units match the curriculum units
                 if (totalUnitsScheduled !== total_units) {
                     console.log(`Mismatch for ${subject_code}:`);
-                    console.log(`Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`);
+                    console.log(
+                        `Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`
+                    );
                     hasConflict = true;
                 }
             });
         }
     }
-    
+
     let ISYearGene = chromosome.find((gene: any) => gene.is_1st)?.is_1st;
-    for (let i = 0; i < ISYearGene.length; i++) {        
-        
+    for (let i = 0; i < ISYearGene.length; i++) {
         const totalUnitsInSchedule: any = {};
         let isSectionSched: any = Object.values(ISYearGene[i])[0];
-        
+
         // Iterate through the schedule for each day (M, T, W, TH, F, S)
         for (const day in isSectionSched) {
             isSectionSched[day].forEach((scheduleItem: any) => {
@@ -221,18 +344,21 @@ const checkCurriculumConstraints = async (chromosome: any) => {
                 }
             });
         }
-        
-        const isCurr = semCurr.find(item => item['1IS']); // Find the curriculum for '1CS'
-        
+
+        const isCurr = semCurr.find((item) => item['1IS']); // Find the curriculum for '1CS'
+
         if (isCurr) {
             isCurr['1IS'].forEach((course: any) => {
                 const { subject_code, total_units } = course;
-                const totalUnitsScheduled = totalUnitsInSchedule[subject_code] ?? 0;
+                const totalUnitsScheduled =
+                    totalUnitsInSchedule[subject_code] ?? 0;
 
                 // Check if the scheduled units match the curriculum units
                 if (totalUnitsScheduled !== total_units) {
                     console.log(`Mismatch for ${subject_code}:`);
-                    console.log(`Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`);
+                    console.log(
+                        `Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`
+                    );
                     hasConflict = true;
                 }
             });
@@ -245,26 +371,26 @@ const checkCurriculumConstraints = async (chromosome: any) => {
 const getCoursesAndTotalUnitsPerCurriculum = async (semester: number) => {
     let coursesAndUnitsPerCurr = [];
 
-    const query = "SELECT * FROM curriculum WHERE semester = $1";
+    const query = 'SELECT * FROM curriculum WHERE semester = $1';
     const res = await client.query(query, [semester]);
     const curriculums = res.rows;
-    
-    for (let i = 0; i < curriculums.length; i++){
+
+    for (let i = 0; i < curriculums.length; i++) {
         let curr = curriculums[i];
-        
-        const query2 = "SELECT subject_code, total_units FROM courses WHERE subject_code = ANY($1)";
+
+        const query2 =
+            'SELECT subject_code, total_units FROM courses WHERE subject_code = ANY($1)';
         const res2 = await client.query(query2, [curr.courses]);
 
         let key = `${curr.year}${curr.department}`;
 
         coursesAndUnitsPerCurr.push({
             [key]: res2.rows
-        })
-
+        });
     }
 
     return coursesAndUnitsPerCurr;
-}
+};
 
 const checkRoomConstraints = (chromosome: any) => {
     let dayBasedSchedule = groupByDaySchedule(chromosome);
@@ -422,38 +548,17 @@ const findProfessorConflicts = (schedules: any) => {
 
 // get constraints from db
 
-// check if curriculum is finished
-const findIncompleteUnits = async ({
-    weeklyCourseUnits,
-    courses
-}: {
-    weeklyCourseUnits: any;
-    courses: any;
-}) => {
-    let query =
-        'SELECT subject_code, total_units FROM courses WHERE subject_code = ANY($1)';
-    const res = await client.query(query, [courses]);
-    const courseTotalUnits = res.rows;
-
-    for (let i = 0; i < courseTotalUnits.length; i++) {
-        let units =
-            weeklyCourseUnits[courseTotalUnits[i].subject_code]?.units || 0;
-        if (units < courseTotalUnits[i].total_units) {
-            return false;
-        }
-    }
-    return true;
-};
-
-// check nice to have class gap constraint
 // check nice to have class start constraint
 // check nice to have class end constraint
 
 // check nice to have prof constraint
 
+
+// kahit one constraint lng per cat isang minus lng
 export const evaluateFitnessScore = async (chromosome: any) => {
     let score = 100;
 
+    // hard conflicts
     if (checkRoomConstraints(chromosome)) {
         score -= 10;
     }
@@ -461,11 +566,17 @@ export const evaluateFitnessScore = async (chromosome: any) => {
     if (checkProfConstraints(chromosome)) {
         score -= 10;
     }
-    
+
     let currConflicts = await checkCurriculumConstraints(chromosome);
-    if (!currConflicts){
+    if (!currConflicts) {
         score -= 10;
     }
-
+    
+    // medium conflicts
+    let classGapConflicts = await checkClassGapConstraint(chromosome);
+    if (!classGapConflicts) {
+        score -= 5;
+    }
+    
     return score;
 };
