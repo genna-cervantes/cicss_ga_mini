@@ -34,8 +34,6 @@ client
 
 let chromosomes = [];
 
-// ung prof units pag reg and irreg
-
 const generateYearGene = async ({
     dept,
     year,
@@ -57,53 +55,62 @@ const generateYearGene = async ({
         const curriculum = res.rows[0];
         const specialization = curriculum.specialization;
         const courses = curriculum.courses;
-        const yearLevelConstraints = {
-            M: [
-                {
-                    start: '1600',
-                    end: '2100'
-                }
-            ],
-            T: [
-                {
-                    start: '1600',
-                    end: '2100'
-                }
-            ],
-            W: [
-                {
-                    start: '1600',
-                    end: '2100'
-                }
-            ],
-            TH: [
-                {
-                    start: '1600',
-                    end: '2100'
-                }
-            ],
-            F: [
-                {
-                    start: '0700',
-                    end: '2100'
-                }
-            ],
-            S: [
-                {
-                    start: '0700',
-                    end: '2100'
-                }
-            ]
-        };
+        // get sa db
+        const query2 = "SELECT restrictions FROM year_restrictions WHERE department = $1 AND year = $2";
+        const res2 = await client.query(query2, [dept, year]);
+        const yearLevelConstraints = res2.rows[0].restrictions;
+        // const yearLevelConstraints = {
+        //     M: [
+        //         {
+        //             start: '1600',
+        //             end: '2100'
+        //         }
+        //     ],
+        //     T: [
+        //         {
+        //             start: '1600',
+        //             end: '2100'
+        //         }
+        //     ],
+        //     W: [
+        //         {
+        //             start: '1600',
+        //             end: '2100'
+        //         }
+        //     ],
+        //     TH: [
+        //         {
+        //             start: '1600',
+        //             end: '2100'
+        //         }
+        //     ],
+        //     F: [
+        //         {
+        //             start: '1600',
+        //             end: '2100'
+        //         }
+        //     ],
+        //     S: [
+        //         {
+        //             start: '0700',
+        //             end: '2100'
+        //         }
+        //     ]
+        // };
 
         // console.log(courses)
         let yearGene: any = [];
         let gene;
-        let sectionNames = generateSectionNames({year, dept, sectionNumber: sections});
-        
+        let sectionNames = generateSectionNames({
+            year,
+            dept,
+            sectionNumber: sections
+        });
+
         // ung mga shared like profs and rooms is outside sa section loop para di mag reset per section
         // track prof units
         let weeklyProfUnits: any = {};
+        let weeklyProfTimeBlocks: any = {};
         let weeklyRoomUnits: any = {}; // max 14
         // rm 1806: {
         //     M: [],
@@ -118,7 +125,7 @@ const generateYearGene = async ({
         loop1: for (let i = 0; i < sectionNames.length; i++) {
             let sectionName = sectionNames[i];
             let weeklyCourseUnits: any = {};
-    
+
             // track time blocks
             let weeklyTimeBlockConstraints: any = {
                 M: [],
@@ -128,7 +135,7 @@ const generateYearGene = async ({
                 F: [],
                 S: []
             };
-    
+
             let weeklyGenedConstraints: any = {
                 M: [],
                 T: [],
@@ -138,9 +145,9 @@ const generateYearGene = async ({
                 S: []
             };
             // {M: [THY], T: [FELEC]}
-            
+
             let weeklyUnits: any = {};
-            
+
             let schedule: any = {
                 M: [],
                 T: [],
@@ -166,17 +173,19 @@ const generateYearGene = async ({
                 let availableTime = weeklyUnits[schoolDay] || 9;
                 // console.log('1', availableTime);
 
-                loop3:
-                while (availableTime > 2) {
+                loop3: while (availableTime > 2) {
                     // gap logic for gened subs
-                    
+
                     loop4: while (!courseAssigned) {
                         tries++;
 
                         // wala n tlga beh or check if puno na ung units
-                        let unitsComplete = await checkIfUnitsComplete({weeklyCourseUnits, courses});
+                        let unitsComplete = await checkIfUnitsComplete({
+                            weeklyCourseUnits,
+                            courses
+                        });
                         if (tries >= 1000 || unitsComplete) {
-                            console.log('enough tries || complete assignment')
+                            console.log('enough tries || complete assignment');
                             break loop3;
                         }
                         let courseDetails;
@@ -194,43 +203,72 @@ const generateYearGene = async ({
                         courseDetails = await getCourseDetails(course);
 
                         // check if gened and gap
-                        if (courseDetails.category === 'gened' && !courseDetails.subject_code.startsWith('PATHFIT')) {
+                        if (
+                            courseDetails.category === 'gened' &&
+                            !courseDetails.subject_code.startsWith('PATHFIT')
+                        ) {
                             // need hanapin saang day siya naka assign if naka assign na siya
                             // m
-                            // need ung opposite dito -- stricter more prone to incomplete 
-                            if (weeklyGenedConstraints['M'].includes(courseDetails.subject_code)) {
+                            // need ung opposite dito -- stricter more prone to incomplete
+                            if (
+                                weeklyGenedConstraints['M'].includes(
+                                    courseDetails.subject_code
+                                )
+                            ) {
                                 // make sure this is the gap day
-                                if (schoolDay != 'W'){
+                                if (schoolDay != 'W') {
                                     continue loop4;
                                 }
-                            } else if (weeklyGenedConstraints['T'].includes(courseDetails.subject_code)) {
+                            } else if (
+                                weeklyGenedConstraints['T'].includes(
+                                    courseDetails.subject_code
+                                )
+                            ) {
                                 // make sure this is the gap day
-                                if (schoolDay != 'TH'){
+                                if (schoolDay != 'TH') {
                                     continue loop4;
                                 }
-                            } else if (weeklyGenedConstraints['W'].includes(courseDetails.subject_code)) {
+                            } else if (
+                                weeklyGenedConstraints['W'].includes(
+                                    courseDetails.subject_code
+                                )
+                            ) {
                                 // make sure this is the gap day
-                                if (schoolDay != 'M'){
+                                if (schoolDay != 'M') {
                                     continue loop4;
                                 }
-                            } else if (weeklyGenedConstraints['TH'].includes(courseDetails.subject_code)) {
+                            } else if (
+                                weeklyGenedConstraints['TH'].includes(
+                                    courseDetails.subject_code
+                                )
+                            ) {
                                 // make sure this is the gap day
-                                if (schoolDay != 'T'){
+                                if (schoolDay != 'T') {
                                     continue loop4;
                                 }
-                            } else if (weeklyGenedConstraints['F'].includes(courseDetails.subject_code)) {
+                            } else if (
+                                weeklyGenedConstraints['F'].includes(
+                                    courseDetails.subject_code
+                                )
+                            ) {
                                 // make sure this is the gap day
-                                if (schoolDay != 'S'){
+                                if (schoolDay != 'S') {
                                     continue loop4;
                                 }
-                            } else if (weeklyGenedConstraints['S'].includes(courseDetails.subject_code)) {
+                            } else if (
+                                weeklyGenedConstraints['S'].includes(
+                                    courseDetails.subject_code
+                                )
+                            ) {
                                 // make sure this is the gap day
-                                if (schoolDay != 'F'){
+                                if (schoolDay != 'F') {
                                     continue loop4;
                                 }
                             } else {
                                 // put it in there
-                                weeklyGenedConstraints[schoolDay].push(courseDetails.subject_code)
+                                weeklyGenedConstraints[schoolDay].push(
+                                    courseDetails.subject_code
+                                );
                             }
                         }
 
@@ -281,6 +319,7 @@ const generateYearGene = async ({
                                 // get prof for course
                                 profDetails = await getProfFromCourse({
                                     courseDetails,
+                                    weeklyProfTimeBlocks,
                                     weeklyProfUnits,
                                     dept,
                                     schoolDay,
@@ -289,30 +328,58 @@ const generateYearGene = async ({
 
                                 if (profDetails) {
                                     if (
-                                        weeklyProfUnits[
+                                        weeklyProfTimeBlocks[
                                             profDetails.professor_id
                                         ]
                                     ) {
                                         // insert the time block
-                                        weeklyProfUnits[profDetails.professor_id][schoolDay].push(
-                                            timeBlock.timeBlock
-                                        );
+                                        weeklyProfTimeBlocks[
+                                            profDetails.professor_id
+                                        ][schoolDay].push(timeBlock.timeBlock);
 
                                         // weeklyProfUnits[
                                         //     profDetails.professor_id
                                         // ].units += profDetails.units;
                                     } else {
-                                        weeklyProfUnits[profDetails.professor_id] = {
+                                        weeklyProfTimeBlocks[
+                                            profDetails.professor_id
+                                        ] = {
                                             M: [],
                                             T: [],
                                             W: [],
                                             TH: [],
                                             F: [],
                                             S: []
+                                        };
+                                        weeklyProfTimeBlocks[
+                                            profDetails.professor_id
+                                        ][schoolDay].push(timeBlock.timeBlock);
+                                    }
+
+                                    if (
+                                        weeklyProfUnits[
+                                            profDetails.professor_id
+                                        ]?.units
+                                    ) {
+                                        if (courseDetails.type === 'lec') {
+                                            weeklyProfUnits[
+                                                profDetails.professor_id
+                                            ].units += courseDetails.units;
+                                        }else if (courseDetails.type === 'lab'){
+                                            weeklyProfUnits[
+                                                profDetails.professor_id
+                                            ].units += (courseDetails.units * 1.5);
                                         }
-                                        weeklyProfUnits[profDetails.professor_id][schoolDay].push(
-                                            timeBlock.timeBlock
-                                        );
+                                    }else{
+                                        if (courseDetails.type === 'lec') {
+                                            weeklyProfUnits[
+                                                profDetails.professor_id
+                                            ] = {units: courseDetails.units};
+                                        }else if (courseDetails.type === 'lab'){
+                                            weeklyProfUnits[
+                                                profDetails.professor_id
+                                            ] = {units: (courseDetails.units * 1.5)};
+                                        }
                                     }
                                 } else {
                                     console.log('no more prof possibilities');
@@ -341,14 +408,12 @@ const generateYearGene = async ({
                                     if (
                                         // weeklyRoomUnits[roomDetails.room_id]
                                         //     ?.units
-                                        weeklyRoomUnits[
-                                            roomDetails.room_id
-                                        ]
+                                        weeklyRoomUnits[roomDetails.room_id]
                                     ) {
                                         // insert the time block
-                                        weeklyRoomUnits[roomDetails.room_id][schoolDay].push(
-                                            timeBlock.timeBlock
-                                        );
+                                        weeklyRoomUnits[roomDetails.room_id][
+                                            schoolDay
+                                        ].push(timeBlock.timeBlock);
 
                                         // HARDCODED
                                         // weeklyRoomUnits[
@@ -363,10 +428,10 @@ const generateYearGene = async ({
                                             TH: [],
                                             F: [],
                                             S: []
-                                        }
-                                        weeklyRoomUnits[roomDetails.room_id][schoolDay].push(
-                                            timeBlock.timeBlock
-                                        );
+                                        };
+                                        weeklyRoomUnits[roomDetails.room_id][
+                                            schoolDay
+                                        ].push(timeBlock.timeBlock);
 
                                         // weeklyRoomUnits[roomDetails.room_id] = {
                                         //     units: courseDetails.units_per_class
@@ -379,13 +444,12 @@ const generateYearGene = async ({
                             }
                             //  console.log("room: ", roomDetails);
 
-                            
                             // add class units to weekly tracker
                             if (weeklyUnits[schoolDay]?.units) {
                                 weeklyUnits[schoolDay].units -=
                                     courseDetails.units_per_class;
                             } else {
-                                weeklyUnits[schoolDay] = { 
+                                weeklyUnits[schoolDay] = {
                                     units: 9 - courseDetails.units_per_class
                                 };
                             }
@@ -403,7 +467,7 @@ const generateYearGene = async ({
                                 prof: profDetails,
                                 room: roomDetails,
                                 timeBlock: timeBlock.timeBlock
-                            })
+                            });
 
                             // add course units to weekly tracker
                             if (weeklyCourseUnits[course]?.units) {
@@ -425,10 +489,9 @@ const generateYearGene = async ({
                         }
                     }
 
-                    
                     courseAssigned = false;
                 }
-                
+
                 // console.log('schedule', schedule)
                 // assign everything to that section
                 // add to yearlevel gene
@@ -452,41 +515,56 @@ const generateYearGene = async ({
 const generateChromosome = async () => {
     let chromosome = [];
 
-    let CSYearGene = await generateYearGene({ dept: 'CS', year: 1, sem: 1, sections: 2 });
-    chromosome.push({'cs_1st': CSYearGene});
-    let ITYearGene = await generateYearGene({ dept: 'IT', year: 1, sem: 1, sections: 2 });
-    chromosome.push({'it_1st': ITYearGene});
-    let ISYearGene = await generateYearGene({ dept: 'IS', year: 1, sem: 1, sections: 2 });
-    chromosome.push({'is_1st': ISYearGene});
+    let CSYearGene = await generateYearGene({
+        dept: 'CS',
+        year: 1,
+        sem: 1,
+        sections: 2
+    });
+    chromosome.push({ cs_1st: CSYearGene });
+    let ITYearGene = await generateYearGene({
+        dept: 'IT',
+        year: 1,
+        sem: 1,
+        sections: 2
+    });
+    chromosome.push({ it_1st: ITYearGene });
+    let ISYearGene = await generateYearGene({
+        dept: 'IS',
+        year: 1,
+        sem: 1,
+        sections: 2
+    });
+    chromosome.push({ is_1st: ISYearGene });
 
-    for (let i = 0; i < chromosome.length; i++){
+    for (let i = 0; i < chromosome.length; i++) {
         const value = Object.values(chromosome[i])[0];
         printYearGene(value);
     }
 
     return chromosome;
-}
+};
 
 const runScript = async () => {
     let ch = await generateChromosome();
     let score = await evaluateFitnessScore(ch);
     console.log(score);
-}
+};
 
-runScript()
+runScript();
 
 const printYearGene = (yearGene: any) => {
-    for (let i = 0; i < yearGene.length; i++){
+    for (let i = 0; i < yearGene.length; i++) {
         let gene = yearGene[i];
         let geneKeys = Object.keys(gene);
-        for (let j = 0; j < geneKeys.length; j++){
+        for (let j = 0; j < geneKeys.length; j++) {
             console.log(geneKeys[j]);
             let geneKey = geneKeys[j];
 
             let geneKeySchedKeys = Object.keys(gene[geneKey]);
             let section = gene[geneKey];
-            console.log(geneKeySchedKeys)
-            for (let k = 0; k < geneKeySchedKeys.length; k++){
+            console.log(geneKeySchedKeys);
+            for (let k = 0; k < geneKeySchedKeys.length; k++) {
                 let geneKeySchedKey: any = geneKeySchedKeys[k];
                 console.log(geneKeySchedKey);
 
@@ -494,29 +572,45 @@ const printYearGene = (yearGene: any) => {
             }
         }
     }
-}
+};
 
-const generateSectionNames = ({year, dept, sectionNumber}: {year: any, dept: any, sectionNumber: any}) => {
+const generateSectionNames = ({
+    year,
+    dept,
+    sectionNumber
+}: {
+    year: any;
+    dept: any;
+    sectionNumber: any;
+}) => {
     let sectionNames = [];
-    for (let i = 0; i < sectionNumber; i++){
-        sectionNames.push(`${year}${dept}${String.fromCharCode(65 + i)}`)
+    for (let i = 0; i < sectionNumber; i++) {
+        sectionNames.push(`${year}${dept}${String.fromCharCode(65 + i)}`);
     }
     return sectionNames;
-}
+};
 
-const checkIfUnitsComplete = async ({weeklyCourseUnits, courses}: {weeklyCourseUnits: any, courses: any}) => {
-    let query = "SELECT subject_code, total_units FROM courses WHERE subject_code = ANY($1)"
+const checkIfUnitsComplete = async ({
+    weeklyCourseUnits,
+    courses
+}: {
+    weeklyCourseUnits: any;
+    courses: any;
+}) => {
+    let query =
+        'SELECT subject_code, total_units FROM courses WHERE subject_code = ANY($1)';
     const res = await client.query(query, [courses]);
     const courseTotalUnits = res.rows;
 
-    for (let i = 0; i < courseTotalUnits.length; i++){
-        let units = weeklyCourseUnits[courseTotalUnits[i].subject_code]?.units || 0
-        if (units < courseTotalUnits[i].total_units){
+    for (let i = 0; i < courseTotalUnits.length; i++) {
+        let units =
+            weeklyCourseUnits[courseTotalUnits[i].subject_code]?.units || 0;
+        if (units < courseTotalUnits[i].total_units) {
             return false;
         }
     }
     return true;
-}
+};
 
 const getCourseDetails = async (course: string) => {
     const query = 'SELECT * FROM courses WHERE subject_code = $1 LIMIT 1';
@@ -526,16 +620,18 @@ const getCourseDetails = async (course: string) => {
 
 const getProfFromCourse = async ({
     courseDetails,
+    weeklyProfTimeBlocks,
     weeklyProfUnits,
     dept,
     schoolDay,
     timeBlock
 }: {
     courseDetails: any;
+    weeklyProfTimeBlocks: any;
     weeklyProfUnits: any;
     dept: string;
     schoolDay: any;
-    timeBlock: any
+    timeBlock: any;
 }) => {
     // ung main dep lng muna kunin
     const query =
@@ -561,16 +657,18 @@ const getProfFromCourse = async ({
         }
 
         // check if pwede pa by getting the time slots of the prof from the constraint and if nag ooverlap not na siya pwede
-        let profConstraints = weeklyProfUnits[prof.professor_id] ? weeklyProfUnits[prof.professor_id][schoolDay] : [];
-        if (!isTimeBlockValid({constraints: profConstraints, timeBlock})){
+        let profConstraints = weeklyProfTimeBlocks[prof.professor_id]
+            ? weeklyProfTimeBlocks[prof.professor_id][schoolDay]
+            : [];
+        if (!isTimeBlockValid({ constraints: profConstraints, timeBlock })) {
             continue loop1;
         }
 
         // check if pwede pa from the course units
-        // let assignedUnits = weeklyProfUnits[prof.professor_id]?.units || 0;
-        // if (assignedUnits >= prof.units) {
-        //     continue;
-        // }
+        let assignedUnits = weeklyProfUnits[prof.professor_id]?.units || 0;
+        if (assignedUnits >= prof.units) {
+            continue loop1;
+        }
 
         // return ung prof na un
         return prof;
@@ -580,6 +678,8 @@ const getProfFromCourse = async ({
     const query2 =
         'SELECT * FROM professors WHERE $1 = ANY(courses) AND main_department != $2';
     const res2 = await client.query(query2, [courseDetails.subject_code, dept]);
+
+    console.log('kuha sub prof');
 
     const subAvailableProfs = res2.rows;
 
@@ -600,14 +700,17 @@ const getProfFromCourse = async ({
         }
 
         // check if pwede pa from the course units
-        let profConstraints = weeklyProfUnits[prof.professor_id] ? weeklyProfUnits[prof.professor_id][schoolDay] : [];
-        if (!isTimeBlockValid({constraints: profConstraints, timeBlock})){
+        let profConstraints = weeklyProfTimeBlocks[prof.professor_id]
+            ? weeklyProfTimeBlocks[prof.professor_id][schoolDay]
+            : [];
+        if (!isTimeBlockValid({ constraints: profConstraints, timeBlock })) {
             continue loop2;
         }
-        // let assignedUnits = weeklyProfUnits[prof.professor_id]?.units || 0;
-        // if (assignedUnits >= prof.units) {
-        //     continue;
-        // }
+
+        let assignedUnits = weeklyProfUnits[prof.professor_id]?.units || 0;
+        if (assignedUnits >= prof.units) {
+            continue loop2;
+        }
 
         // return ung prof na un
         return prof;
@@ -616,15 +719,23 @@ const getProfFromCourse = async ({
     return null;
 };
 
-const isTimeBlockValid = ({constraints, timeBlock}: {constraints: any, timeBlock: any}) => {
-    if (constraints.length > 0){
-        return !constraints.some((constraint: any) => 
-          timeBlock.start < constraint.end && timeBlock.end > constraint.start
+const isTimeBlockValid = ({
+    constraints,
+    timeBlock
+}: {
+    constraints: any;
+    timeBlock: any;
+}) => {
+    if (constraints.length > 0) {
+        return !constraints.some(
+            (constraint: any) =>
+                timeBlock.start < constraint.end &&
+                timeBlock.end > constraint.start
         );
-    }else{
+    } else {
         return true;
     }
-  }
+};
 
 const getRoomFromCourse = async ({
     courseDetails,
@@ -637,7 +748,7 @@ const getRoomFromCourse = async ({
     weeklyRoomUnits: any;
     dept: string;
     schoolDay: any;
-    timeBlock: any
+    timeBlock: any;
 }) => {
     const query =
         'SELECT * FROM rooms WHERE main_department = $1 AND type = $2';
@@ -662,8 +773,10 @@ const getRoomFromCourse = async ({
         }
 
         // check if pwede pa from the course units
-        let roomConstraints = weeklyRoomUnits[room.room_id] ? weeklyRoomUnits[room.room_id][schoolDay] : [];
-        if (!isTimeBlockValid({constraints: roomConstraints, timeBlock})){
+        let roomConstraints = weeklyRoomUnits[room.room_id]
+            ? weeklyRoomUnits[room.room_id][schoolDay]
+            : [];
+        if (!isTimeBlockValid({ constraints: roomConstraints, timeBlock })) {
             continue loop1;
         }
         // let assignedUnits = weeklyRoomUnits[room.room_id]?.units || 0;
@@ -699,8 +812,10 @@ const getRoomFromCourse = async ({
         }
 
         // check if pwede pa from the course units
-        let roomConstraints = weeklyRoomUnits[room.room_id] ? weeklyRoomUnits[room.room_id][schoolDay] : [];
-        if (!isTimeBlockValid({constraints: roomConstraints, timeBlock})){
+        let roomConstraints = weeklyRoomUnits[room.room_id]
+            ? weeklyRoomUnits[room.room_id][schoolDay]
+            : [];
+        if (!isTimeBlockValid({ constraints: roomConstraints, timeBlock })) {
             continue loop2;
         }
         // let assignedUnits = weeklyRoomUnits[room.room_id]?.units || 0;
@@ -798,9 +913,16 @@ const getTimeBlockFromCourse = ({
                     }
                 }
             } else {
-                if (courseDetails.units_per_class * 60 > availableMinutes) {
-                    // console.log('oops sobra');
-                    continue loop1;
+                if (courseDetails.type === 'lab'){
+                    if ((courseDetails.units_per_class * 3 * 60 )> availableMinutes) {
+                        // console.log('oops sobra');
+                        continue loop1;
+                    }
+                }else{
+                    if (courseDetails.units_per_class * 60 > availableMinutes) {
+                        // console.log('oops sobra');
+                        continue loop1;
+                    }
                 }
             }
 
@@ -825,15 +947,28 @@ const getTimeBlockFromCourse = ({
                     }
                 };
             } else {
-                return {
-                    timeBlock: {
-                        start: randomStart,
-                        end: minutesToTime(
-                            timeToMinutes(randomStart) +
-                                courseDetails.units_per_class * 60
-                        )
-                    }
-                };
+                // pag lab 1 unit is 3 hours
+                if (courseDetails.type === 'lab'){
+                    return {
+                        timeBlock: {
+                            start: randomStart,
+                            end: minutesToTime(
+                                timeToMinutes(randomStart) +
+                                    courseDetails.units_per_class * 3 * 60
+                            )
+                        }
+                    };
+                }else{
+                    return {
+                        timeBlock: {
+                            start: randomStart,
+                            end: minutesToTime(
+                                timeToMinutes(randomStart) +
+                                    courseDetails.units_per_class * 60
+                            )
+                        }
+                    };
+                }
             }
         }
     } else {

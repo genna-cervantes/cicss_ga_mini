@@ -130,11 +130,202 @@ const groupByDaySchedule = (chromosome: any) => {
     return dayBasedSchedule;
 };
 
+const checkClassEndConstraint = async (chromosome: any) => {
+    let hasConflict = false;
+    let CSYearGene = chromosome.find((gene: any) => gene.cs_1st)?.cs_1st;
+
+    const queryCS =
+        'SELECT class_end FROM class_ends WHERE department = $1 AND year = $2';
+    const res = await client.query(queryCS, ['CS', 1]);
+    const classEndCS1st = res.rows[0];
+
+    for (let i = 0; i < CSYearGene.length; i++) {
+        let csSectionSched: any = Object.values(CSYearGene[i])[0];
+
+        for (const day in csSectionSched) {
+            hasConflict = checkClassEnd({
+                schedule: csSectionSched[day],
+                classEnd: classEndCS1st.class_end
+            });
+        }
+    }
+
+    if (hasConflict) {
+        console.log('class end later than provided');
+        return hasConflict;
+    }
+
+    let ITYearGene = chromosome.find((gene: any) => gene.it_1st)?.it_1st;
+
+    const queryIT =
+        'SELECT class_end FROM class_ends WHERE department = $1 AND year = $2';
+    const resIT = await client.query(queryCS, ['IT', 1]);
+    const classStartIT1st = resIT.rows[0];
+
+    for (let i = 0; i < ITYearGene.length; i++) {
+        let itSectionSched: any = Object.values(ITYearGene[i])[0];
+
+        for (const day in itSectionSched) {
+            hasConflict = checkClassEnd({
+                schedule: itSectionSched[day],
+                classEnd: classStartIT1st.class_end
+            });
+        }
+    }
+
+    if (hasConflict) {
+        console.log('class end later than provided');
+        return hasConflict;
+    }
+
+    let ISYearGene = chromosome.find((gene: any) => gene.is_1st)?.is_1st;
+
+    const queryIS =
+        'SELECT class_end FROM class_ends WHERE department = $1 AND year = $2';
+    const resIS = await client.query(queryIS, ['IT', 1]);
+    const classStartIS1st = resIS.rows[0];
+
+    for (let i = 0; i < ISYearGene.length; i++) {
+        let isSectionSched: any = Object.values(ISYearGene[i])[0];
+
+        for (const day in isSectionSched) {
+            hasConflict = checkClassEnd({
+                schedule: isSectionSched[day],
+                classEnd: classStartIS1st.class_end
+            });
+        }
+    }
+
+    return hasConflict;
+};
+
+const checkClassStartConstraint = async (chromosome: any) => {
+    let hasConflict = false;
+    let CSYearGene = chromosome.find((gene: any) => gene.cs_1st)?.cs_1st;
+
+    const queryCS =
+        'SELECT class_start FROM class_starts WHERE department = $1 AND year = $2';
+    const res = await client.query(queryCS, ['CS', 1]);
+    const classStartCS1st = res.rows[0];
+
+    for (let i = 0; i < CSYearGene.length; i++) {
+        let csSectionSched: any = Object.values(CSYearGene[i])[0];
+
+        for (const day in csSectionSched) {
+            hasConflict = checkClassStart({
+                schedule: csSectionSched[day],
+                classStart: classStartCS1st.class_start
+            });
+        }
+    }
+
+    if (hasConflict) {
+        console.log('class start earlier than provided');
+        return hasConflict;
+    }
+
+    let ITYearGene = chromosome.find((gene: any) => gene.it_1st)?.it_1st;
+
+    const queryIT =
+        'SELECT class_start FROM class_starts WHERE department = $1 AND year = $2';
+    const resIT = await client.query(queryCS, ['IT', 1]);
+    const classStartIT1st = resIT.rows[0];
+
+    for (let i = 0; i < ITYearGene.length; i++) {
+        let itSectionSched: any = Object.values(ITYearGene[i])[0];
+
+        for (const day in itSectionSched) {
+            hasConflict = checkClassStart({
+                schedule: itSectionSched[day],
+                classStart: classStartIT1st.class_start
+            });
+        }
+    }
+
+    if (hasConflict) {
+        console.log('class start earlier than provided');
+        return hasConflict;
+    }
+
+    let ISYearGene = chromosome.find((gene: any) => gene.is_1st)?.is_1st;
+
+    const queryIS =
+        'SELECT class_start FROM class_starts WHERE department = $1 AND year = $2';
+    const resIS = await client.query(queryIS, ['IT', 1]);
+    const classStartIS1st = resIS.rows[0];
+
+    for (let i = 0; i < ISYearGene.length; i++) {
+        let isSectionSched: any = Object.values(ISYearGene[i])[0];
+
+        for (const day in isSectionSched) {
+            hasConflict = checkClassStart({
+                schedule: isSectionSched[day],
+                classStart: classStartIS1st.class_start
+            });
+        }
+    }
+
+    return hasConflict;
+};
+
+const checkClassStart = ({
+    schedule,
+    classStart
+}: {
+    schedule: any;
+    classStart: string;
+}): boolean => {
+    if (schedule.length <= 0) {
+        return false;
+    }
+    // Sort schedule by start time (earliest first)
+    const sortedSchedule = schedule.sort(
+        (a: any, b: any) =>
+            timeToMinutes(a.timeBlock.start) - timeToMinutes(b.timeBlock.start)
+    );
+
+    // Get the earliest start time
+    const earliestStart = sortedSchedule[0].timeBlock.start;
+
+    // Compare it with the provided classStart time
+    if (timeToMinutes(earliestStart) < timeToMinutes(classStart)) {
+        return true; // Earliest start is earlier than the provided class start time
+    }
+
+    return false; // Earliest start is not earlier
+};
+
+const checkClassEnd = ({
+    schedule,
+    classEnd
+}: {
+    schedule: any;
+    classEnd: string;
+}): boolean => {
+    if (schedule.length <= 0) {
+        return false;
+    }
+    const sortedSchedule = schedule.sort(
+        (a: any, b: any) =>
+            timeToMinutes(b.timeBlock.end) - timeToMinutes(a.timeBlock.end)
+    );
+
+    // Get the latest end time
+    const latestEnd = sortedSchedule[0].timeBlock.end;
+
+    // Compare it with the provided end time
+    if (timeToMinutes(latestEnd) > timeToMinutes(classEnd)) {
+        return true; // Latest end time exceeds the provided end time
+    }
+
+    return false; // Latest end time is within the provided limit
+};
+
 // check nice to have class gap constraint
 const checkClassGapConstraint = async (chromosome: any) => {
     let hasConflict = false;
     let CSYearGene = chromosome.find((gene: any) => gene.cs_1st)?.cs_1st;
-    
+
     // get min and max from db
     const queryCS =
         'SELECT class_gap_in_minutes_min, class_gap_in_minutes_max FROM class_gaps WHERE department = $1 AND year = $2';
@@ -153,13 +344,13 @@ const checkClassGapConstraint = async (chromosome: any) => {
         }
     }
 
-    if (hasConflict){
+    if (hasConflict) {
         return hasConflict;
     }
 
     // IT
     let ITYearGene = chromosome.find((gene: any) => gene.it_1st)?.it_1st;
-    
+
     // get min and max from db
     const queryIT =
         'SELECT class_gap_in_minutes_min, class_gap_in_minutes_max FROM class_gaps WHERE department = $1 AND year = $2';
@@ -178,13 +369,13 @@ const checkClassGapConstraint = async (chromosome: any) => {
         }
     }
 
-    if (hasConflict){
+    if (hasConflict) {
         return hasConflict;
     }
 
     // IS
     let ISYearGene = chromosome.find((gene: any) => gene.it_1st)?.it_1st;
-    
+
     // get min and max from db
     const queryIS =
         'SELECT class_gap_in_minutes_min, class_gap_in_minutes_max FROM class_gaps WHERE department = $1 AND year = $2';
@@ -547,12 +738,110 @@ const findProfessorConflicts = (schedules: any) => {
 };
 
 // get constraints from db
+const checkProfRequestConstraints = async (chromosome: any) => {
+    let CSYearGene = chromosome.find((gene: any) => gene.cs_1st)?.cs_1st;
+    for (let i = 0; i < CSYearGene.length; i++) {
+        let csSectionSched: any = Object.values(CSYearGene[i])[0];
 
-// check nice to have class start constraint
-// check nice to have class end constraint
+        // Iterate through the schedule for each day (M, T, W, TH, F, S)
+        for (const day in csSectionSched) {
+            for (const scheduleItem of csSectionSched[day]) {
+                if (scheduleItem.course.category === 'gened') {
+                    continue;
+                } else {
+                    const query =
+                        'SELECT restrictions FROM professors WHERE professor_id = $1';
+                    const res = await client.query(query, [
+                        scheduleItem.prof.professor_id
+                    ]);
+                    const profReq = res.rows[0].restrictions;
+
+                    for (const res of profReq[day]) {
+                        if (
+                            isOverlap({
+                                time1: scheduleItem.timeBlock,
+                                time2: res
+                            })
+                        ) {
+                            console.log(`has conflict with prof request: ${scheduleItem.prof.name}`)
+                            return false; // Conflict found, exit immediately
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let ITYearGene = chromosome.find((gene: any) => gene.it_1st)?.it_1st;
+    for (let i = 0; i < ITYearGene.length; i++) {
+        let itSectionSched: any = Object.values(ITYearGene[i])[0];
+
+        // Iterate through the schedule for each day (M, T, W, TH, F, S)
+        for (const day in itSectionSched) {
+            for (const scheduleItem of itSectionSched[day]) {
+                if (scheduleItem.course.category === 'gened') {
+                    continue;
+                } else {
+                    const query =
+                        'SELECT restrictions FROM professors WHERE professor_id = $1';
+                    const res = await client.query(query, [
+                        scheduleItem.prof.professor_id
+                    ]);                    
+                    const profReq = res.rows[0].restrictions;
+
+                    for (const res of profReq[day]) {
+                        if (
+                            isOverlap({
+                                time1: scheduleItem.timeBlock,
+                                time2: res
+                            })
+                        ) {
+                            console.log(`has conflict with prof request: ${scheduleItem.prof.name}`)
+                            return false; // Conflict found, exit immediately
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let ISYearGene = chromosome.find((gene: any) => gene.is_1st)?.is_1st;
+    for (let i = 0; i < ISYearGene.length; i++) {
+        let isSectionSched: any = Object.values(ISYearGene[i])[0];
+
+        // Iterate through the schedule for each day (M, T, W, TH, F, S)
+        for (const day in isSectionSched) {
+            for (const scheduleItem of isSectionSched[day]) {
+                if (scheduleItem.course.category === 'gened') {
+                    continue;
+                } else {
+                    const query =
+                        'SELECT restrictions FROM professors WHERE professor_id = $1';
+                    const res = await client.query(query, [
+                        scheduleItem.prof.professor_id
+                    ]);
+                    const profReq = res.rows[0].restrictions;
+
+                    for (const res of profReq[day]) {
+                        if (
+                            isOverlap({
+                                time1: scheduleItem.timeBlock,
+                                time2: res
+                            })
+                        ) {
+                            console.log(`has conflict with prof request: ${scheduleItem.prof.name}`)
+                            return false; // Conflict found, exit immediately
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+};
 
 // check nice to have prof constraint
-
 
 // kahit one constraint lng per cat isang minus lng
 export const evaluateFitnessScore = async (chromosome: any) => {
@@ -571,12 +860,27 @@ export const evaluateFitnessScore = async (chromosome: any) => {
     if (!currConflicts) {
         score -= 10;
     }
-    
+
     // medium conflicts
     let classGapConflicts = await checkClassGapConstraint(chromosome);
     if (!classGapConflicts) {
         score -= 5;
     }
-    
+
+    let classStartConflicts = await checkClassStartConstraint(chromosome);
+    if (!classStartConflicts) {
+        score -= 5;
+    }
+
+    let classEndConflicts = await checkClassEndConstraint(chromosome);
+    if (!classEndConflicts) {
+        score -= 5;
+    }
+
+    let profRequestConflicts = await checkProfRequestConstraints(chromosome);
+    if (!profRequestConflicts) {
+        score -= 5;
+    }
+
     return score;
 };
