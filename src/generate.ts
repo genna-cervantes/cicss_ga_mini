@@ -65,9 +65,6 @@ const generateYearGene = async ({
         const yearLevelAvailableDays = res3.rows[0]?.available_days || SCHOOL_DAYS;
         const yearLevelMaxDays = res3.rows[0]?.max_days || 6;
 
-        console.log(yearLevelAvailableDays)
-        console.log(yearLevelMaxDays)
-
         // console.log(courses)
         let yearGene: any = [];
         let gene;
@@ -126,13 +123,20 @@ const generateYearGene = async ({
                 F: [],
                 S: []
             };
-
-            // loop thru school days
-            loop2: for (let j = 0; j < SCHOOL_DAYS.length; j++) {
-                let schoolDay = SCHOOL_DAYS[j];
+            
+            // loop thru available school days
+            loop2: for (let j = 0; j < yearLevelAvailableDays.length; j++) {
+                let schoolDay = yearLevelAvailableDays[j];
                 let courseAssigned = false;
-                let scheduleBlock;
                 let tries = 0;
+
+                // check if max days reached
+                let assignedDays = checkNumberOfAssignedDays(schedule)
+                console.log(assignedDays)
+                if (assignedDays >= yearLevelMaxDays){
+                    console.log('max days reached')
+                    break loop2;
+                }
 
                 // console.log('SCHOOL DAY: ', schoolDay);
 
@@ -616,6 +620,17 @@ const printYearGene = (yearGene: any) => {
         }
     }
 };
+
+const checkNumberOfAssignedDays = (schedule: any) => {
+    let assignedDays = 0;
+    for (let i = 0; i < SCHOOL_DAYS.length; i++){
+        if (schedule[SCHOOL_DAYS[i]].length > 0){
+            assignedDays++;
+        }
+    }
+
+    return assignedDays;
+}
 
 const findCourseInSchedule = ({subject_code, schedule}: {subject_code: string, schedule: any}) => {
     let generalSubjectCode = subject_code.split('-')[0]; // ICS26001-LC - gets the ICS26001 part
