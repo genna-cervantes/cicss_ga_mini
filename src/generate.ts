@@ -55,10 +55,18 @@ const generateYearGene = async ({
         const curriculum = res.rows[0];
         const specialization = curriculum.specialization;
         const courses = curriculum.courses;
-        // get sa db
+        
         const query2 = "SELECT restrictions FROM year_time_restrictions WHERE department = $1 AND year = $2";
         const res2 = await client.query(query2, [dept, year]);
-        const yearLevelConstraints = res2.rows[0].restrictions;
+        const yearLevelTimeConstraints = res2.rows[0].restrictions;
+
+        const query3 = "SELECT available_days, max_days FROM year_day_restrictions WHERE department = $1 AND year = $2";
+        const res3 = await client.query(query3, [dept, year]);
+        const yearLevelAvailableDays = res3.rows[0]?.available_days || SCHOOL_DAYS;
+        const yearLevelMaxDays = res3.rows[0]?.max_days || 6;
+
+        console.log(yearLevelAvailableDays)
+        console.log(yearLevelMaxDays)
 
         // console.log(courses)
         let yearGene: any = [];
@@ -248,7 +256,7 @@ const generateYearGene = async ({
                             // get random time slot for course
                             let timeBlock = getTimeBlockFromCourse({
                                 courseDetails,
-                                yearLevelConstraints,
+                                yearLevelTimeConstraints,
                                 weeklyTimeBlockConstraints,
                                 schoolDay
                             });
@@ -909,17 +917,17 @@ const getRoomFromCourse = async ({
 
 const getTimeBlockFromCourse = ({
     courseDetails,
-    yearLevelConstraints,
+    yearLevelTimeConstraints,
     weeklyTimeBlockConstraints,
     schoolDay
 }: {
     courseDetails: any;
-    yearLevelConstraints: any;
+    yearLevelTimeConstraints: any;
     weeklyTimeBlockConstraints: any;
     schoolDay: string;
 }) => {
     let availableRanges = getPossibleTimeRanges({
-        yearLevelConstraints,
+        yearLevelTimeConstraints,
         weeklyTimeBlockConstraints,
         courseConstraints: courseDetails.restrictions,
         schoolDay
@@ -1074,19 +1082,19 @@ const timeToMinutes = (time: any) => {
 };
 
 const getPossibleTimeRanges = ({
-    yearLevelConstraints,
+    yearLevelTimeConstraints,
     weeklyTimeBlockConstraints,
     courseConstraints,
     schoolDay
 }: {
-    yearLevelConstraints: any;
+    yearLevelTimeConstraints: any;
     weeklyTimeBlockConstraints: any;
     courseConstraints: any;
     schoolDay: string;
 }) => {
     const defaultRange = { start: '0700', end: '2100' };
     const constraints = [
-        ...yearLevelConstraints[schoolDay],
+        ...yearLevelTimeConstraints[schoolDay],
         ...weeklyTimeBlockConstraints[schoolDay],
         ...courseConstraints[schoolDay]
     ];
