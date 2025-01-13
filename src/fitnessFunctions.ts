@@ -134,7 +134,7 @@ const checkYearLevelConstraints = async (chromosome: any) => {
     let CSYearGene = chromosome.find((gene: any) => gene.cs_1st)?.cs_1st;
 
     const queryCS =
-        'SELECT restrictions FROM year_restrictions WHERE department = $1 AND year = $2';
+        'SELECT restrictions FROM year_time_restrictions WHERE department = $1 AND year = $2';
     const res = await client.query(queryCS, ['CS', 1]);
     const yearLevelConstraintsCS1 = res.rows[0].restrictions;
 
@@ -151,7 +151,7 @@ const checkYearLevelConstraints = async (chromosome: any) => {
                     schedule: csSectionSched[day],
                     classStart: yearLevelConstraintsCS1[day][j].start
                 })){
-                    console.log('class start too early')
+                    // console.log('class start too early')
                     return false;
                 }
                 
@@ -159,7 +159,7 @@ const checkYearLevelConstraints = async (chromosome: any) => {
                     schedule: csSectionSched[day],
                     classEnd: yearLevelConstraintsCS1[day][j].end
                 })){
-                    console.log('class end too late')
+                    // console.log('class end too late')
                     return false;
                 }
             }
@@ -170,7 +170,7 @@ const checkYearLevelConstraints = async (chromosome: any) => {
     let ITYearGene = chromosome.find((gene: any) => gene.it_1st)?.it_1st;
     
     const queryIT =
-        'SELECT restrictions FROM year_restrictions WHERE department = $1 AND year = $2';
+        'SELECT restrictions FROM year_time_restrictions WHERE department = $1 AND year = $2';
         const resIT = await client.query(queryIT, ['IT', 1]);
         const yearLevelConstraintsIT1 = resIT.rows[0].restrictions;
         
@@ -185,7 +185,7 @@ const checkYearLevelConstraints = async (chromosome: any) => {
                         schedule: itSectionSched[day],
                         classStart: yearLevelConstraintsIT1[day][j].start
                     })){
-                        console.log('class start too early')
+                        // console.log('class start too early')
                         return false;
                     }
                     
@@ -193,7 +193,7 @@ const checkYearLevelConstraints = async (chromosome: any) => {
                         schedule: itSectionSched[day],
                         classEnd: yearLevelConstraintsIT1[day][j].end
                     })){
-                        console.log('class end too late')
+                        // console.log('class end too late')
                         return false;
                     }
                 }
@@ -205,7 +205,7 @@ const checkYearLevelConstraints = async (chromosome: any) => {
         let ISYearGene = chromosome.find((gene: any) => gene.it_1st)?.it_1st;
 
         const queryIS =
-        'SELECT restrictions FROM year_restrictions WHERE department = $1 AND year = $2';
+        'SELECT restrictions FROM year_time_restrictions WHERE department = $1 AND year = $2';
     const resIS = await client.query(queryIS, ['IS', 1]);
     const yearLevelConstraintsIS1 = resIS.rows[0].restrictions;
     
@@ -220,7 +220,7 @@ const checkYearLevelConstraints = async (chromosome: any) => {
                     schedule: isSectionSched[day],
                     classStart: yearLevelConstraintsIS1[day][j].start
                 })){
-                    console.log('class start too early')
+                    // console.log('class start too early')
                     return false;
                 }
                 
@@ -228,7 +228,7 @@ const checkYearLevelConstraints = async (chromosome: any) => {
                     schedule: isSectionSched[day],
                     classEnd: yearLevelConstraintsIS1[day][j].end
                 })){
-                    console.log('class end too late')
+                    // console.log('class end too late')
                     return false;
                 }
             }
@@ -396,9 +396,9 @@ const checkClassGaps = ({
 
         // Check if the gap is within the allowed range
         if (gap < minGap || gap > maxGap) {
-            console.log(
-                `Class gap between ${currentClass.course.subject_code} and ${nextClass.course.subject_code} is ${gap} minutes, which is outside the range.`
-            );
+            // console.log(
+            //     `Class gap between ${currentClass.course.subject_code} and ${nextClass.course.subject_code} is ${gap} minutes, which is outside the range.`
+            // );
             return true; // If any gap is out of range, return false
         }
     }
@@ -444,10 +444,10 @@ const checkCurriculumConstraints = async (chromosome: any) => {
 
                 // Check if the scheduled units match the curriculum units
                 if (totalUnitsScheduled !== total_units) {
-                    console.log(`Mismatch for ${subject_code}:`);
-                    console.log(
-                        `Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`
-                    );
+                    // console.log(`Mismatch for ${subject_code}:`);
+                    // console.log(
+                    //     `Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`
+                    // );
                     hasConflict = true;
                 }
             });
@@ -481,10 +481,10 @@ const checkCurriculumConstraints = async (chromosome: any) => {
 
                 // Check if the scheduled units match the curriculum units
                 if (totalUnitsScheduled !== total_units) {
-                    console.log(`Mismatch for ${subject_code}:`);
-                    console.log(
-                        `Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`
-                    );
+                    // console.log(`Mismatch for ${subject_code}:`);
+                    // console.log(
+                    //     `Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`
+                    // );
                     hasConflict = true;
                 }
             });
@@ -518,10 +518,10 @@ const checkCurriculumConstraints = async (chromosome: any) => {
 
                 // Check if the scheduled units match the curriculum units
                 if (totalUnitsScheduled !== total_units) {
-                    console.log(`Mismatch for ${subject_code}:`);
-                    console.log(
-                        `Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`
-                    );
+                    // console.log(`Mismatch for ${subject_code}:`);
+                    // console.log(
+                    //     `Scheduled units: ${totalUnitsScheduled}, Expected units: ${total_units}`
+                    // );
                     hasConflict = true;
                 }
             });
@@ -572,10 +572,10 @@ const checkRoomConstraints = (chromosome: any) => {
 
         if (conflicts.length > 0) {
             for (let i = 0; i < conflicts.length; i++) {
-                console.log(conflicts[i].room);
-                for (let j = 0; j < conflicts[i].conflict.length; j++) {
-                    console.log(conflicts[i].conflict[j]);
-                }
+                // console.log(conflicts[i].room);
+                // for (let j = 0; j < conflicts[i].conflict.length; j++) {
+                //     console.log(conflicts[i].conflict[j]);
+                // }
             }
             return true;
         }
@@ -599,11 +599,11 @@ const checkProfConstraints = (chromosome: any) => {
 
         if (conflicts.length > 0) {
             for (let i = 0; i < conflicts.length; i++) {
-                console.log(conflicts[i].professorId);
-                console.log(conflicts[i].professor);
-                for (let j = 0; j < conflicts[i].conflict.length; j++) {
-                    console.log(conflicts[i].conflict[j]);
-                }
+                // console.log(conflicts[i].professorId);
+                // console.log(conflicts[i].professor);
+                // for (let j = 0; j < conflicts[i].conflict.length; j++) {
+                //     console.log(conflicts[i].conflict[j]);
+                // }
             }
             return true;
         }
@@ -735,7 +735,7 @@ const checkProfRequestConstraints = async (chromosome: any) => {
                                 time2: res
                             })
                         ) {
-                            console.log(`has conflict with prof request: ${scheduleItem.prof.name}`)
+                            // console.log(`has conflict with prof request: ${scheduleItem.prof.name}`)
                             return false; // Conflict found, exit immediately
                         }
                     }
@@ -768,7 +768,7 @@ const checkProfRequestConstraints = async (chromosome: any) => {
                                 time2: res
                             })
                         ) {
-                            console.log(`has conflict with prof request: ${scheduleItem.prof.name}`)
+                            // console.log(`has conflict with prof request: ${scheduleItem.prof.name}`)
                             return false; // Conflict found, exit immediately
                         }
                     }
@@ -801,7 +801,7 @@ const checkProfRequestConstraints = async (chromosome: any) => {
                                 time2: res
                             })
                         ) {
-                            console.log(`has conflict with prof request: ${scheduleItem.prof.name}`)
+                            // console.log(`has conflict with prof request: ${scheduleItem.prof.name}`)
                             return false; // Conflict found, exit immediately
                         }
                     }
@@ -813,11 +813,13 @@ const checkProfRequestConstraints = async (chromosome: any) => {
     return true;
 };
 
-// check nice to have prof constraint
-
 // kahit one constraint lng per cat isang minus lng
 export const evaluateFitnessScore = async (chromosome: any) => {
     let score = 100;
+
+    if (chromosome.length < 3){
+        return 0;
+    }
 
     // hard conflicts
     if (checkRoomConstraints(chromosome)) {
@@ -830,7 +832,7 @@ export const evaluateFitnessScore = async (chromosome: any) => {
 
     let currConflicts = await checkCurriculumConstraints(chromosome);
     if (!currConflicts) {
-        score -= 10;
+        score -= 30;
     }
 
     // medium conflicts
@@ -844,6 +846,7 @@ export const evaluateFitnessScore = async (chromosome: any) => {
         score -= 5;
     }
 
+    // soft conflicts
     let profRequestConflicts = await checkProfRequestConstraints(chromosome);
     if (!profRequestConflicts) {
         score -= 5;
@@ -851,3 +854,8 @@ export const evaluateFitnessScore = async (chromosome: any) => {
 
     return score;
 };
+
+// may example sa taas
+// max 8 hrs
+// UNG SA FLOOTS PAG MAGKALAYO
+// KAPAG LNKALOCK PWED EHUMIRAM NG ROOM
