@@ -244,7 +244,6 @@ const evaluateRoomAssignment = (chromosome: any) => {
 };
 
 const evaluateRoomTypeAssignment = (chromosome: any) => {
-
     let violationCount = 0;
     let violations = [];
 
@@ -259,51 +258,61 @@ const evaluateRoomTypeAssignment = (chromosome: any) => {
             let specSectionSchedule = specSection[specSectionKey];
 
             for (let k = 0; k < SCHOOL_DAYS.length; k++) {
-                let dailySched = specSectionSchedule[SCHOOL_DAYS[k]]
+                let dailySched = specSectionSchedule[SCHOOL_DAYS[k]];
 
-                for (let l = 0; l < dailySched.length; l++){
-
-                    if (dailySched[l].course.subject_code.startsWith('PATHFIT')){
+                for (let l = 0; l < dailySched.length; l++) {
+                    if (
+                        dailySched[l].course.subject_code.startsWith('PATHFIT')
+                    ) {
                         continue;
                     }
 
                     // check course per sched block
-                    if (dailySched[l].course.type !== dailySched[l].room.type){
-                        
-                        if (!dailySched[l].course.subject_code.includes('CSELEC')){
+                    if (dailySched[l].course.type !== dailySched[l].room.type) {
+                        if (
+                            !dailySched[l].course.subject_code.includes(
+                                'CSELEC'
+                            )
+                        ) {
                             violationCount++;
                             violations.push({
                                 course: dailySched[l].course.subject_code,
                                 section: specSectionKey,
                                 type: 'room type assignment',
-                                description: 'lec course assigned to lab and vice versa',
+                                description:
+                                    'lec course assigned to lab and vice versa',
                                 time: {
                                     day: SCHOOL_DAYS[k],
                                     time: dailySched[l].timeBlock
                                 },
                                 room: dailySched[l].room.room_id
-                            })
+                            });
                         }
                     }
 
                     // check specific room constraint (IT)
-                    if (dailySched[l].course.specific_room_assignment !== ''){
-                        if (dailySched[l].course.specific_room_assignment !== dailySched[l].room.room_id){
+                    if (dailySched[l].course.specific_room_assignment !== '') {
+                        if (
+                            dailySched[l].course.specific_room_assignment !==
+                            dailySched[l].room.room_id
+                        ) {
                             violationCount++;
                             violations.push({
                                 course: dailySched[l].course.subject_code,
                                 section: specSectionKey,
                                 type: 'room type assignment',
-                                description: 'specific room assignment not followed',
+                                description:
+                                    'specific room assignment not followed',
                                 time: {
                                     day: SCHOOL_DAYS[k],
                                     time: dailySched[l].timeBlock
                                 },
-                                required_room: dailySched[l].course.specific_room_assignment,
+                                required_room:
+                                    dailySched[l].course
+                                        .specific_room_assignment,
                                 room: dailySched[l].room.room_id
-                            })
+                            });
                         }
-
                     }
                 }
             }
@@ -347,7 +356,10 @@ const evaluateTASAssignment = (chromosome: any) => {
                     violations.push({
                         type: 'conflicting TAS assignment',
                         TAS: schedBlock1.prof,
-                        courses: [schedBlock1.course.subject_code, schedBlock2.course.subject_code],
+                        courses: [
+                            schedBlock1.course.subject_code,
+                            schedBlock2.course.subject_code
+                        ],
                         time: {
                             day: SCHOOL_DAYS[j],
                             time: schedBlock2.timeBlock.start
@@ -360,29 +372,30 @@ const evaluateTASAssignment = (chromosome: any) => {
     }
 
     return violations;
-}
+};
 
 const evaluateTASSpecializationAssignment = async (chromosome: any) => {
     let violationCount = 0;
     let violations = [];
-    
+
     let schedByProf = groupSchedByTAS(chromosome);
     let profKeys = Object.keys(schedByProf);
 
-    for (let i = 0; i < profKeys.length; i++){
-        const query = 'SELECT courses FROM teaching_academic_staff WHERE tas_id = $1';
+    for (let i = 0; i < profKeys.length; i++) {
+        const query =
+            'SELECT courses FROM teaching_academic_staff WHERE tas_id = $1';
         const res = await client.query(query, [profKeys[i]]);
-        const courses = res.rows[0].courses
+        const courses = res.rows[0].courses;
 
-        // loop thru all the assigned sa kanya - 
+        // loop thru all the assigned sa kanya -
         let specProfSched = schedByProf[profKeys[i]];
-        for (let j = 0; j < SCHOOL_DAYS.length; j++){
+        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
             let dailySpecProfSched = specProfSched[SCHOOL_DAYS[j]];
 
-            for (let k = 0; k < dailySpecProfSched.length; k++){
+            for (let k = 0; k < dailySpecProfSched.length; k++) {
                 let schedBlock = dailySpecProfSched[k];
 
-                if (!courses.includes(schedBlock.course.subject_code)){
+                if (!courses.includes(schedBlock.course.subject_code)) {
                     violationCount++;
                     violations.push({
                         type: 'TAS assignment not specialty',
@@ -400,7 +413,53 @@ const evaluateTASSpecializationAssignment = async (chromosome: any) => {
     }
 
     return violations;
-}
+};
+
+const evaluateTASUnitsAssignment = async (chromosome: any) => {
+    let violationCount = 0;
+    let violations = [];
+
+    let schedByProf = groupSchedByTAS(chromosome);
+    let profKeys = Object.keys(schedByProf);
+
+    for (let i = 0; i < profKeys.length; i++) {
+        const query =
+            'SELECT units FROM teaching_academic_staff WHERE tas_id = $1';
+        const res = await client.query(query, [profKeys[i]]);
+        const maxUnits = res.rows[0].units;
+
+        let totalWeeklyUnits = 0;
+
+        // loop thru all the assigned sa kanya -
+        let specProfSched = schedByProf[profKeys[i]];
+        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+            let dailySpecProfSched = specProfSched[SCHOOL_DAYS[j]];
+
+            for (let k = 0; k < dailySpecProfSched.length; k++) {
+                let schedBlock = dailySpecProfSched[k];
+
+                if (schedBlock.course.type === 'lec') {
+                    totalWeeklyUnits += schedBlock.course.units;
+                } else {
+                    // lab
+                    totalWeeklyUnits += schedBlock.course.units * 3;
+                }
+            }
+        }
+
+        if (totalWeeklyUnits > maxUnits) {
+            violationCount++;
+            violations.push({
+                type: 'TAS assignment over max units',
+                TAS: profKeys[i],
+                assignedUnits: totalWeeklyUnits,
+                maxUnits: maxUnits
+            });
+        }
+    }
+
+    return violations;
+};
 
 // helper functions
 const groupSchedByTAS = (chromosome: any) => {
@@ -457,8 +516,7 @@ const groupSchedByTAS = (chromosome: any) => {
     }
 
     return schedByTAS;
-}
-
+};
 
 const groupSchedByRoom = (chromosome: any) => {
     // group schedule by room
@@ -589,7 +647,9 @@ export const evaluate = async () => {
 
     // let violations = evaluateTASAssignment(chromosome)
 
-    let violations = evaluateTASSpecializationAssignment(chromosome);
+    // let violations = evaluateTASSpecializationAssignment(chromosome);
+
+    let violations = evaluateTASUnitsAssignment(chromosome);
 
     return violations;
     // return true;
