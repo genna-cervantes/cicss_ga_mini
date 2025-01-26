@@ -362,6 +362,46 @@ const evaluateTASAssignment = (chromosome: any) => {
     return violations;
 }
 
+const evaluateTASSpecializationAssignment = async (chromosome: any) => {
+    let violationCount = 0;
+    let violations = [];
+    
+    let schedByProf = groupSchedByTAS(chromosome);
+    let profKeys = Object.keys(schedByProf);
+
+    for (let i = 0; i < profKeys.length; i++){
+        const query = 'SELECT courses FROM teaching_academic_staff WHERE tas_id = $1';
+        const res = await client.query(query, [profKeys[i]]);
+        const courses = res.rows[0].courses
+
+        // loop thru all the assigned sa kanya - 
+        let specProfSched = schedByProf[profKeys[i]];
+        for (let j = 0; j < SCHOOL_DAYS.length; j++){
+            let dailySpecProfSched = specProfSched[SCHOOL_DAYS[j]];
+
+            for (let k = 0; k < dailySpecProfSched.length; k++){
+                let schedBlock = dailySpecProfSched[k];
+
+                if (!courses.includes(schedBlock.course.subject_code)){
+                    violationCount++;
+                    violations.push({
+                        type: 'TAS assignment not specialty',
+                        TAS: schedBlock.prof,
+                        courses: schedBlock.course.subject_code,
+                        time: {
+                            day: SCHOOL_DAYS[j],
+                            time: schedBlock.timeBlock.start
+                        },
+                        sections: schedBlock.section
+                    });
+                }
+            }
+        }
+    }
+
+    return violations;
+}
+
 // helper functions
 const groupSchedByTAS = (chromosome: any) => {
     let schedByTAS;
@@ -547,7 +587,9 @@ export const evaluate = async () => {
 
     // let violations = evaluateRoomTypeAssignment(chromosome);
 
-    let violations = evaluateTASAssignment(chromosome)
+    // let violations = evaluateTASAssignment(chromosome)
+
+    let violations = evaluateTASSpecializationAssignment(chromosome);
 
     return violations;
     // return true;
