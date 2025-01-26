@@ -461,6 +461,59 @@ const evaluateTASUnitsAssignment = async (chromosome: any) => {
     return violations;
 };
 
+const evaluateMaxClassDayLength = (chromosome: any) => {
+
+    let violationCount = 0;
+    let violations = [];
+
+    for (let i = 0; i < chromosome.length; i++) {
+        let perYear = chromosome[i];
+
+        let yearAndDepartmentKey = Object.keys(perYear)[0];
+
+        let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
+        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
+            let specSection = yearAndDepartmentSchedule[j];
+            let specSectionKey = Object.keys(specSection)[0];
+            let specSectionSchedule = specSection[specSectionKey];
+
+            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
+
+                if (daySched.length <= 0){
+                    continue;
+                }
+
+                let ascendingSched = daySched.sort(
+                    (schedBlock1: any, schedBlock2: any) => {
+                        return (
+                            parseInt(schedBlock1.timeBlock.start, 10) -
+                            parseInt(schedBlock2.timeBlock.start, 10)
+                        );
+                    }
+                );
+
+                let dayStart = parseInt(ascendingSched[0].timeBlock.start);
+                let dayEnd = parseInt(
+                    ascendingSched[ascendingSched.length - 1].timeBlock.end
+                );
+
+                if (dayEnd - dayStart > 800) {
+                    violationCount++;
+                    violations.push({
+                        type: 'Section assigned more than 8 hours in a day',
+                        section: specSectionKey,
+                        day: SCHOOL_DAYS[k],
+                        assignedUnits: (dayEnd - dayStart)
+                    });
+                }
+            }
+        }
+    }
+
+    return violations;
+};
+
 // helper functions
 const groupSchedByTAS = (chromosome: any) => {
     let schedByTAS;
@@ -649,7 +702,9 @@ export const evaluate = async () => {
 
     // let violations = evaluateTASSpecializationAssignment(chromosome);
 
-    let violations = evaluateTASUnitsAssignment(chromosome);
+    // let violations = evaluateTASUnitsAssignment(chromosome);
+
+    let violations = evaluateMaxClassDayLength(chromosome);
 
     return violations;
     // return true;
