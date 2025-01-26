@@ -53,16 +53,25 @@ const generateYearGene = async ({
         const res = await client.query(query, [dept, year, sem]);
 
         const curriculum = res.rows[0];
+
         const specialization = curriculum.specialization;
         const courses = curriculum.courses;
-        
-        const query2 = "SELECT restrictions FROM year_time_restrictions WHERE department = $1 AND year = $2";
+
+        let genedCourses = getCoursesFromCurriculum(courses).gened;
+        let majorCourses = getCoursesFromCurriculum(courses).major;
+
+        let coursesCopy = courses;
+
+        const query2 =
+            'SELECT restrictions FROM year_time_restrictions WHERE department = $1 AND year = $2';
         const res2 = await client.query(query2, [dept, year]);
         const yearLevelTimeConstraints = res2.rows[0].restrictions;
 
-        const query3 = "SELECT available_days, max_days FROM year_day_restrictions WHERE department = $1 AND year = $2";
+        const query3 =
+            'SELECT available_days, max_days FROM year_day_restrictions WHERE department = $1 AND year = $2';
         const res3 = await client.query(query3, [dept, year]);
-        const yearLevelAvailableDays = res3.rows[0]?.available_days || SCHOOL_DAYS;
+        const yearLevelAvailableDays =
+            res3.rows[0]?.available_days || SCHOOL_DAYS;
         const yearLevelMaxDays = res3.rows[0]?.max_days || 6;
 
         // console.log(courses)
@@ -90,6 +99,8 @@ const generateYearGene = async ({
 
         // loop through sections
         loop1: for (let i = 0; i < sectionNames.length; i++) {
+            console.log(sectionNames[i]);
+
             let sectionName = sectionNames[i];
             let weeklyCourseUnits: any = {};
 
@@ -123,22 +134,31 @@ const generateYearGene = async ({
                 F: [],
                 S: []
             };
-            
+
+            let genedAssignedCourses = 0;
+            let genedCoursesCopy = genedCourses;
+            let majorCoursesCopy = majorCourses;
+
             // loop thru available school days
             loop2: for (let j = 0; j < yearLevelAvailableDays.length; j++) {
                 let schoolDay = yearLevelAvailableDays[j];
                 let courseAssigned = false;
                 let tries = 0;
 
+                // tatanggalin sa dailly copy kapag no time possiblities and gap problem
+                // tatanggalin sa genedcourses copy kapag fully assigned na => matatanggal din sa daily copy
+                // check kung may assignable pa sa day na toh
+                let genedCoursesDailyCopy = genedCoursesCopy;
+                let majorCoursesDailyCopy = majorCoursesCopy;
+
                 // check if max days reached
-                let assignedDays = checkNumberOfAssignedDays(schedule)
-                console.log(assignedDays)
-                if (assignedDays >= yearLevelMaxDays){
-                    console.log('max days reached')
+                let assignedDays = checkNumberOfAssignedDays(schedule);
+                if (assignedDays >= yearLevelMaxDays) {
+                    console.log('max assigend days');
                     break loop2;
                 }
 
-                // console.log('SCHOOL DAY: ', schoolDay);
+                console.log('SCHOOL DAY: ', schoolDay);
 
                 // Try to assign a valid course for the current day
                 // habang may avail time pa mag assign pa ng course
@@ -147,7 +167,7 @@ const generateYearGene = async ({
                 let availableTime = weeklyUnits[schoolDay] || 8;
                 // console.log('1', availableTime);
 
-                loop3: while (availableTime > 2) {
+                loop3: while (availableTime > 1.5) { // minimum 1.5 hours
                     // gap logic for gened subs
 
                     loop4: while (!courseAssigned) {
@@ -159,7 +179,7 @@ const generateYearGene = async ({
                             courses
                         });
                         if (tries >= 100 || unitsComplete) {
-                            // console.log('enough tries || complete assignment');
+                            console.log('enough tries || complete assignment');
                             break loop3;
                         }
                         let courseDetails;
@@ -167,14 +187,120 @@ const generateYearGene = async ({
                         let roomDetails;
 
                         // get random course
-                        let course =
-                            courses[Math.floor(Math.random() * courses.length)];
+
+                        if (
+                            genedCoursesDailyCopy.length <= 0 &&
+                            majorCoursesDailyCopy.length <= 0
+                        ) {
+                            // assigned na lahat ng courses
+                            console.log(genedCourses)
+                            console.log(majorCourses)
+                            console.log(genedCoursesCopy)
+                            console.log(majorCoursesCopy)
+                            console.log('assigned n lahat wla na gened nd major courses copy')
+                            continue loop2;
+                        }
+
+                        let probabilityGened =
+                            1 - genedAssignedCourses / genedCourses.length;
+                        let course;
+
+                        // nassturck siya here
+                        // kung MT lang saka tapos pag tapos random na
+                        if (schoolDay === 'M' || schoolDay === 'T' || schoolDay === 'F') {
+
+                            if (Math.random() < probabilityGened) {
+                                if (genedCoursesDailyCopy.length > 0) {
+                                    course =
+                                        genedCoursesDailyCopy[
+                                            Math.floor(
+                                                Math.random() *
+                                                    genedCoursesDailyCopy.length
+                                            )
+                                        ];
+                                } else {
+                                    course =
+                                        majorCoursesDailyCopy[
+                                            Math.floor(
+                                                Math.random() *
+                                                    majorCoursesDailyCopy.length
+                                            )
+                                        ];
+                                }
+                            } else {
+                                if (majorCoursesDailyCopy.length > 0) {
+                                    course =
+                                        majorCoursesDailyCopy[
+                                            Math.floor(
+                                                Math.random() *
+                                                    majorCoursesDailyCopy.length
+                                            )
+                                        ];
+                                } else {
+                                    course =
+                                        genedCoursesDailyCopy[
+                                            Math.floor(
+                                                Math.random() *
+                                                    genedCoursesDailyCopy.length
+                                            )
+                                        ];
+                                }
+                            }
+                        } else {
+                            let allCourses = [
+                                ...genedCoursesDailyCopy,
+                                ...majorCoursesDailyCopy
+                            ];
+                            course =
+                                allCourses[
+                                    Math.floor(
+                                        Math.random() * (allCourses.length)
+                                    )
+                                ];
+                        }
+
+                        console.log(course);
 
                         // check if pwede pa from the course units
 
                         courseAssigned = true;
                         // console.log('2', course);
                         courseDetails = await getCourseDetails(course);
+
+                        let assignedUnits =
+                            weeklyCourseUnits[course]?.units || 0;
+
+
+                        // check if pwede pa sa units
+                        if (assignedUnits >= courseDetails.total_units) {
+                            console.log('sobra na units');
+
+                            if (courseDetails.category == 'gened') {
+                                genedCoursesCopy =
+                                    removeFromGenedCoursesCompleteUnits({
+                                        subjectCode: courseDetails.subject_code,
+                                        genedCourses: genedCoursesCopy
+                                    });
+                                genedCoursesDailyCopy =
+                                    removeFromGenedCoursesCompleteUnits({
+                                        subjectCode: courseDetails.subject_code,
+                                        genedCourses: genedCoursesDailyCopy
+                                    });
+        
+                            } else {
+                                majorCoursesCopy =
+                                    removeFromMajorCoursesCompleteUnits({
+                                        subjectCode: courseDetails.subject_code,
+                                        majorCourses: majorCoursesCopy
+                                    });
+                                majorCoursesDailyCopy =
+                                    removeFromMajorCoursesCompleteUnits({
+                                        subjectCode: courseDetails.subject_code,
+                                        majorCourses: majorCoursesDailyCopy
+                                    });
+                            }
+                            continue loop4; // assign different course
+                        }
 
                         // check if gened and gap
                         if (
@@ -190,7 +316,14 @@ const generateYearGene = async ({
                                 )
                             ) {
                                 // make sure this is the gap day
-                                if (schoolDay != 'W') {
+                                if (schoolDay != 'W' && schoolDay != 'M') {
+                                    console.log('sa gap');
+                                    // pag ganito tanggalin n sa daily copy ??
+                                    genedCoursesDailyCopy =
+                                    removeFromGenedCoursesCompleteUnits({
+                                        subjectCode: courseDetails.subject_code,
+                                        genedCourses: genedCoursesDailyCopy
+                                    });
                                     continue loop4;
                                 }
                             } else if (
@@ -199,7 +332,13 @@ const generateYearGene = async ({
                                 )
                             ) {
                                 // make sure this is the gap day
-                                if (schoolDay != 'TH') {
+                                if (schoolDay != 'TH' && schoolDay != 'T') {
+                                    console.log('sa gap');
+                                    genedCoursesDailyCopy =
+                                    removeFromGenedCoursesCompleteUnits({
+                                        subjectCode: courseDetails.subject_code,
+                                        genedCourses: genedCoursesDailyCopy
+                                    });
                                     continue loop4;
                                 }
                             } else if (
@@ -208,7 +347,13 @@ const generateYearGene = async ({
                                 )
                             ) {
                                 // make sure this is the gap day
-                                if (schoolDay != 'M') {
+                                if (schoolDay != 'W') {
+                                    console.log('sa gap');
+                                    genedCoursesDailyCopy =
+                                    removeFromGenedCoursesCompleteUnits({
+                                        subjectCode: courseDetails.subject_code,
+                                        genedCourses: genedCoursesDailyCopy
+                                    });
                                     continue loop4;
                                 }
                             } else if (
@@ -217,7 +362,13 @@ const generateYearGene = async ({
                                 )
                             ) {
                                 // make sure this is the gap day
-                                if (schoolDay != 'T') {
+                                if (schoolDay != 'TH') {
+                                    console.log('sa gap');
+                                    genedCoursesDailyCopy =
+                                    removeFromGenedCoursesCompleteUnits({
+                                        subjectCode: courseDetails.subject_code,
+                                        genedCourses: genedCoursesDailyCopy
+                                    });
                                     continue loop4;
                                 }
                             } else if (
@@ -226,7 +377,13 @@ const generateYearGene = async ({
                                 )
                             ) {
                                 // make sure this is the gap day
-                                if (schoolDay != 'S') {
+                                if (schoolDay != 'S' && schoolDay != 'F') {
+                                    console.log('sa gap');
+                                    genedCoursesDailyCopy =
+                                    removeFromGenedCoursesCompleteUnits({
+                                        subjectCode: courseDetails.subject_code,
+                                        genedCourses: genedCoursesDailyCopy
+                                    });
                                     continue loop4;
                                 }
                             } else if (
@@ -235,7 +392,13 @@ const generateYearGene = async ({
                                 )
                             ) {
                                 // make sure this is the gap day
-                                if (schoolDay != 'F') {
+                                if (schoolDay != 'S') {
+                                    console.log('sa gap');
+                                    genedCoursesDailyCopy =
+                                    removeFromGenedCoursesCompleteUnits({
+                                        subjectCode: courseDetails.subject_code,
+                                        genedCourses: genedCoursesDailyCopy
+                                    });
                                     continue loop4;
                                 }
                             } else {
@@ -246,24 +409,26 @@ const generateYearGene = async ({
                             }
                         }
 
-                        let assignedUnits =
-                            weeklyCourseUnits[course]?.units || 0;
-
-                        if (assignedUnits >= courseDetails.total_units) {
-                            continue loop4; // assign different course
-                        }
 
                         // add sa units nung course
                         if (courseDetails) {
                             // console.log("course: ", courseDetails);
 
-                            // get random time slot for course
-                            let timeBlock = getTimeBlockFromCourse({
+                            // check if may time slot pa na pwede
+                            let assignableTimeRanges = checkAssignableTimeRanges({
                                 courseDetails,
                                 yearLevelTimeConstraints,
                                 weeklyTimeBlockConstraints,
                                 schoolDay
                             });
+
+                            if (assignableTimeRanges.length <= 0){
+                                console.log('no more assignable time ranges for day')
+                                continue loop2;
+                            }
+
+                            // get random time slot for course
+                            let timeBlock = getTimeBlockFromCourse({assignableTimeRanges, courseDetails});
                             if (timeBlock) {
                                 if (
                                     courseDetails.subject_code.startsWith(
@@ -282,19 +447,28 @@ const generateYearGene = async ({
                                 // console.log(
                                 //     'no more time block possibilities for school day'
                                 // );
-                                continue loop2; // next day na
+                                console.log('no time possiblities');
+                                // kasi pwede para lng sa course na un walang time pero sa iba pwede (lab)
+                                continue loop4; // next day na
                             }
                             //   console.log("timeBlock: ", timeBlock);
 
-                            // handler for lab AND lec courses 
+                            // handler for lab AND lec courses
                             // check if lab nd lec course ba - check if LB/LC ung dulo ng coursecode
-                            if (courseDetails.subject_code.endsWith('LB') || courseDetails.subject_code.endsWith('LC')){
-
+                            if (
+                                courseDetails.subject_code.endsWith('LB') ||
+                                courseDetails.subject_code.endsWith('LC')
+                            ) {
                                 // ccheck ko kung may assigned na sa lec / lab na prof
-                                let schedBlockWithDupCourse = findCourseInSchedule({subject_code: courseDetails.subject_code, schedule});
+                                let schedBlockWithDupCourse =
+                                    findCourseInSchedule({
+                                        subject_code:
+                                            courseDetails.subject_code,
+                                        schedule
+                                    });
 
-                                if (schedBlockWithDupCourse){
-                                    // un na ung iaassign ko 
+                                if (schedBlockWithDupCourse) {
+                                    // un na ung iaassign ko
                                     profDetails = schedBlockWithDupCourse.prof;
                                 } else {
                                     // assign ako bago
@@ -306,24 +480,26 @@ const generateYearGene = async ({
                                         schoolDay,
                                         timeBlock: timeBlock.timeBlock
                                     });
-    
+
                                     if (profDetails) {
                                         if (
                                             weeklyProfTimeBlocks[
-                                                profDetails.professor_id
+                                                profDetails.tas_id
                                             ]
                                         ) {
                                             // insert the time block
                                             weeklyProfTimeBlocks[
-                                                profDetails.professor_id
-                                            ][schoolDay].push(timeBlock.timeBlock);
-    
+                                                profDetails.tas_id
+                                            ][schoolDay].push(
+                                                timeBlock.timeBlock
+                                            );
+
                                             // weeklyProfUnits[
                                             //     profDetails.professor_id
                                             // ].units += profDetails.units;
                                         } else {
                                             weeklyProfTimeBlocks[
-                                                profDetails.professor_id
+                                                profDetails.tas_id
                                             ] = {
                                                 M: [],
                                                 T: [],
@@ -333,42 +509,56 @@ const generateYearGene = async ({
                                                 S: []
                                             };
                                             weeklyProfTimeBlocks[
-                                                profDetails.professor_id
-                                            ][schoolDay].push(timeBlock.timeBlock);
+                                                profDetails.tas_id
+                                            ][schoolDay].push(
+                                                timeBlock.timeBlock
+                                            );
                                         }
-    
+
                                         if (
-                                            weeklyProfUnits[
-                                                profDetails.professor_id
-                                            ]?.units
+                                            weeklyProfUnits[profDetails.tas_id]
+                                                ?.units
                                         ) {
                                             if (courseDetails.type === 'lec') {
                                                 weeklyProfUnits[
-                                                    profDetails.professor_id
+                                                    profDetails.tas_id
                                                 ].units += courseDetails.units;
-                                            }else if (courseDetails.type === 'lab'){
+                                            } else if (
+                                                courseDetails.type === 'lab'
+                                            ) {
                                                 weeklyProfUnits[
-                                                    profDetails.professor_id
-                                                ].units += (courseDetails.units * 1.5); // times 1.5 kapag lab
+                                                    profDetails.tas_id
+                                                ].units +=
+                                                    courseDetails.units * 1.5; // times 1.5 kapag lab
                                             }
-                                        }else{
+                                        } else {
                                             if (courseDetails.type === 'lec') {
                                                 weeklyProfUnits[
-                                                    profDetails.professor_id
-                                                ] = {units: courseDetails.units};
-                                            }else if (courseDetails.type === 'lab'){
+                                                    profDetails.tas_id
+                                                ] = {
+                                                    units: courseDetails.units
+                                                };
+                                            } else if (
+                                                courseDetails.type === 'lab'
+                                            ) {
                                                 weeklyProfUnits[
-                                                    profDetails.professor_id
-                                                ] = {units: (courseDetails.units * 1.5)};
+                                                    profDetails.tas_id
+                                                ] = {
+                                                    units:
+                                                        courseDetails.units *
+                                                        1.5
+                                                };
                                             }
                                         }
                                     } else {
-                                        // console.log('no more prof possibilities');
-                                        break loop2; // next day
+                                        console.log(
+                                            'no more prof possibilities 1'
+                                        );
+                                        break loop4; // try diff course
                                     }
                                 }
-
-                            } else if (courseDetails.category === 'gened') { // handler for gened subjects profs
+                            } else if (courseDetails.category === 'gened') {
+                                // handler for gened subjects profs
                                 profDetails = { professor_id: 'GENDED PROF' };
                             } else {
                                 // get prof for course
@@ -383,13 +573,11 @@ const generateYearGene = async ({
 
                                 if (profDetails) {
                                     if (
-                                        weeklyProfTimeBlocks[
-                                            profDetails.professor_id
-                                        ]
+                                        weeklyProfTimeBlocks[profDetails.tas_id]
                                     ) {
                                         // insert the time block
                                         weeklyProfTimeBlocks[
-                                            profDetails.professor_id
+                                            profDetails.tas_id
                                         ][schoolDay].push(timeBlock.timeBlock);
 
                                         // weeklyProfUnits[
@@ -397,7 +585,7 @@ const generateYearGene = async ({
                                         // ].units += profDetails.units;
                                     } else {
                                         weeklyProfTimeBlocks[
-                                            profDetails.professor_id
+                                            profDetails.tas_id
                                         ] = {
                                             M: [],
                                             T: [],
@@ -407,38 +595,44 @@ const generateYearGene = async ({
                                             S: []
                                         };
                                         weeklyProfTimeBlocks[
-                                            profDetails.professor_id
+                                            profDetails.tas_id
                                         ][schoolDay].push(timeBlock.timeBlock);
                                     }
 
                                     if (
-                                        weeklyProfUnits[
-                                            profDetails.professor_id
-                                        ]?.units
+                                        weeklyProfUnits[profDetails.tas_id]
+                                            ?.units
                                     ) {
                                         if (courseDetails.type === 'lec') {
                                             weeklyProfUnits[
-                                                profDetails.professor_id
+                                                profDetails.tas_id
                                             ].units += courseDetails.units;
-                                        }else if (courseDetails.type === 'lab'){
+                                        } else if (
+                                            courseDetails.type === 'lab'
+                                        ) {
                                             weeklyProfUnits[
-                                                profDetails.professor_id
-                                            ].units += (courseDetails.units * 1.5); // times 1.5 kapag lab
+                                                profDetails.tas_id
+                                            ].units +=
+                                                courseDetails.units * 1.5; // times 1.5 kapag lab
                                         }
-                                    }else{
+                                    } else {
                                         if (courseDetails.type === 'lec') {
                                             weeklyProfUnits[
-                                                profDetails.professor_id
-                                            ] = {units: courseDetails.units};
-                                        }else if (courseDetails.type === 'lab'){
+                                                profDetails.tas_id
+                                            ] = { units: courseDetails.units };
+                                        } else if (
+                                            courseDetails.type === 'lab'
+                                        ) {
                                             weeklyProfUnits[
-                                                profDetails.professor_id
-                                            ] = {units: (courseDetails.units * 1.5)};
+                                                profDetails.tas_id
+                                            ] = {
+                                                units: courseDetails.units * 1.5
+                                            };
                                         }
                                     }
                                 } else {
-                                    // console.log('no more prof possibilities');
-                                    break loop2; // next day
+                                    console.log('no more prof possibilities 2');
+                                    break loop4; // try different prof
                                 }
                             }
                             // console.log("prof: ", profDetails);
@@ -493,8 +687,8 @@ const generateYearGene = async ({
                                         // };
                                     }
                                 } else {
-                                    // console.log('no more room possibilities');
-                                    break loop2;
+                                    console.log('no more room possibilities');
+                                    break loop4; // try different course
                                 }
                             }
                             //  console.log("room: ", roomDetails);
@@ -517,8 +711,21 @@ const generateYearGene = async ({
                             //     timeBlock: timeBlock.timeBlock
                             // });
 
+                            let miniCourseDetails = {
+                                subject_code: courseDetails.subject_code,
+                                type: courseDetails.type,
+                                category: courseDetails.category
+                            };
+
+                            console.log(timeBlock.timeBlock);
+                            console.log('assigned');
+
+                            if (courseDetails.category == 'gened') {
+                                genedAssignedCourses++;
+                            }
+
                             schedule[schoolDay].push({
-                                course: courseDetails,
+                                course: miniCourseDetails,
                                 prof: profDetails,
                                 room: roomDetails,
                                 timeBlock: timeBlock.timeBlock
@@ -539,7 +746,7 @@ const generateYearGene = async ({
                             //     weeklyCourseUnits
                             // );
                         } else {
-                            // console.log('no more course possibilities');
+                            console.log('no more course possibilities');
                             break loop2;
                         }
                     }
@@ -570,13 +777,28 @@ const generateYearGene = async ({
 export const generateChromosome = async () => {
     let chromosome = [];
 
-    let CSYearGene = await generateYearGene({
+    let CSYearGene1 = await generateYearGene({
         dept: 'CS',
         year: 1,
-        sem: 1,
+        sem: 2,
         sections: 2
     });
-    chromosome.push({ cs_1st: CSYearGene });
+    chromosome.push({ cs_1st: CSYearGene1 });
+
+    return chromosome;
+
+    let CSYearGene2 = await generateYearGene({
+        dept: 'CS',
+        year: 2,
+        sem: 2,
+        sections: 2
+    });
+    chromosome.push({ cs_2nd: CSYearGene2 });
+
+    // console.log('done with cs')
+
+    // return chromosome;
+
     let ITYearGene = await generateYearGene({
         dept: 'IT',
         year: 1,
@@ -621,31 +843,84 @@ const printYearGene = (yearGene: any) => {
     }
 };
 
+const getCoursesFromCurriculum = (courses: string[]) => {
+    let genedCourses = [];
+    let majorCourses = [];
+
+    for (let i = 0; i < courses.length; i++) {
+        if (
+            courses[i].startsWith('CS') ||
+            courses[i].startsWith('IS') ||
+            courses[i].startsWith('IT') ||
+            courses[i].startsWith('ICS') ||
+            courses[i].startsWith('C-') ||
+            courses[i].startsWith('G-') ||
+            courses[i].startsWith('D-')
+        ) {
+            majorCourses.push(courses[i]);
+        } else {
+            genedCourses.push(courses[i]);
+        }
+    }
+
+    return {
+        gened: genedCourses,
+        major: majorCourses
+    };
+};
+
+const removeFromGenedCoursesCompleteUnits = ({
+    subjectCode,
+    genedCourses
+}: {
+    subjectCode: string;
+    genedCourses: string[];
+}) => {
+    return genedCourses.filter(course => course !== subjectCode);
+};
+
+const removeFromMajorCoursesCompleteUnits = ({
+    subjectCode,
+    majorCourses
+}: {
+    subjectCode: string;
+    majorCourses: string[];
+}) => {
+    return majorCourses.filter(course => course !== subjectCode);
+};
+
 const checkNumberOfAssignedDays = (schedule: any) => {
     let assignedDays = 0;
-    for (let i = 0; i < SCHOOL_DAYS.length; i++){
-        if (schedule[SCHOOL_DAYS[i]].length > 0){
+    for (let i = 0; i < SCHOOL_DAYS.length; i++) {
+        if (schedule[SCHOOL_DAYS[i]].length > 0) {
             assignedDays++;
         }
     }
 
     return assignedDays;
-}
+};
 
-const findCourseInSchedule = ({subject_code, schedule}: {subject_code: string, schedule: any}) => {
+const findCourseInSchedule = ({
+    subject_code,
+    schedule
+}: {
+    subject_code: string;
+    schedule: any;
+}) => {
     let generalSubjectCode = subject_code.split('-')[0]; // ICS26001-LC - gets the ICS26001 part
 
-    for (let i = 0; i < SCHOOL_DAYS.length; i++){
-        for (let j = 0; j < schedule[SCHOOL_DAYS[i]].length; j++){
+    for (let i = 0; i < SCHOOL_DAYS.length; i++) {
+        for (let j = 0; j < schedule[SCHOOL_DAYS[i]].length; j++) {
             let schedBlock = schedule[SCHOOL_DAYS[i]][j];
-            let courseGeneralSubjectCode = schedBlock.course.subject_code.split('-')[0]; // ICS26001-LC - gets the ICS26001 part
-            if (courseGeneralSubjectCode === generalSubjectCode){
+            let courseGeneralSubjectCode =
+                schedBlock.course.subject_code.split('-')[0]; // ICS26001-LC - gets the ICS26001 part
+            if (courseGeneralSubjectCode === generalSubjectCode) {
                 return schedBlock;
             }
         }
     }
     return null;
-}
+};
 
 const generateSectionNames = ({
     year,
@@ -659,7 +934,7 @@ const generateSectionNames = ({
     let sectionNames = [];
     for (let i = 0; i < sectionNumber; i++) {
         let secName = `${dept}_${year}${String.fromCharCode(65 + i)}`;
-        sectionNames.push(secName.toLowerCase())
+        sectionNames.push(secName.toLowerCase());
     }
     return sectionNames;
 };
@@ -708,11 +983,14 @@ const getProfFromCourse = async ({
     timeBlock: any;
 }) => {
     // ung main dep lng muna kunin
+
     const query =
-        'SELECT * FROM professors WHERE $1 = ANY(courses) AND main_department = $2';
+        'SELECT * FROM teaching_academic_staff WHERE $1 = ANY(courses) AND main_department = $2';
     const res = await client.query(query, [courseDetails.subject_code, dept]);
 
     const mainAvailableProfs = res.rows;
+
+    console.log(mainAvailableProfs);
 
     let profAssigned = false;
     let tries = 0;
@@ -726,24 +1004,24 @@ const getProfFromCourse = async ({
         tries++;
 
         // wala n tlga beh
-        if (tries >= 10) {
+        if (tries >= 50) {
             break loop1;
         }
 
-        if (!prof || !prof?.professor_id){
+        if (!prof || !prof?.tas_id) {
             continue loop1;
         }
 
         // check if pwede pa by getting the time slots of the prof from the constraint and if nag ooverlap not na siya pwede
-        let profConstraints = weeklyProfTimeBlocks[prof.professor_id]
-            ? weeklyProfTimeBlocks[prof.professor_id][schoolDay]
+        let profConstraints = weeklyProfTimeBlocks[prof.tas_id]
+            ? weeklyProfTimeBlocks[prof.tas_id][schoolDay]
             : [];
         if (!isTimeBlockValid({ constraints: profConstraints, timeBlock })) {
             continue loop1;
         }
 
         // check if pwede pa from the course units
-        let assignedUnits = weeklyProfUnits[prof.professor_id]?.units || 0;
+        let assignedUnits = weeklyProfUnits[prof.tas_id]?.units || 0;
         if (assignedUnits >= prof.units) {
             continue loop1;
         }
@@ -754,7 +1032,7 @@ const getProfFromCourse = async ({
 
     // pag wala sa main dep kuha sa iba except ung main dep para di maulit
     const query2 =
-        'SELECT * FROM professors WHERE $1 = ANY(courses) AND main_department != $2';
+        'SELECT * FROM teaching_academic_staff WHERE $1 = ANY(courses) AND main_department != $2';
     const res2 = await client.query(query2, [courseDetails.subject_code, dept]);
 
     // console.log('kuha sub prof');
@@ -765,7 +1043,7 @@ const getProfFromCourse = async ({
     let tries2 = 0;
     // Try to assign a valid course for the current day
 
-    if (subAvailableProfs.length < 0){
+    if (subAvailableProfs.length < 0) {
         return null;
     }
 
@@ -777,24 +1055,24 @@ const getProfFromCourse = async ({
             ];
         tries2++;
 
-        if (tries2 >= 10) {
+        if (tries2 >= 30) {
             // wala n tlga beh
             break loop2;
         }
 
-        if (!prof || !prof?.professor_id){
+        if (!prof || !prof?.tas_id) {
             continue loop2;
         }
 
         // check if pwede pa from the course units
-        let profConstraints = weeklyProfTimeBlocks[prof.professor_id]
-            ? weeklyProfTimeBlocks[prof.professor_id][schoolDay]
+        let profConstraints = weeklyProfTimeBlocks[prof.tas_id]
+            ? weeklyProfTimeBlocks[prof.tas_id][schoolDay]
             : [];
         if (!isTimeBlockValid({ constraints: profConstraints, timeBlock })) {
             continue loop2;
         }
 
-        let assignedUnits = weeklyProfUnits[prof.professor_id]?.units || 0;
+        let assignedUnits = weeklyProfUnits[prof.tas_id]?.units || 0;
         if (assignedUnits >= prof.units) {
             continue loop2;
         }
@@ -858,11 +1136,10 @@ const getRoomFromCourse = async ({
         if (tries >= 10) {
             break loop1;
         }
-        
-        if (!room || !room?.room_id){
+
+        if (!room || !room?.room_id) {
             continue loop1;
         }
-
 
         // check if pwede pa from the course units
         let roomConstraints = weeklyRoomUnits[room.room_id]
@@ -877,37 +1154,74 @@ const getRoomFromCourse = async ({
         //     continue;
         // }
 
-        // return ung prof na un
+        return room;
+    }
+
+    // // pag wala sa type na un check sa same dept pero different type naman
+    const query2 =
+        'SELECT * FROM rooms WHERE main_department = $1 AND type != $2';
+    const res2 = await client.query(query2, [dept, courseDetails.type]);
+
+    const mainAvailableRoomsDiffType = res2.rows;
+
+    let roomAssigned2 = false;
+    let tries2 = 0;
+
+    loop1: while (!roomAssigned2) {
+        // pick random don
+        let room =
+            mainAvailableRoomsDiffType[
+                Math.floor(Math.random() * mainAvailableRoomsDiffType.length)
+            ];
+        tries2++;
+
+        // wala n tlga beh
+        if (tries2 >= 10) {
+            break loop1;
+        }
+
+        if (!room || !room?.room_id) {
+            continue loop1;
+        }
+
+        // check if pwede pa from the course units
+        let roomConstraints = weeklyRoomUnits[room.room_id]
+            ? weeklyRoomUnits[room.room_id][schoolDay]
+            : [];
+        if (!isTimeBlockValid({ constraints: roomConstraints, timeBlock })) {
+            continue loop1;
+        }
+
         return room;
     }
 
     // pag wala sa main dep kuha sa iba except ung main dep para di maulit
-    const query2 = 'SELECT * FROM rooms WHERE main_department = $1';
-    const res2 = await client.query(query2, [dept]);
+    const query3 = 'SELECT * FROM rooms WHERE main_department != $1';
+    const res3 = await client.query(query3, [dept]);
 
-    const subAvailableRooms = res2.rows;
+    const subAvailableRooms = res3.rows;
 
-    if (subAvailableRooms.length < 0){
+    if (subAvailableRooms.length < 0) {
         return null;
     }
 
-    let roomAssigned2 = false;
-    let tries2 = 0;
+    let roomAssigned3 = false;
+    let tries3 = 0;
     // Try to assign a valid course for the current day
-    loop2: while (!roomAssigned2) {
+    loop2: while (!roomAssigned3) {
         // pick random don
         let room =
             subAvailableRooms[
                 Math.floor(Math.random() * subAvailableRooms.length)
             ];
-        tries2++;
+        tries3++;
 
-        if (tries2 >= 10) {
+        if (tries3 >= 10) {
             // wala n tlga beh
             break loop2;
         }
 
-        if (!room || !room?.room_id){
+        if (!room || !room?.room_id) {
             continue loop2;
         }
 
@@ -918,19 +1232,14 @@ const getRoomFromCourse = async ({
         if (!isTimeBlockValid({ constraints: roomConstraints, timeBlock })) {
             continue loop2;
         }
-        // let assignedUnits = weeklyRoomUnits[room.room_id]?.units || 0;
-        // if (assignedUnits >= 14) {
-        //     continue;
-        // }
 
-        // return ung prof na un
         return room;
     }
 
     return null;
 };
 
-const getTimeBlockFromCourse = ({
+const checkAssignableTimeRanges = ({
     courseDetails,
     yearLevelTimeConstraints,
     weeklyTimeBlockConstraints,
@@ -941,6 +1250,9 @@ const getTimeBlockFromCourse = ({
     weeklyTimeBlockConstraints: any;
     schoolDay: string;
 }) => {
+
+    let assignableRanges = [];
+
     let availableRanges = getPossibleTimeRanges({
         yearLevelTimeConstraints,
         weeklyTimeBlockConstraints,
@@ -948,7 +1260,30 @@ const getTimeBlockFromCourse = ({
         schoolDay
     });
 
-    // console.log(availableRanges);
+    for (let i = 0; i < availableRanges.length; i++){
+        let timeDuration = timeToMinutes(availableRanges[i].end) - timeToMinutes(availableRanges[i].start)
+
+        if (timeDuration >= 90){
+            assignableRanges.push(availableRanges[i])
+        }
+    }
+
+    return assignableRanges;
+}
+
+const getTimeBlockFromCourse = ({
+    assignableTimeRanges,
+    courseDetails
+}: {
+    assignableTimeRanges: {
+        start: string;
+        end: string;
+    }[],
+    courseDetails: any
+}) => {
+    let availableRanges = assignableTimeRanges;
+
+    console.log(availableRanges);
 
     let timeBlockAssigned = false;
     let tries = 0;
@@ -1013,12 +1348,15 @@ const getTimeBlockFromCourse = ({
                     }
                 }
             } else {
-                if (courseDetails.type === 'lab'){
-                    if ((courseDetails.units_per_class * 3 * 60 )> availableMinutes) {
+                if (courseDetails.type === 'lab') {
+                    if (
+                        courseDetails.units_per_class * 3 * 60 >
+                        availableMinutes
+                    ) {
                         // console.log('oops sobra');
                         continue loop1;
                     }
-                }else{
+                } else {
                     if (courseDetails.units_per_class * 60 > availableMinutes) {
                         // console.log('oops sobra');
                         continue loop1;
@@ -1048,7 +1386,7 @@ const getTimeBlockFromCourse = ({
                 };
             } else {
                 // pag lab 1 unit is 3 hours
-                if (courseDetails.type === 'lab'){
+                if (courseDetails.type === 'lab') {
                     return {
                         timeBlock: {
                             start: randomStart,
@@ -1058,7 +1396,7 @@ const getTimeBlockFromCourse = ({
                             )
                         }
                     };
-                }else{
+                } else {
                     return {
                         timeBlock: {
                             start: randomStart,

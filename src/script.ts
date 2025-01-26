@@ -23,26 +23,26 @@ export const runScript = async () => {
     };
 
     for (let generation = 0; generation < 10; generation++) {
-        console.log(`Generation ${generation + 1}: Selecting top 50 chromosomes...`);
+        // console.log(`Generation ${generation + 1}: Selecting top 50 chromosomes...`);
         const top50 = findTop50(population);
 
-        console.log(top50)
+        // console.log(top50)
 
-        console.log('Performing crossover...');
+        // console.log('Performing crossover...');
         const newChromosomes = await Promise.all(
             top50.map(async (ch, index) => {
                 const [parent1, parent2] = splitChromosome(ch.chromosome);
                 const child = mergeChromosomes(parent1, parent2);
-                console.log(`Child ${index} created`);
+                // console.log(`Child ${index} created`);
                 return child;
             })
         );
 
-        console.log('Evaluating new chromosomes...');
+        // console.log('Evaluating new chromosomes...');
         const evaluatedChromosomes = await Promise.all(
             newChromosomes.map(async (ch, index) => {
                 const score = await evaluateFitnessScore(ch);
-                console.log(`Chromosome ${index} evaluated with score ${score}`);
+                // console.log(`Chromosome ${index} evaluated with score ${score}`);
                 return { chromosome: ch, score };
             })
         );
@@ -137,6 +137,6 @@ const mergeChromosomes = (parent1: any[], parent2: any[]) => {
     return child;
 };
 
-runScript();
+// runScript();
 
 // ung pairs pwede 12 or 1 25 ano kaya mas maganda

@@ -664,7 +664,7 @@ const findRoomConflicts = (schedules: any) => {
 const findProfessorConflicts = (schedules: any) => {
     // Step 1: Group by professor
     const profGroups = schedules.reduce((groups: any, schedule: any) => {
-        const professorId = schedule.prof.professor_id;
+        const professorId = schedule.prof.tas_id;
 
         // Skip schedules with professor_id "PE ROOM" or invalid prof (if needed)
         if (professorId === 'GENDED PROF') {
@@ -722,9 +722,9 @@ const checkProfRequestConstraints = async (chromosome: any) => {
                     continue;
                 } else {
                     const query =
-                        'SELECT restrictions FROM professors WHERE professor_id = $1';
+                        'SELECT restrictions FROM teaching_academic_staff WHERE tas_id = $1';
                     const res = await client.query(query, [
-                        scheduleItem.prof.professor_id
+                        scheduleItem.prof.tas_id
                     ]);
                     const profReq = res.rows[0].restrictions;
 
@@ -755,9 +755,9 @@ const checkProfRequestConstraints = async (chromosome: any) => {
                     continue;
                 } else {
                     const query =
-                        'SELECT restrictions FROM professors WHERE professor_id = $1';
+                        'SELECT restrictions FROM teaching_academic_staff WHERE tas_id = $1';
                     const res = await client.query(query, [
-                        scheduleItem.prof.professor_id
+                        scheduleItem.prof.tas_id
                     ]);                    
                     const profReq = res.rows[0].restrictions;
 
@@ -788,9 +788,9 @@ const checkProfRequestConstraints = async (chromosome: any) => {
                     continue;
                 } else {
                     const query =
-                        'SELECT restrictions FROM professors WHERE professor_id = $1';
+                        'SELECT restrictions FROM teaching_academic_staff WHERE tas_id = $1';
                     const res = await client.query(query, [
-                        scheduleItem.prof.professor_id
+                        scheduleItem.prof.tas_id
                     ]);
                     const profReq = res.rows[0].restrictions;
 
