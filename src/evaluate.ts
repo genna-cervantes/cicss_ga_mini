@@ -313,7 +313,113 @@ const evaluateRoomTypeAssignment = (chromosome: any) => {
     return violations;
 };
 
+const evaluateTASAssignment = (chromosome: any) => {
+    let violationCount = 0;
+    let violations = [];
+
+    let schedByTAS = groupSchedByTAS(chromosome);
+
+    let roomKeys = Object.keys(schedByTAS);
+
+    for (let i = 0; i < roomKeys.length; i++) {
+        let specTASSched = schedByTAS[roomKeys[i]];
+
+        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+            let specTASSchedPerDay = specTASSched[SCHOOL_DAYS[j]];
+
+            // sort by ascending order tapos compare magkakasunod
+            let ascendingSched = specTASSchedPerDay.sort(
+                (schedBlock1: any, schedBlock2: any) => {
+                    return (
+                        parseInt(schedBlock1.timeBlock.start, 10) -
+                        parseInt(schedBlock2.timeBlock.start, 10)
+                    );
+                }
+            );
+
+            for (let k = 0; k < ascendingSched.length - 1; k++) {
+                // check if may conflicting
+                let schedBlock1 = ascendingSched[k];
+                let schedBlock2 = ascendingSched[k + 1];
+
+                if (schedBlock2.timeBlock.start <= schedBlock1.timeBlock.end) {
+                    violationCount++;
+                    violations.push({
+                        type: 'conflicting TAS assignment',
+                        TAS: schedBlock1.prof,
+                        courses: [schedBlock1.course.subject_code, schedBlock2.course.subject_code],
+                        time: {
+                            day: SCHOOL_DAYS[j],
+                            time: schedBlock2.timeBlock.start
+                        },
+                        sections: [schedBlock1.section, schedBlock2.section]
+                    });
+                }
+            }
+        }
+    }
+
+    return violations;
+}
+
 // helper functions
+const groupSchedByTAS = (chromosome: any) => {
+    let schedByTAS;
+
+    // loop per room per day
+    for (let i = 0; i < chromosome.length; i++) {
+        let perYear = chromosome[i];
+
+        let yearAndDepartmentKey = Object.keys(perYear)[0];
+
+        let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
+        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
+            let specSection = yearAndDepartmentSchedule[j];
+            let specSectionKey = Object.keys(specSection)[0];
+            let specSectionSchedule = specSection[specSectionKey];
+
+            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
+
+                let schedByTASPerSectionPerDay = daySched.reduce(
+                    (accumulator: any, schedBlock: any) => {
+                        let TAS = schedBlock.prof.tas_id;
+
+                        if (TAS === 'GENDED PROF') {
+                            return accumulator;
+                        }
+
+                        if (!accumulator[TAS]) {
+                            accumulator[TAS] = {
+                                M: [],
+                                T: [],
+                                W: [],
+                                TH: [],
+                                F: [],
+                                S: []
+                            };
+                        }
+                        accumulator[TAS][SCHOOL_DAYS[k]].push({
+                            ...schedBlock,
+                            section: specSectionKey
+                        });
+                        return accumulator;
+                    },
+                    {}
+                );
+
+                schedByTAS = mergeObjects({
+                    obj1: schedByTAS,
+                    obj2: schedByTASPerSectionPerDay
+                });
+            }
+        }
+    }
+
+    return schedByTAS;
+}
+
+
 const groupSchedByRoom = (chromosome: any) => {
     // group schedule by room
     let schedByRoom;
@@ -439,7 +545,9 @@ export const evaluate = async () => {
 
     // let violations = evaluateRoomAssignment(chromosome);
 
-    let violations = evaluateRoomTypeAssignment(chromosome);
+    // let violations = evaluateRoomTypeAssignment(chromosome);
+
+    let violations = evaluateTASAssignment(chromosome)
 
     return violations;
     // return true;

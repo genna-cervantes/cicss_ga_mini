@@ -573,7 +573,7 @@ const generateYearGene = async ({
                                 }
                             } else if (courseDetails.category === 'gened') {
                                 // handler for gened subjects profs
-                                profDetails = { professor_id: 'GENDED PROF' };
+                                profDetails = { tas_id: 'GENDED PROF' };
                             } else {
                                 // get prof for course
                                 profDetails = await getProfFromCourse({
@@ -1130,7 +1130,7 @@ const getRoomFromCourse = async ({
     schoolDay: any;
     timeBlock: any;
 }) => {
-    
+
     // try muna ung specific room na need
     if (courseDetails?.specific_room_assignment) {
         const query0 = 'SELECT * FROM rooms WHERE room_id = $1';

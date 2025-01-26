@@ -6,19 +6,19 @@ export const chromosome = [
                     M: [
                         {
                             course: {
-                                subject_code: 'PURPCOM',
+                                subject_code: 'THY2',
                                 type: 'lec',
                                 category: 'gened',
                                 units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: {
-                                room_id: 'RM1806',
+                                room_id: 'RM1807',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1330', end: '1500' }
+                            timeBlock: { start: '1430', end: '1600' }
                         },
                         {
                             course: {
@@ -28,48 +28,28 @@ export const chromosome = [
                                 units: 2,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: { room_id: 'PE ROOM' },
                             timeBlock: { start: '0930', end: '1130' }
-                        }
-                    ],
-                    T: [
+                        },
                         {
                             course: {
-                                subject_code: 'CS2612',
+                                subject_code: 'PURPCOM',
                                 type: 'lec',
-                                category: 'major',
-                                units: 2,
+                                category: 'gened',
+                                units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: {
-                                tas_id: 'PFNCW4il4D',
-                                units: 24,
-                                courses: [
-                                    'CS2612',
-                                    'CS26116',
-                                    'C-CSELEC4-LC',
-                                    'C-CSELEC4-LB'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Perla Cosme',
-                                email: 'ppcosme@ust.edu.ph'
-                            },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: {
-                                room_id: 'RM1901',
+                                room_id: 'RM1807',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1330', end: '1530' }
-                        },
+                            timeBlock: { start: '0700', end: '0830' }
+                        }
+                    ],
+                    T: [
                         {
                             course: {
                                 subject_code: 'ICS2606-LB',
@@ -106,217 +86,7 @@ export const chromosome = [
                                 type: 'lab',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1000', end: '1300' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ELEEM',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1805',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0730', end: '0900' }
-                        }
-                    ],
-                    W: [
-                        {
-                            course: {
-                                subject_code: 'ICS2606-LC',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFzBM14sPW',
-                                units: 24,
-                                courses: [
-                                    'ICS2606-LC',
-                                    'ICS2606-LB',
-                                    'ICS2609-LC',
-                                    'ICS2609-LB',
-                                    'ICS26013',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Lawrence Decamora III',
-                                email: 'lgdecamora@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1907',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1330', end: '1500' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'CS2611',
-                                type: 'lec',
-                                category: 'major',
-                                units: 3,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PF49g4ClJM',
-                                units: 24,
-                                courses: ['CS26113', 'CS2611'],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Jonathan Cabero',
-                                email: 'jbcabero@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1808',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1030', end: '1330' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'THY2',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1911',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0830', end: '1000' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'THY2',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1902',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0700', end: '0830' }
-                        }
-                    ],
-                    TH: [
-                        {
-                            course: {
-                                subject_code: 'ICS2606-LC',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFzBM14sPW',
-                                units: 24,
-                                courses: [
-                                    'ICS2606-LC',
-                                    'ICS2606-LB',
-                                    'ICS2609-LC',
-                                    'ICS2609-LB',
-                                    'ICS26013',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Lawrence Decamora III',
-                                email: 'lgdecamora@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1904',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1400', end: '1530' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ELEEM',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1907',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1200', end: '1330' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ICS2605-LC',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFpV5LKIi4',
-                                units: 24,
-                                courses: [
-                                    'ICS2605-LC',
-                                    'ICS2605-LB',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Francis Noel Alarcon',
-                                email: 'fialarcon@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1909',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1030', end: '1200' }
+                            timeBlock: { start: '1300', end: '1600' }
                         },
                         {
                             course: {
@@ -343,49 +113,12 @@ export const chromosome = [
                                 email: ''
                             },
                             room: {
-                                room_id: 'RM1808',
+                                room_id: 'RM1904',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '0830', end: '1030' }
+                            timeBlock: { start: '1100', end: '1300' }
                         },
-                        {
-                            course: {
-                                subject_code: 'ICS2605-LC',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFpV5LKIi4',
-                                units: 24,
-                                courses: [
-                                    'ICS2605-LC',
-                                    'ICS2605-LB',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Francis Noel Alarcon',
-                                email: 'fialarcon@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1902',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0700', end: '0830' }
-                        }
-                    ],
-                    F: [
                         {
                             course: {
                                 subject_code: 'ICS2605-LB',
@@ -422,39 +155,23 @@ export const chromosome = [
                             timeBlock: { start: '0730', end: '1030' }
                         }
                     ],
-                    S: []
-                }
-            },
-            {
-                cs_1b: {
-                    M: [
+                    W: [
                         {
                             course: {
-                                subject_code: 'PATHFIT2',
+                                subject_code: 'CS2612',
                                 type: 'lec',
-                                category: 'gened',
+                                category: 'major',
                                 units: 2,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: { room_id: 'PE ROOM' },
-                            timeBlock: { start: '0700', end: '0900' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ICS2605-LB',
-                                type: 'lab',
-                                category: 'major',
-                                units: 1,
-                                specific_room_assignment: ''
-                            },
                             prof: {
-                                tas_id: 'PFpV5LKIi4',
+                                tas_id: 'PFNCW4il4D',
                                 units: 24,
                                 courses: [
-                                    'ICS2605-LC',
-                                    'ICS2605-LB',
-                                    'CS26112'
+                                    'CS2612',
+                                    'CS26116',
+                                    'C-CSELEC4-LC',
+                                    'C-CSELEC4-LB'
                                 ],
                                 main_department: 'CS',
                                 restrictions: {
@@ -465,15 +182,15 @@ export const chromosome = [
                                     W: [],
                                     TH: []
                                 },
-                                name: 'Francis Noel Alarcon',
-                                email: 'fialarcon@ust.edu.ph'
+                                name: 'Perla Cosme',
+                                email: 'ppcosme@ust.edu.ph'
                             },
                             room: {
-                                room_id: 'RM1801',
-                                type: 'lab',
+                                room_id: 'RM1909',
+                                type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1100', end: '1400' }
+                            timeBlock: { start: '1330', end: '1530' }
                         },
                         {
                             course: {
@@ -483,80 +200,13 @@ export const chromosome = [
                                 units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: {
-                                room_id: 'RM1901',
+                                room_id: 'RM1902',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1400', end: '1530' }
-                        }
-                    ],
-                    T: [
-                        {
-                            course: {
-                                subject_code: 'CS2612',
-                                type: 'lec',
-                                category: 'major',
-                                units: 2,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFERyimVff',
-                                units: 24,
-                                courses: ['ICS26013', 'CS2612', 'ICS26016'],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Amelia Damian',
-                                email: ''
-                            },
-                            room: {
-                                room_id: 'RM1909',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0800', end: '1000' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ELEEM',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1904',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1330', end: '1500' }
-                        }
-                    ],
-                    W: [
-                        {
-                            course: {
-                                subject_code: 'THY2',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1909',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0800', end: '0930' }
+                            timeBlock: { start: '1200', end: '1330' }
                         },
                         {
                             course: {
@@ -587,11 +237,383 @@ export const chromosome = [
                                 email: 'fialarcon@ust.edu.ph'
                             },
                             room: {
+                                room_id: 'RM1909',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1000', end: '1130' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2605-LC',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFpV5LKIi4',
+                                units: 24,
+                                courses: [
+                                    'ICS2605-LC',
+                                    'ICS2605-LB',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Francis Noel Alarcon',
+                                email: 'fialarcon@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1806',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0830', end: '1000' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'PURPCOM',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1907',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0700', end: '0830' }
+                        }
+                    ],
+                    TH: [
+                        {
+                            course: {
+                                subject_code: 'ICS2606-LC',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFzBM14sPW',
+                                units: 24,
+                                courses: [
+                                    'ICS2606-LC',
+                                    'ICS2606-LB',
+                                    'ICS2609-LC',
+                                    'ICS2609-LB',
+                                    'ICS26013',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Lawrence Decamora III',
+                                email: 'lgdecamora@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1808',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1400', end: '1530' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ELEEM',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
                                 room_id: 'RM1901',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1030', end: '1200' }
+                            timeBlock: { start: '1230', end: '1400' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ELEEM',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1903',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1100', end: '1230' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2606-LC',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFzBM14sPW',
+                                units: 24,
+                                courses: [
+                                    'ICS2606-LC',
+                                    'ICS2606-LB',
+                                    'ICS2609-LC',
+                                    'ICS2609-LB',
+                                    'ICS26013',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Lawrence Decamora III',
+                                email: 'lgdecamora@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1902',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0730', end: '0900' }
+                        }
+                    ],
+                    F: [
+                        {
+                            course: {
+                                subject_code: 'CS2611',
+                                type: 'lec',
+                                category: 'major',
+                                units: 3,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PF49g4ClJM',
+                                units: 24,
+                                courses: ['CS26113', 'CS2611'],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Jonathan Cabero',
+                                email: 'jbcabero@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1909',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0830', end: '1130' }
+                        }
+                    ],
+                    S: []
+                }
+            },
+            {
+                cs_1b: {
+                    M: [
+                        {
+                            course: {
+                                subject_code: 'CS2611',
+                                type: 'lec',
+                                category: 'major',
+                                units: 3,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFLE11LEk7',
+                                units: 24,
+                                courses: [
+                                    'IT2627-LC',
+                                    'IT2627-LB',
+                                    'CS2611',
+                                    'CS2616',
+                                    'CS26116'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Cherry Rose Estabillo',
+                                email: 'crestabillo@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1903',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0730', end: '1030' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'PURPCOM',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1902',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1100', end: '1230' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ELEEM',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1903',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1300', end: '1430' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'PURPCOM',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1808',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1430', end: '1600' }
+                        }
+                    ],
+                    T: [
+                        {
+                            course: {
+                                subject_code: 'PATHFIT2',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 2,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: { room_id: 'PE ROOM' },
+                            timeBlock: { start: '0830', end: '1030' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2605-LC',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFpV5LKIi4',
+                                units: 24,
+                                courses: [
+                                    'ICS2605-LC',
+                                    'ICS2605-LB',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Francis Noel Alarcon',
+                                email: 'fialarcon@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1806',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1400', end: '1530' }
+                        }
+                    ],
+                    W: [
+                        {
+                            course: {
+                                subject_code: 'ICS2605-LC',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFpV5LKIi4',
+                                units: 24,
+                                courses: [
+                                    'ICS2605-LC',
+                                    'ICS2605-LB',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Francis Noel Alarcon',
+                                email: 'fialarcon@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1808',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0730', end: '0900' }
                         },
                         {
                             course: {
@@ -629,16 +651,70 @@ export const chromosome = [
                                 type: 'lab',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1230', end: '1530' }
+                            timeBlock: { start: '0930', end: '1230' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'THY2',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1901',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1330', end: '1500' }
                         }
                     ],
                     TH: [
                         {
                             course: {
-                                subject_code: 'ICS2605-LC',
+                                subject_code: 'ICS2606-LC',
                                 type: 'lec',
                                 category: 'major',
                                 units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFzBM14sPW',
+                                units: 24,
+                                courses: [
+                                    'ICS2606-LC',
+                                    'ICS2606-LB',
+                                    'ICS2609-LC',
+                                    'ICS2609-LB',
+                                    'ICS26013',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Lawrence Decamora III',
+                                email: 'lgdecamora@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1907',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0700', end: '0830' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2605-LB',
+                                type: 'lab',
+                                category: 'major',
+                                units: 1,
                                 specific_room_assignment: ''
                             },
                             prof: {
@@ -662,43 +738,47 @@ export const chromosome = [
                                 email: 'fialarcon@ust.edu.ph'
                             },
                             room: {
-                                room_id: 'RM1903',
-                                type: 'lec',
+                                room_id: 'RM1801',
+                                type: 'lab',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '0730', end: '0900' }
+                            timeBlock: { start: '0900', end: '1200' }
                         },
                         {
                             course: {
-                                subject_code: 'PURPCOM',
+                                subject_code: 'CS2612',
                                 type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
+                                category: 'major',
+                                units: 2,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: {
+                                tas_id: 'PFNCW4il4D',
+                                units: 24,
+                                courses: [
+                                    'CS2612',
+                                    'CS26116',
+                                    'C-CSELEC4-LC',
+                                    'C-CSELEC4-LB'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Perla Cosme',
+                                email: 'ppcosme@ust.edu.ph'
+                            },
                             room: {
-                                room_id: 'RM1909',
+                                room_id: 'RM1808',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '0900', end: '1030' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ELEEM',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1904',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1030', end: '1200' }
+                            timeBlock: { start: '1200', end: '1400' }
                         },
                         {
                             course: {
@@ -732,11 +812,67 @@ export const chromosome = [
                                 email: 'lgdecamora@ust.edu.ph'
                             },
                             room: {
-                                room_id: 'RM1903',
+                                room_id: 'RM1806',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1200', end: '1330' }
+                            timeBlock: { start: '1400', end: '1530' }
+                        }
+                    ],
+                    F: [
+                        {
+                            course: {
+                                subject_code: 'CS2613',
+                                type: 'lec',
+                                category: 'major',
+                                units: 2,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFtx2bV54e',
+                                units: 24,
+                                courses: ['IT2621', 'ICS2603', 'CS2613'],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Joan Vale',
+                                email: ''
+                            },
+                            room: {
+                                room_id: 'RM1806',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0830', end: '1030' }
+                        }
+                    ],
+                    S: []
+                }
+            },
+            {
+                cs_1c: {
+                    M: [
+                        {
+                            course: {
+                                subject_code: 'PURPCOM',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1902',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0730', end: '0900' }
                         },
                         {
                             course: {
@@ -763,14 +899,478 @@ export const chromosome = [
                                 email: ''
                             },
                             room: {
+                                room_id: 'RM1909',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0900', end: '1100' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'CS2611',
+                                type: 'lec',
+                                category: 'major',
+                                units: 3,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFLE11LEk7',
+                                units: 24,
+                                courses: [
+                                    'IT2627-LC',
+                                    'IT2627-LB',
+                                    'CS2611',
+                                    'CS2616',
+                                    'CS26116'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Cherry Rose Estabillo',
+                                email: 'crestabillo@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1807',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1130', end: '1430' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ELEEM',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1901',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1430', end: '1600' }
+                        }
+                    ],
+                    T: [
+                        {
+                            course: {
+                                subject_code: 'CS2612',
+                                type: 'lec',
+                                category: 'major',
+                                units: 2,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFERyimVff',
+                                units: 24,
+                                courses: ['ICS26013', 'CS2612', 'ICS26016'],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Amelia Damian',
+                                email: ''
+                            },
+                            room: {
+                                room_id: 'RM1902',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0800', end: '1000' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2605-LB',
+                                type: 'lab',
+                                category: 'major',
+                                units: 1,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFpV5LKIi4',
+                                units: 24,
+                                courses: [
+                                    'ICS2605-LC',
+                                    'ICS2605-LB',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Francis Noel Alarcon',
+                                email: 'fialarcon@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1907',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1030', end: '1330' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'THY2',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1807',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1400', end: '1530' }
+                        }
+                    ],
+                    W: [
+                        {
+                            course: {
+                                subject_code: 'ICS2605-LC',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFpV5LKIi4',
+                                units: 24,
+                                courses: [
+                                    'ICS2605-LC',
+                                    'ICS2605-LB',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Francis Noel Alarcon',
+                                email: 'fialarcon@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1903',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0800', end: '0930' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2605-LC',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFpV5LKIi4',
+                                units: 24,
+                                courses: [
+                                    'ICS2605-LC',
+                                    'ICS2605-LB',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Francis Noel Alarcon',
+                                email: 'fialarcon@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1911',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1300', end: '1430' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'PURPCOM',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1903',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1430', end: '1600' }
+                        }
+                    ],
+                    TH: [
+                        {
+                            course: {
+                                subject_code: 'PATHFIT2',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 2,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: { room_id: 'PE ROOM' },
+                            timeBlock: { start: '0700', end: '0900' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2606-LB',
+                                type: 'lab',
+                                category: 'major',
+                                units: 1,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFzBM14sPW',
+                                units: 24,
+                                courses: [
+                                    'ICS2606-LC',
+                                    'ICS2606-LB',
+                                    'ICS2609-LC',
+                                    'ICS2609-LB',
+                                    'ICS26013',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Lawrence Decamora III',
+                                email: 'lgdecamora@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1807',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1130', end: '1430' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2606-LC',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFzBM14sPW',
+                                units: 24,
+                                courses: [
+                                    'ICS2606-LC',
+                                    'ICS2606-LB',
+                                    'ICS2609-LC',
+                                    'ICS2609-LB',
+                                    'ICS26013',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Lawrence Decamora III',
+                                email: 'lgdecamora@ust.edu.ph'
+                            },
+                            room: {
                                 room_id: 'RM1805',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1330', end: '1530' }
+                            timeBlock: { start: '1430', end: '1600' }
                         }
                     ],
                     F: [
+                        {
+                            course: {
+                                subject_code: 'ICS2606-LC',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFzBM14sPW',
+                                units: 24,
+                                courses: [
+                                    'ICS2606-LC',
+                                    'ICS2606-LB',
+                                    'ICS2609-LC',
+                                    'ICS2609-LB',
+                                    'ICS26013',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Lawrence Decamora III',
+                                email: 'lgdecamora@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1902',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1330', end: '1500' }
+                        }
+                    ],
+                    S: []
+                }
+            },
+            {
+                cs_1d: {
+                    M: [
+                        {
+                            course: {
+                                subject_code: 'PATHFIT2',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 2,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: { room_id: 'PE ROOM' },
+                            timeBlock: { start: '0700', end: '0900' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'THY2',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1909',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1100', end: '1230' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2606-LC',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFzBM14sPW',
+                                units: 24,
+                                courses: [
+                                    'ICS2606-LC',
+                                    'ICS2606-LB',
+                                    'ICS2609-LC',
+                                    'ICS2609-LB',
+                                    'ICS26013',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Lawrence Decamora III',
+                                email: 'lgdecamora@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1808',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1230', end: '1400' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'CS2612',
+                                type: 'lec',
+                                category: 'major',
+                                units: 2,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFNCW4il4D',
+                                units: 24,
+                                courses: [
+                                    'CS2612',
+                                    'CS26116',
+                                    'C-CSELEC4-LC',
+                                    'C-CSELEC4-LB'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Perla Cosme',
+                                email: 'ppcosme@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1904',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1400', end: '1600' }
+                        }
+                    ],
+                    T: [
                         {
                             course: {
                                 subject_code: 'CS2611',
@@ -810,6 +1410,40 @@ export const chromosome = [
                         },
                         {
                             course: {
+                                subject_code: 'ELEEM',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1808',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1100', end: '1230' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ELEEM',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1805',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1430', end: '1600' }
+                        }
+                    ],
+                    W: [
+                        {
+                            course: {
                                 subject_code: 'ICS2606-LC',
                                 type: 'lec',
                                 category: 'major',
@@ -840,81 +1474,11 @@ export const chromosome = [
                                 email: 'lgdecamora@ust.edu.ph'
                             },
                             room: {
-                                room_id: 'RM1904',
+                                room_id: 'RM1901',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1400', end: '1530' }
-                        }
-                    ],
-                    S: []
-                }
-            },
-            {
-                cs_1c: {
-                    M: [
-                        {
-                            course: {
-                                subject_code: 'ELEEM',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1904',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0800', end: '0930' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ELEEM',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1911',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1030', end: '1200' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'CS2612',
-                                type: 'lec',
-                                category: 'major',
-                                units: 2,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFERyimVff',
-                                units: 24,
-                                courses: ['ICS26013', 'CS2612', 'ICS26016'],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Amelia Damian',
-                                email: ''
-                            },
-                            room: {
-                                room_id: 'RM1907',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1230', end: '1430' }
+                            timeBlock: { start: '0700', end: '0830' }
                         },
                         {
                             course: {
@@ -924,86 +1488,102 @@ export const chromosome = [
                                 units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1904',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0930', end: '1100' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2605-LC',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFpV5LKIi4',
+                                units: 24,
+                                courses: [
+                                    'ICS2605-LC',
+                                    'ICS2605-LB',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Francis Noel Alarcon',
+                                email: 'fialarcon@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1901',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1100', end: '1230' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2605-LC',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFpV5LKIi4',
+                                units: 24,
+                                courses: [
+                                    'ICS2605-LC',
+                                    'ICS2605-LB',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Francis Noel Alarcon',
+                                email: 'fialarcon@ust.edu.ph'
+                            },
                             room: {
                                 room_id: 'RM1807',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1430', end: '1600' }
+                            timeBlock: { start: '1230', end: '1400' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'THY2',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1808',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1400', end: '1530' }
                         }
                     ],
-                    T: [
-                        {
-                            course: {
-                                subject_code: 'ICS2605-LC',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFpV5LKIi4',
-                                units: 24,
-                                courses: [
-                                    'ICS2605-LC',
-                                    'ICS2605-LB',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Francis Noel Alarcon',
-                                email: 'fialarcon@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1807',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0800', end: '0930' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ICS2605-LC',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFpV5LKIi4',
-                                units: 24,
-                                courses: [
-                                    'ICS2605-LC',
-                                    'ICS2605-LB',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Francis Noel Alarcon',
-                                email: 'fialarcon@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1909',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1030', end: '1200' }
-                        },
+                    TH: [
                         {
                             course: {
                                 subject_code: 'ICS2605-LB',
@@ -1033,157 +1613,12 @@ export const chromosome = [
                                 email: 'fialarcon@ust.edu.ph'
                             },
                             room: {
-                                room_id: 'RM1911',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1230', end: '1530' }
-                        }
-                    ],
-                    W: [
-                        {
-                            course: {
-                                subject_code: 'CS2611',
-                                type: 'lec',
-                                category: 'major',
-                                units: 3,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PF49g4ClJM',
-                                units: 24,
-                                courses: ['CS26113', 'CS2611'],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Jonathan Cabero',
-                                email: 'jbcabero@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1901',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0730', end: '1030' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ICS2606-LC',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFzBM14sPW',
-                                units: 24,
-                                courses: [
-                                    'ICS2606-LC',
-                                    'ICS2606-LB',
-                                    'ICS2609-LC',
-                                    'ICS2609-LB',
-                                    'ICS26013',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Lawrence Decamora III',
-                                email: 'lgdecamora@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1909',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1030', end: '1200' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'THY2',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1807',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1230', end: '1400' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'PURPCOM',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
                                 room_id: 'RM1903',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1430', end: '1600' }
-                        }
-                    ],
-                    TH: [
-                        {
-                            course: {
-                                subject_code: 'ICS2606-LC',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFzBM14sPW',
-                                units: 24,
-                                courses: [
-                                    'ICS2606-LC',
-                                    'ICS2606-LB',
-                                    'ICS2609-LC',
-                                    'ICS2609-LB',
-                                    'ICS26013',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Lawrence Decamora III',
-                                email: 'lgdecamora@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1901',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1200', end: '1330' }
-                        }
-                    ],
-                    F: [
+                            timeBlock: { start: '0700', end: '1000' }
+                        },
                         {
                             course: {
                                 subject_code: 'CS2613',
@@ -1209,11 +1644,11 @@ export const chromosome = [
                                 email: ''
                             },
                             room: {
-                                room_id: 'RM1909',
+                                room_id: 'RM1808',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '0800', end: '1000' }
+                            timeBlock: { start: '1000', end: '1200' }
                         },
                         {
                             course: {
@@ -1251,433 +1686,10 @@ export const chromosome = [
                                 type: 'lab',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1030', end: '1330' }
+                            timeBlock: { start: '1200', end: '1500' }
                         }
                     ],
-                    S: []
-                }
-            },
-            {
-                cs_1d: {
-                    M: [
-                        {
-                            course: {
-                                subject_code: 'PATHFIT2',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 2,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: { room_id: 'PE ROOM' },
-                            timeBlock: { start: '0800', end: '1000' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ICS2606-LC',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFzBM14sPW',
-                                units: 24,
-                                courses: [
-                                    'ICS2606-LC',
-                                    'ICS2606-LB',
-                                    'ICS2609-LC',
-                                    'ICS2609-LB',
-                                    'ICS26013',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Lawrence Decamora III',
-                                email: 'lgdecamora@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1909',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1200', end: '1330' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ELEEM',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1808',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1400', end: '1530' }
-                        }
-                    ],
-                    T: [
-                        {
-                            course: {
-                                subject_code: 'ICS2605-LB',
-                                type: 'lab',
-                                category: 'major',
-                                units: 1,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFpV5LKIi4',
-                                units: 24,
-                                courses: [
-                                    'ICS2605-LC',
-                                    'ICS2605-LB',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Francis Noel Alarcon',
-                                email: 'fialarcon@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1806',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0730', end: '1030' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ICS2606-LB',
-                                type: 'lab',
-                                category: 'major',
-                                units: 1,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFzBM14sPW',
-                                units: 24,
-                                courses: [
-                                    'ICS2606-LC',
-                                    'ICS2606-LB',
-                                    'ICS2609-LC',
-                                    'ICS2609-LB',
-                                    'ICS26013',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Lawrence Decamora III',
-                                email: 'lgdecamora@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1807',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1030', end: '1330' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'PURPCOM',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1808',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1430', end: '1600' }
-                        }
-                    ],
-                    W: [
-                        {
-                            course: {
-                                subject_code: 'ICS2605-LC',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFpV5LKIi4',
-                                units: 24,
-                                courses: [
-                                    'ICS2605-LC',
-                                    'ICS2605-LB',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Francis Noel Alarcon',
-                                email: 'fialarcon@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1904',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0700', end: '0830' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ELEEM',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1805',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0900', end: '1030' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ICS2605-LC',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFpV5LKIi4',
-                                units: 24,
-                                courses: [
-                                    'ICS2605-LC',
-                                    'ICS2605-LB',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Francis Noel Alarcon',
-                                email: 'fialarcon@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1806',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1100', end: '1230' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'CS2612',
-                                type: 'lec',
-                                category: 'major',
-                                units: 2,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFNCW4il4D',
-                                units: 24,
-                                courses: [
-                                    'CS2612',
-                                    'CS26116',
-                                    'C-CSELEC4-LC',
-                                    'C-CSELEC4-LB'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Perla Cosme',
-                                email: 'ppcosme@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1904',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1230', end: '1430' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ICS2606-LC',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFzBM14sPW',
-                                units: 24,
-                                courses: [
-                                    'ICS2606-LC',
-                                    'ICS2606-LB',
-                                    'ICS2609-LC',
-                                    'ICS2609-LB',
-                                    'ICS26013',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Lawrence Decamora III',
-                                email: 'lgdecamora@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1911',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1430', end: '1600' }
-                        }
-                    ],
-                    TH: [
-                        {
-                            course: {
-                                subject_code: 'PURPCOM',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1901',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1000', end: '1130' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'THY2',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1904',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1230', end: '1400' }
-                        }
-                    ],
-                    F: [
-                        {
-                            course: {
-                                subject_code: 'CS2611',
-                                type: 'lec',
-                                category: 'major',
-                                units: 3,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PF49g4ClJM',
-                                units: 24,
-                                courses: ['CS26113', 'CS2611'],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Jonathan Cabero',
-                                email: 'jbcabero@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1903',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0800', end: '1100' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'CS2613',
-                                type: 'lec',
-                                category: 'major',
-                                units: 2,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFtx2bV54e',
-                                units: 24,
-                                courses: ['IT2621', 'ICS2603', 'CS2613'],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Joan Vale',
-                                email: ''
-                            },
-                            room: {
-                                room_id: 'RM1911',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1230', end: '1430' }
-                        }
-                    ],
+                    F: [],
                     S: []
                 }
             }
@@ -1690,19 +1702,15 @@ export const chromosome = [
                     M: [
                         {
                             course: {
-                                subject_code: 'READPH',
+                                subject_code: 'PATHFIT4',
                                 type: 'lec',
                                 category: 'gened',
-                                units: 1.5,
+                                units: 2,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1901',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1100', end: '1230' }
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: { room_id: 'PE ROOM' },
+                            timeBlock: { start: '1500', end: '1700' }
                         },
                         {
                             course: {
@@ -1712,31 +1720,130 @@ export const chromosome = [
                                 units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: {
-                                room_id: 'RM1911',
+                                room_id: 'RM1901',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '0830', end: '1000' }
+                            timeBlock: { start: '0700', end: '0830' }
                         },
                         {
                             course: {
-                                subject_code: 'ICS2609-LB',
+                                subject_code: 'READPH',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1909',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1030', end: '1200' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'STS',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1807',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1930', end: '2100' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2609-LC',
+                                type: 'lec',
+                                category: 'major',
+                                units: 2,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PF2NTNrtAV',
+                                units: 12,
+                                courses: ['ICS2609-LC', 'ICS2609-LB'],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [{ end: '2100', start: '0700' }],
+                                    M: [{ end: '2100', start: '0700' }],
+                                    S: [],
+                                    T: [{ end: '2100', start: '0700' }],
+                                    W: [{ end: '2100', start: '0700' }],
+                                    TH: [{ end: '2100', start: '0700' }]
+                                },
+                                name: 'Alfonso Azucenas',
+                                email: 'aaazucenas@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1901',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0830', end: '1030' }
+                        }
+                    ],
+                    T: [
+                        {
+                            course: {
+                                subject_code: 'CS2617-LB',
                                 type: 'lab',
                                 category: 'major',
                                 units: 1,
                                 specific_room_assignment: ''
                             },
                             prof: {
-                                tas_id: 'PFzBM14sPW',
+                                tas_id: 'PFEXVSk6Wu',
                                 units: 24,
                                 courses: [
-                                    'ICS2606-LC',
-                                    'ICS2606-LB',
-                                    'ICS2609-LC',
-                                    'ICS2609-LB',
-                                    'ICS26013',
+                                    'CS2617-LC',
+                                    'CS2617-LB',
+                                    'CS26112',
+                                    'ICS26015'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Donata Acula',
+                                email: 'ddacula@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1801',
+                                type: 'lab',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1700', end: '2000' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'CS2618',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFmFs1IslJ',
+                                units: 24,
+                                courses: [
+                                    'C-CSELEC2-LC',
+                                    'C-CSELEC2-LB',
+                                    'CS2618',
                                     'CS26112'
                                 ],
                                 main_department: 'CS',
@@ -1748,62 +1855,46 @@ export const chromosome = [
                                     W: [],
                                     TH: []
                                 },
-                                name: 'Lawrence Decamora III',
-                                email: 'lgdecamora@ust.edu.ph'
+                                name: 'Cecil Jose Delfinado',
+                                email: 'cadelfinado@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1911',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1100', end: '1230' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2609-LB',
+                                type: 'lab',
+                                category: 'major',
+                                units: 1,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PF2NTNrtAV',
+                                units: 12,
+                                courses: ['ICS2609-LC', 'ICS2609-LB'],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [{ end: '2100', start: '0700' }],
+                                    M: [{ end: '2100', start: '0700' }],
+                                    S: [],
+                                    T: [{ end: '2100', start: '0700' }],
+                                    W: [{ end: '2100', start: '0700' }],
+                                    TH: [{ end: '2100', start: '0700' }]
+                                },
+                                name: 'Alfonso Azucenas',
+                                email: 'aaazucenas@ust.edu.ph'
                             },
                             room: {
                                 room_id: 'RM1801',
                                 type: 'lab',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1730', end: '2030' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'READPH',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1807',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1230', end: '1400' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'CS2619',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFbpKwFiyX',
-                                units: 24,
-                                courses: ['CS2619'],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Darlene Alberto',
-                                email: 'ddalberto@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1808',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0700', end: '0830' }
+                            timeBlock: { start: '1400', end: '1700' }
                         },
                         {
                             course: {
@@ -1835,14 +1926,293 @@ export const chromosome = [
                                 email: 'ddacula@ust.edu.ph'
                             },
                             room: {
+                                room_id: 'RM1909',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0700', end: '0900' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'CS2618',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFmFs1IslJ',
+                                units: 24,
+                                courses: [
+                                    'C-CSELEC2-LC',
+                                    'C-CSELEC2-LB',
+                                    'CS2618',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Cecil Jose Delfinado',
+                                email: 'cadelfinado@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1805',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1230', end: '1400' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'CS2619',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFbpKwFiyX',
+                                units: 24,
+                                courses: ['CS2619'],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Darlene Alberto',
+                                email: 'ddalberto@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1911',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0900', end: '1030' }
+                        }
+                    ],
+                    W: [
+                        {
+                            course: {
+                                subject_code: 'READPH',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1903',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1130', end: '1300' }
+                        }
+                    ],
+                    TH: [
+                        {
+                            course: {
+                                subject_code: 'CS2619',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFbpKwFiyX',
+                                units: 24,
+                                courses: ['CS2619'],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Darlene Alberto',
+                                email: 'ddalberto@ust.edu.ph'
+                            },
+                            room: {
                                 room_id: 'RM1907',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1430', end: '1630' }
+                            timeBlock: { start: '1030', end: '1200' }
+                        }
+                    ],
+                    F: [],
+                    S: []
+                }
+            },
+            {
+                cs_2b: {
+                    M: [
+                        {
+                            course: {
+                                subject_code: 'PATHFIT4',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 2,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: { room_id: 'PE ROOM' },
+                            timeBlock: { start: '1230', end: '1430' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'READPH',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1806',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1630', end: '1800' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2609-LB',
+                                type: 'lab',
+                                category: 'major',
+                                units: 1,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PF2NTNrtAV',
+                                units: 12,
+                                courses: ['ICS2609-LC', 'ICS2609-LB'],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [{ end: '2100', start: '0700' }],
+                                    M: [{ end: '2100', start: '0700' }],
+                                    S: [],
+                                    T: [{ end: '2100', start: '0700' }],
+                                    W: [{ end: '2100', start: '0700' }],
+                                    TH: [{ end: '2100', start: '0700' }]
+                                },
+                                name: 'Alfonso Azucenas',
+                                email: 'aaazucenas@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1801',
+                                type: 'lab',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1800', end: '2100' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'CS2619',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFbpKwFiyX',
+                                units: 24,
+                                courses: ['CS2619'],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Darlene Alberto',
+                                email: 'ddalberto@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1911',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '0900', end: '1030' }
                         }
                     ],
                     T: [
+                        {
+                            course: {
+                                subject_code: 'STS',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1806',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1430', end: '1600' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'ICS2609-LC',
+                                type: 'lec',
+                                category: 'major',
+                                units: 2,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PF2NTNrtAV',
+                                units: 12,
+                                courses: ['ICS2609-LC', 'ICS2609-LB'],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [{ end: '2100', start: '0700' }],
+                                    M: [{ end: '2100', start: '0700' }],
+                                    S: [],
+                                    T: [{ end: '2100', start: '0700' }],
+                                    W: [{ end: '2100', start: '0700' }],
+                                    TH: [{ end: '2100', start: '0700' }]
+                                },
+                                name: 'Alfonso Azucenas',
+                                email: 'aaazucenas@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1909',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1100', end: '1300' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'STS',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1904',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1600', end: '1730' }
+                        },
                         {
                             course: {
                                 subject_code: 'CS2619',
@@ -1873,29 +2243,27 @@ export const chromosome = [
                                 email: 'rllopez@ust.edu.ph'
                             },
                             room: {
-                                room_id: 'RM1807',
+                                room_id: 'RM1806',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1430', end: '1600' }
+                            timeBlock: { start: '0900', end: '1030' }
                         },
                         {
                             course: {
-                                subject_code: 'ICS2609-LC',
+                                subject_code: 'CS2618',
                                 type: 'lec',
                                 category: 'major',
-                                units: 2,
+                                units: 1.5,
                                 specific_room_assignment: ''
                             },
                             prof: {
-                                tas_id: 'PFzBM14sPW',
+                                tas_id: 'PFmFs1IslJ',
                                 units: 24,
                                 courses: [
-                                    'ICS2606-LC',
-                                    'ICS2606-LB',
-                                    'ICS2609-LC',
-                                    'ICS2609-LB',
-                                    'ICS26013',
+                                    'C-CSELEC2-LC',
+                                    'C-CSELEC2-LB',
+                                    'CS2618',
                                     'CS26112'
                                 ],
                                 main_department: 'CS',
@@ -1907,15 +2275,15 @@ export const chromosome = [
                                     W: [],
                                     TH: []
                                 },
-                                name: 'Lawrence Decamora III',
-                                email: 'lgdecamora@ust.edu.ph'
+                                name: 'Cecil Jose Delfinado',
+                                email: 'cadelfinado@ust.edu.ph'
                             },
                             room: {
                                 room_id: 'RM1904',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1000', end: '1200' }
+                            timeBlock: { start: '1730', end: '1900' }
                         },
                         {
                             course: {
@@ -1947,79 +2315,7 @@ export const chromosome = [
                                 email: 'cadelfinado@ust.edu.ph'
                             },
                             room: {
-                                room_id: 'RM1911',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1200', end: '1330' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'CS2617-LB',
-                                type: 'lab',
-                                category: 'major',
-                                units: 1,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFEXVSk6Wu',
-                                units: 24,
-                                courses: [
-                                    'CS2617-LC',
-                                    'CS2617-LB',
-                                    'CS26112',
-                                    'ICS26015'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Donata Acula',
-                                email: 'ddacula@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1801',
-                                type: 'lab',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1630', end: '1930' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'CS2618',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFmFs1IslJ',
-                                units: 24,
-                                courses: [
-                                    'C-CSELEC2-LC',
-                                    'C-CSELEC2-LB',
-                                    'CS2618',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Cecil Jose Delfinado',
-                                email: 'cadelfinado@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1805',
+                                room_id: 'RM1901',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
@@ -2027,90 +2323,6 @@ export const chromosome = [
                         }
                     ],
                     W: [
-                        {
-                            course: {
-                                subject_code: 'PATHFIT4',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 2,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: { room_id: 'PE ROOM' },
-                            timeBlock: { start: '1430', end: '1630' }
-                        }
-                    ],
-                    TH: [],
-                    F: [],
-                    S: []
-                }
-            },
-            {
-                cs_2b: {
-                    M: [
-                        {
-                            course: {
-                                subject_code: 'STS',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1806',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1430', end: '1600' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ICS2609-LB',
-                                type: 'lab',
-                                category: 'major',
-                                units: 1,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PF2NTNrtAV',
-                                units: 12,
-                                courses: ['ICS2609-LC', 'ICS2609-LB'],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [{ end: '2100', start: '0700' }],
-                                    M: [{ end: '2100', start: '0700' }],
-                                    S: [],
-                                    T: [{ end: '2100', start: '0700' }],
-                                    W: [{ end: '2100', start: '0700' }],
-                                    TH: [{ end: '2100', start: '0700' }]
-                                },
-                                name: 'Alfonso Azucenas',
-                                email: 'aaazucenas@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1801',
-                                type: 'lab',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0700', end: '1000' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'STS',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1805',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1100', end: '1230' }
-                        },
                         {
                             course: {
                                 subject_code: 'CS2617-LC',
@@ -2141,108 +2353,11 @@ export const chromosome = [
                                 email: 'ddacula@ust.edu.ph'
                             },
                             room: {
-                                room_id: 'RM1907',
+                                room_id: 'RM1806',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1730', end: '1930' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'ICS2609-LC',
-                                type: 'lec',
-                                category: 'major',
-                                units: 2,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PF2NTNrtAV',
-                                units: 12,
-                                courses: ['ICS2609-LC', 'ICS2609-LB'],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [{ end: '2100', start: '0700' }],
-                                    M: [{ end: '2100', start: '0700' }],
-                                    S: [],
-                                    T: [{ end: '2100', start: '0700' }],
-                                    W: [{ end: '2100', start: '0700' }],
-                                    TH: [{ end: '2100', start: '0700' }]
-                                },
-                                name: 'Alfonso Azucenas',
-                                email: 'aaazucenas@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1904',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1230', end: '1430' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'READPH',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1904',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1930', end: '2100' }
-                        }
-                    ],
-                    T: [
-                        {
-                            course: {
-                                subject_code: 'PATHFIT4',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 2,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: { room_id: 'PE ROOM' },
-                            timeBlock: { start: '0900', end: '1100' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'CS2618',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFmFs1IslJ',
-                                units: 24,
-                                courses: [
-                                    'C-CSELEC2-LC',
-                                    'C-CSELEC2-LB',
-                                    'CS2618',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Cecil Jose Delfinado',
-                                email: 'cadelfinado@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1903',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1530', end: '1700' }
+                            timeBlock: { start: '0700', end: '0900' }
                         },
                         {
                             course: {
@@ -2274,44 +2389,11 @@ export const chromosome = [
                                 email: 'ddacula@ust.edu.ph'
                             },
                             room: {
-                                room_id: 'RM1806',
-                                type: 'lec',
+                                room_id: 'RM1801',
+                                type: 'lab',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1730', end: '2030' }
-                        }
-                    ],
-                    W: [
-                        {
-                            course: {
-                                subject_code: 'CS2619',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFbpKwFiyX',
-                                units: 24,
-                                courses: ['CS2619'],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Darlene Alberto',
-                                email: 'ddalberto@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1911',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1630', end: '1800' }
+                            timeBlock: { start: '1700', end: '2000' }
                         },
                         {
                             course: {
@@ -2321,76 +2403,9 @@ export const chromosome = [
                                 units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: {
-                                room_id: 'RM1901',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0800', end: '0930' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'CS2618',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFmFs1IslJ',
-                                units: 24,
-                                courses: [
-                                    'C-CSELEC2-LC',
-                                    'C-CSELEC2-LB',
-                                    'CS2618',
-                                    'CS26112'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Cecil Jose Delfinado',
-                                email: 'cadelfinado@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1904',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1000', end: '1130' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'CS2619',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFbpKwFiyX',
-                                units: 24,
-                                courses: ['CS2619'],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Darlene Alberto',
-                                email: 'ddalberto@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1907',
+                                room_id: 'RM1807',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
@@ -2407,31 +2422,55 @@ export const chromosome = [
                     M: [
                         {
                             course: {
-                                subject_code: 'READPH',
+                                subject_code: 'STS',
                                 type: 'lec',
                                 category: 'gened',
                                 units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: {
-                                room_id: 'RM1808',
+                                room_id: 'RM1909',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1900', end: '2030' }
+                            timeBlock: { start: '1400', end: '1530' }
                         },
                         {
                             course: {
-                                subject_code: 'PATHFIT4',
+                                subject_code: 'CS2618',
                                 type: 'lec',
-                                category: 'gened',
-                                units: 2,
+                                category: 'major',
+                                units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: { room_id: 'PE ROOM' },
-                            timeBlock: { start: '0830', end: '1030' }
+                            prof: {
+                                tas_id: 'PFmFs1IslJ',
+                                units: 24,
+                                courses: [
+                                    'C-CSELEC2-LC',
+                                    'C-CSELEC2-LB',
+                                    'CS2618',
+                                    'CS26112'
+                                ],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Cecil Jose Delfinado',
+                                email: 'cadelfinado@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1806',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1030', end: '1200' }
                         },
                         {
                             course: {
@@ -2441,16 +2480,30 @@ export const chromosome = [
                                 units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: {
-                                room_id: 'RM1903',
+                                room_id: 'RM1902',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1600', end: '1730' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'READPH',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1909',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
                             timeBlock: { start: '1230', end: '1400' }
-                        }
-                    ],
-                    T: [
+                        },
                         {
                             course: {
                                 subject_code: 'ICS2609-LC',
@@ -2476,79 +2529,14 @@ export const chromosome = [
                                 email: ''
                             },
                             room: {
-                                room_id: 'RM1911',
+                                room_id: 'RM1806',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '0730', end: '0930' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'CS2619',
-                                type: 'lec',
-                                category: 'major',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFbpKwFiyX',
-                                units: 24,
-                                courses: ['CS2619'],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Darlene Alberto',
-                                email: 'ddalberto@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1807',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1900', end: '2030' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'CS2617-LC',
-                                type: 'lec',
-                                category: 'major',
-                                units: 2,
-                                specific_room_assignment: ''
-                            },
-                            prof: {
-                                tas_id: 'PFEXVSk6Wu',
-                                units: 24,
-                                courses: [
-                                    'CS2617-LC',
-                                    'CS2617-LB',
-                                    'CS26112',
-                                    'ICS26015'
-                                ],
-                                main_department: 'CS',
-                                restrictions: {
-                                    F: [],
-                                    M: [],
-                                    S: [],
-                                    T: [],
-                                    W: [],
-                                    TH: []
-                                },
-                                name: 'Donata Acula',
-                                email: 'ddacula@ust.edu.ph'
-                            },
-                            room: {
-                                room_id: 'RM1901',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1630', end: '1830' }
-                        },
+                            timeBlock: { start: '1900', end: '2100' }
+                        }
+                    ],
+                    T: [
                         {
                             course: {
                                 subject_code: 'ICS2609-LB',
@@ -2578,7 +2566,7 @@ export const chromosome = [
                                 type: 'lab',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1300', end: '1600' }
+                            timeBlock: { start: '1100', end: '1400' }
                         },
                         {
                             course: {
@@ -2614,26 +2602,24 @@ export const chromosome = [
                                 type: 'lab',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1000', end: '1300' }
-                        }
-                    ],
-                    W: [
+                            timeBlock: { start: '0800', end: '1100' }
+                        },
                         {
                             course: {
-                                subject_code: 'CS2618',
+                                subject_code: 'CS2617-LC',
                                 type: 'lec',
                                 category: 'major',
-                                units: 1.5,
+                                units: 2,
                                 specific_room_assignment: ''
                             },
                             prof: {
-                                tas_id: 'PFmFs1IslJ',
+                                tas_id: 'PFEXVSk6Wu',
                                 units: 24,
                                 courses: [
-                                    'C-CSELEC2-LC',
-                                    'C-CSELEC2-LB',
-                                    'CS2618',
-                                    'CS26112'
+                                    'CS2617-LC',
+                                    'CS2617-LB',
+                                    'CS26112',
+                                    'ICS26015'
                                 ],
                                 main_department: 'CS',
                                 restrictions: {
@@ -2644,15 +2630,15 @@ export const chromosome = [
                                     W: [],
                                     TH: []
                                 },
-                                name: 'Cecil Jose Delfinado',
-                                email: 'cadelfinado@ust.edu.ph'
+                                name: 'Donata Acula',
+                                email: 'ddacula@ust.edu.ph'
                             },
                             room: {
                                 room_id: 'RM1901',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1630', end: '1800' }
+                            timeBlock: { start: '1900', end: '2100' }
                         },
                         {
                             course: {
@@ -2684,11 +2670,60 @@ export const chromosome = [
                                 email: 'rllopez@ust.edu.ph'
                             },
                             room: {
-                                room_id: 'RM1806',
+                                room_id: 'RM1907',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '1500', end: '1630' }
+                            timeBlock: { start: '1400', end: '1530' }
+                        }
+                    ],
+                    W: [
+                        {
+                            course: {
+                                subject_code: 'CS2619',
+                                type: 'lec',
+                                category: 'major',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: {
+                                tas_id: 'PFbpKwFiyX',
+                                units: 24,
+                                courses: ['CS2619'],
+                                main_department: 'CS',
+                                restrictions: {
+                                    F: [],
+                                    M: [],
+                                    S: [],
+                                    T: [],
+                                    W: [],
+                                    TH: []
+                                },
+                                name: 'Darlene Alberto',
+                                email: 'ddalberto@ust.edu.ph'
+                            },
+                            room: {
+                                room_id: 'RM1805',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1630', end: '1800' }
+                        },
+                        {
+                            course: {
+                                subject_code: 'READPH',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1808',
+                                type: 'lec',
+                                main_department: 'CS'
+                            },
+                            timeBlock: { start: '1030', end: '1200' }
                         },
                         {
                             course: {
@@ -2720,46 +2755,27 @@ export const chromosome = [
                                 email: 'cadelfinado@ust.edu.ph'
                             },
                             room: {
-                                room_id: 'RM1903',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '1330', end: '1500' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'READPH',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
                                 room_id: 'RM1805',
                                 type: 'lec',
                                 main_department: 'CS'
                             },
-                            timeBlock: { start: '0930', end: '1100' }
-                        },
-                        {
-                            course: {
-                                subject_code: 'STS',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1903',
-                                type: 'lec',
-                                main_department: 'CS'
-                            },
-                            timeBlock: { start: '0700', end: '0830' }
+                            timeBlock: { start: '0900', end: '1030' }
                         }
                     ],
-                    TH: [],
+                    TH: [
+                        {
+                            course: {
+                                subject_code: 'PATHFIT4',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 2,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: { room_id: 'PE ROOM' },
+                            timeBlock: { start: '0730', end: '0930' }
+                        }
+                    ],
                     F: [],
                     S: []
                 }
@@ -2773,15 +2789,19 @@ export const chromosome = [
                     M: [
                         {
                             course: {
-                                subject_code: 'PATHFIT1',
+                                subject_code: 'THY1',
                                 type: 'lec',
                                 category: 'gened',
-                                units: 2,
+                                units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: { room_id: 'PE ROOM' },
-                            timeBlock: { start: '0930', end: '1130' }
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1813',
+                                type: 'lec',
+                                main_department: 'IT'
+                            },
+                            timeBlock: { start: '1300', end: '1430' }
                         },
                         {
                             course: {
@@ -2791,13 +2811,49 @@ export const chromosome = [
                                 units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: {
-                                room_id: 'RM2012',
+                                room_id: 'RM2011',
                                 type: 'lec',
                                 main_department: 'IT'
                             },
                             timeBlock: { start: '1430', end: '1600' }
+                        }
+                    ],
+                    T: [],
+                    W: [],
+                    TH: [
+                        {
+                            course: {
+                                subject_code: 'PATHFIT1',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 2,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: { room_id: 'PE ROOM' },
+                            timeBlock: { start: '0730', end: '0930' }
+                        }
+                    ],
+                    F: [],
+                    S: []
+                }
+            },
+            {
+                it_1b: {
+                    M: [
+                        {
+                            course: {
+                                subject_code: 'PATHFIT1',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 2,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: { room_id: 'PE ROOM' },
+                            timeBlock: { start: '0800', end: '1000' }
                         }
                     ],
                     T: [],
@@ -2810,70 +2866,13 @@ export const chromosome = [
                                 units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: {
-                                room_id: 'RM1813',
+                                room_id: 'RM2004',
                                 type: 'lec',
                                 main_department: 'IT'
                             },
-                            timeBlock: { start: '1430', end: '1600' }
-                        }
-                    ],
-                    TH: [],
-                    F: [],
-                    S: []
-                }
-            },
-            {
-                it_1b: {
-                    M: [
-                        {
-                            course: {
-                                subject_code: 'THY1',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1702',
-                                type: 'lec',
-                                main_department: 'IT'
-                            },
-                            timeBlock: { start: '1000', end: '1130' }
-                        }
-                    ],
-                    T: [
-                        {
-                            course: {
-                                subject_code: 'PATHFIT1',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 2,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: { room_id: 'PE ROOM' },
-                            timeBlock: { start: '0900', end: '1100' }
-                        }
-                    ],
-                    W: [
-                        {
-                            course: {
-                                subject_code: 'THY1',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM2015',
-                                type: 'lec',
-                                main_department: 'IT'
-                            },
-                            timeBlock: { start: '1330', end: '1500' }
+                            timeBlock: { start: '1030', end: '1200' }
                         }
                     ],
                     TH: [],
@@ -2890,35 +2889,18 @@ export const chromosome = [
                     M: [
                         {
                             course: {
-                                subject_code: 'THY1',
-                                type: 'lec',
-                                category: 'gened',
-                                units: 1.5,
-                                specific_room_assignment: ''
-                            },
-                            prof: { professor_id: 'GENDED PROF' },
-                            room: {
-                                room_id: 'RM1906',
-                                type: 'lec',
-                                main_department: 'IS'
-                            },
-                            timeBlock: { start: '1430', end: '1600' }
-                        },
-                        {
-                            course: {
                                 subject_code: 'PATHFIT1',
                                 type: 'lec',
                                 category: 'gened',
                                 units: 2,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: { room_id: 'PE ROOM' },
                             timeBlock: { start: '0830', end: '1030' }
                         }
                     ],
-                    T: [],
-                    W: [
+                    T: [
                         {
                             course: {
                                 subject_code: 'THY1',
@@ -2927,16 +2909,34 @@ export const chromosome = [
                                 units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: {
-                                room_id: 'RM1915',
+                                room_id: 'RM1811',
                                 type: 'lec',
                                 main_department: 'IS'
                             },
-                            timeBlock: { start: '0800', end: '0930' }
+                            timeBlock: { start: '0900', end: '1030' }
                         }
                     ],
-                    TH: [],
+                    W: [],
+                    TH: [
+                        {
+                            course: {
+                                subject_code: 'THY1',
+                                type: 'lec',
+                                category: 'gened',
+                                units: 1.5,
+                                specific_room_assignment: ''
+                            },
+                            prof: { tas_id: 'GENDED PROF' },
+                            room: {
+                                room_id: 'RM1809',
+                                type: 'lec',
+                                main_department: 'IS'
+                            },
+                            timeBlock: { start: '1400', end: '1530' }
+                        }
+                    ],
                     F: [],
                     S: []
                 }
@@ -2952,9 +2952,9 @@ export const chromosome = [
                                 units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: {
-                                room_id: 'RM1905',
+                                room_id: 'RM1814',
                                 type: 'lec',
                                 main_department: 'IS'
                             },
@@ -2968,13 +2968,13 @@ export const chromosome = [
                                 units: 1.5,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: {
                                 room_id: 'RM1811',
                                 type: 'lec',
                                 main_department: 'IS'
                             },
-                            timeBlock: { start: '0730', end: '0900' }
+                            timeBlock: { start: '1300', end: '1430' }
                         }
                     ],
                     T: [],
@@ -2987,9 +2987,9 @@ export const chromosome = [
                                 units: 2,
                                 specific_room_assignment: ''
                             },
-                            prof: { professor_id: 'GENDED PROF' },
+                            prof: { tas_id: 'GENDED PROF' },
                             room: { room_id: 'PE ROOM' },
-                            timeBlock: { start: '0800', end: '1000' }
+                            timeBlock: { start: '0830', end: '1030' }
                         }
                     ],
                     TH: [],
