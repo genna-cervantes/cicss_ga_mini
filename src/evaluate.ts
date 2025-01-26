@@ -66,13 +66,13 @@ const evaluateCoursesAssignment = async ({
     // const secondISCurriculum = curriculumIS[1].courses;
     // const thirdISCurriculum = curriculumIS[2].courses;
     // const fourthISCurriculum = curriculumIS[3].courses;
-    
+
     // first year muna
     // loop thru the courses
     // query the total units
     // cross check with all units in weekly sched per 1st year section
 
-    // cs 1st year 
+    // cs 1st year
     for (let j = 0; j < chromosome[0].cs_1st.length; j++) {
         let section = chromosome[0].cs_1st[j];
 
@@ -89,11 +89,14 @@ const evaluateCoursesAssignment = async ({
 
             if ((totalUnitsPerSection[subjectCode] ?? 0) < totalUnits) {
                 violationCount++;
-                violations.push({course: subjectCode, description: 'kulang units', section: Object.keys(section)[0]})
+                violations.push({
+                    course: subjectCode,
+                    description: 'kulang units',
+                    section: Object.keys(section)[0]
+                });
             }
         }
     }
-    
 
     // cs 2nd year
     for (let j = 0; j < chromosome[1].cs_2nd.length; j++) {
@@ -112,15 +115,19 @@ const evaluateCoursesAssignment = async ({
 
             if ((totalUnitsPerSection[subjectCode] ?? 0) < totalUnits) {
                 violationCount++;
-                violations.push({course: subjectCode, description: 'kulang units', section: Object.keys(section)[0]})
+                violations.push({
+                    course: subjectCode,
+                    description: 'kulang units',
+                    section: Object.keys(section)[0]
+                });
             }
         }
     }
-    
+
     // third year
     // fourth year
 
-    // it 
+    // it
     for (let j = 0; j < chromosome[2].it_1st.length; j++) {
         let section = chromosome[2].it_1st[j];
 
@@ -137,7 +144,11 @@ const evaluateCoursesAssignment = async ({
 
             if ((totalUnitsPerSection[subjectCode] ?? 0) < totalUnits) {
                 violationCount++;
-                violations.push({course: subjectCode, description: 'kulang units', section: Object.keys(section)[0]})
+                violations.push({
+                    course: subjectCode,
+                    description: 'kulang units',
+                    section: Object.keys(section)[0]
+                });
             }
         }
     }
@@ -145,7 +156,7 @@ const evaluateCoursesAssignment = async ({
     // 2nd
     // 3rd
     // 4th
-    
+
     // is
     for (let j = 0; j < chromosome[3].is_1st.length; j++) {
         let section = chromosome[3].is_1st[j];
@@ -163,7 +174,11 @@ const evaluateCoursesAssignment = async ({
 
             if ((totalUnitsPerSection[subjectCode] ?? 0) < totalUnits) {
                 violationCount++;
-                violations.push({course: subjectCode, description: 'kulang units', section: Object.keys(section)[0]})
+                violations.push({
+                    course: subjectCode,
+                    description: 'kulang units',
+                    section: Object.keys(section)[0]
+                });
             }
         }
     }
@@ -172,8 +187,112 @@ const evaluateCoursesAssignment = async ({
     // 3rd
     // 4th
 
-    return violations
+    return violations;
+};
 
+// check if may conflicting assignment ba sa rooms // 1903
+const evaluateRoomAssignment = (chromosome: any) => {
+    let violationCount = 0;
+    let violations = [];
+
+    let schedByRoom = groupSchedByRoom(chromosome);
+
+    let roomKeys = Object.keys(schedByRoom);
+
+    for (let i = 0; i < roomKeys.length; i++) {
+        let specRoomSched = schedByRoom[roomKeys[i]];
+
+        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+            let specRoomSchedPerDay = specRoomSched[SCHOOL_DAYS[j]];
+
+            // sort by ascending order tapos compare magkakasunod
+            let ascendingSched = specRoomSchedPerDay.sort(
+                (schedBlock1: any, schedBlock2: any) => {
+                    return (
+                        parseInt(schedBlock1.timeBlock.start, 10) -
+                        parseInt(schedBlock2.timeBlock.start, 10)
+                    );
+                }
+            );
+
+            for (let k = 0; k < ascendingSched.length - 1; k++) {
+                // check if may conflicting
+                let schedBlock1 = ascendingSched[k];
+                let schedBlock2 = ascendingSched[k + 1];
+
+                if (schedBlock2.timeBlock.start <= schedBlock1.timeBlock.end) {
+                    violationCount++;
+                    violations.push({
+                        type: 'conflicting room assignment',
+                        room: roomKeys[i],
+                        courses: [
+                            schedBlock1.course.subject_code,
+                            schedBlock2.course.subject_code
+                        ],
+                        time: {day: SCHOOL_DAYS[j], time: schedBlock2.timeBlock.start},
+                        sections: [schedBlock1.section, schedBlock2.section]
+                    });
+                }
+            }
+        }
+    }
+
+    return violations;
+};
+
+// helper functions
+const groupSchedByRoom = (chromosome: any) => {
+    // group schedule by room
+    let schedByRoom;
+
+    // loop per room per day
+    for (let i = 0; i < chromosome.length; i++) {
+        let perYear = chromosome[i];
+
+        let yearAndDepartmentKey = Object.keys(perYear)[0];
+
+        let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
+        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
+            let specSection = yearAndDepartmentSchedule[j];
+            let specSectionKey = Object.keys(specSection)[0];
+            let specSectionSchedule = specSection[specSectionKey];
+
+            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
+
+                let schedByRoomPerSectionPerDay = daySched.reduce(
+                    (accumulator: any, schedBlock: any) => {
+                        let room = schedBlock.room.room_id;
+
+                        if (room === 'PE ROOM') {
+                            return accumulator;
+                        }
+
+                        if (!accumulator[room]) {
+                            accumulator[room] = {
+                                M: [],
+                                T: [],
+                                W: [],
+                                TH: [],
+                                F: [],
+                                S: []
+                            };
+                        }
+                        accumulator[room][SCHOOL_DAYS[k]].push({...schedBlock, section: specSectionKey});
+                        return accumulator;
+                    },
+                    {}
+                );
+
+                schedByRoom = mergeObjects({
+                    obj1: schedByRoom,
+                    obj2: schedByRoomPerSectionPerDay
+                });
+            }
+        }
+    }
+
+    return schedByRoom;
 };
 
 const getTotalUnitsFromWeeklySchedule = ({
@@ -211,8 +330,39 @@ const getTotalUnitsFromWeeklySchedule = ({
     return totalUnitsPerCourse;
 };
 
+const mergeObjects = ({ obj1, obj2 }: { obj1: any; obj2: any }) => {
+    let result: any = { ...obj1 };
+
+    for (let key in obj2) {
+        if (result[key]) {
+            result[key] = mergeObjects2({ obj1: result[key], obj2: obj2[key] });
+        } else {
+            result[key] = obj2[key];
+        }
+    }
+
+    return result;
+};
+
+const mergeObjects2 = ({ obj1, obj2 }: { obj1: any; obj2: any }) => {
+    let result: any = { ...obj1 };
+
+    for (let key in obj2) {
+        if (result[key]) {
+            result[key] = [...result[key], ...obj2[key]];
+        } else {
+            result[key] = obj2[key];
+        }
+    }
+
+    return result;
+};
+
 export const evaluate = async () => {
-    let violations = await evaluateCoursesAssignment({ semester: 2, chromosome: chromosome });
+    // let violations = await evaluateCoursesAssignment({ semester: 2, chromosome: chromosome });
+
+    let violations = evaluateRoomAssignment(chromosome);
 
     return violations;
+    // return true;
 };
