@@ -283,11 +283,28 @@ const evaluateRoomTypeAssignment = (chromosome: any) => {
                                 },
                                 room: dailySched[l].room.room_id
                             })
-
                         }
                     }
 
                     // check specific room constraint (IT)
+                    if (dailySched[l].course.specific_room_assignment !== ''){
+                        if (dailySched[l].course.specific_room_assignment !== dailySched[l].room.room_id){
+                            violationCount++;
+                            violations.push({
+                                course: dailySched[l].course.subject_code,
+                                section: specSectionKey,
+                                type: 'room type assignment',
+                                description: 'specific room assignment not followed',
+                                time: {
+                                    day: SCHOOL_DAYS[k],
+                                    time: dailySched[l].timeBlock
+                                },
+                                required_room: dailySched[l].course.specific_room_assignment,
+                                room: dailySched[l].room.room_id
+                            })
+                        }
+
+                    }
                 }
             }
         }

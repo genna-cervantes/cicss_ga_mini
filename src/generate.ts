@@ -167,7 +167,8 @@ const generateYearGene = async ({
                 let availableTime = weeklyUnits[schoolDay] || 8;
                 // console.log('1', availableTime);
 
-                loop3: while (availableTime > 1.5) { // minimum 1.5 hours
+                loop3: while (availableTime > 1.5) {
+                    // minimum 1.5 hours
                     // gap logic for gened subs
 
                     loop4: while (!courseAssigned) {
@@ -191,23 +192,28 @@ const generateYearGene = async ({
                             majorCoursesDailyCopy.length <= 0
                         ) {
                             // assigned na lahat ng courses
-                            console.log(genedCourses)
-                            console.log(majorCourses)
-                            console.log(genedCoursesCopy)
-                            console.log(majorCoursesCopy)
-                            console.log('assigned n lahat wla na gened nd major courses copy')
+                            console.log(genedCourses);
+                            console.log(majorCourses);
+                            console.log(genedCoursesCopy);
+                            console.log(majorCoursesCopy);
+                            console.log(
+                                'assigned n lahat wla na gened nd major courses copy'
+                            );
                             continue loop2;
                         }
-                        
+
                         // get random course
                         let probabilityGened =
-                        1 - genedAssignedCourses / genedCourses.length;
+                            1 - genedAssignedCourses / genedCourses.length;
                         let course;
 
                         // nassturck siya here
                         // kung MT lang saka tapos pag tapos random na
-                        if (schoolDay === 'M' || schoolDay === 'T' || schoolDay === 'F') {
-
+                        if (
+                            schoolDay === 'M' ||
+                            schoolDay === 'T' ||
+                            schoolDay === 'F'
+                        ) {
                             if (Math.random() < probabilityGened) {
                                 if (genedCoursesDailyCopy.length > 0) {
                                     course =
@@ -253,7 +259,7 @@ const generateYearGene = async ({
                             course =
                                 allCourses[
                                     Math.floor(
-                                        Math.random() * (allCourses.length)
+                                        Math.random() * allCourses.length
                                     )
                                 ];
                         }
@@ -268,7 +274,6 @@ const generateYearGene = async ({
 
                         let assignedUnits =
                             weeklyCourseUnits[course]?.units || 0;
-
 
                         // check if pwede pa sa units
                         if (assignedUnits >= courseDetails.total_units) {
@@ -285,7 +290,6 @@ const generateYearGene = async ({
                                         subjectCode: courseDetails.subject_code,
                                         genedCourses: genedCoursesDailyCopy
                                     });
-        
                             } else {
                                 majorCoursesCopy =
                                     removeFromMajorCoursesCompleteUnits({
@@ -319,10 +323,11 @@ const generateYearGene = async ({
                                     console.log('sa gap');
                                     // pag ganito tanggalin n sa daily copy ??
                                     genedCoursesDailyCopy =
-                                    removeFromGenedCoursesCompleteUnits({
-                                        subjectCode: courseDetails.subject_code,
-                                        genedCourses: genedCoursesDailyCopy
-                                    });
+                                        removeFromGenedCoursesCompleteUnits({
+                                            subjectCode:
+                                                courseDetails.subject_code,
+                                            genedCourses: genedCoursesDailyCopy
+                                        });
                                     continue loop4;
                                 }
                             } else if (
@@ -334,10 +339,11 @@ const generateYearGene = async ({
                                 if (schoolDay != 'TH' && schoolDay != 'T') {
                                     console.log('sa gap');
                                     genedCoursesDailyCopy =
-                                    removeFromGenedCoursesCompleteUnits({
-                                        subjectCode: courseDetails.subject_code,
-                                        genedCourses: genedCoursesDailyCopy
-                                    });
+                                        removeFromGenedCoursesCompleteUnits({
+                                            subjectCode:
+                                                courseDetails.subject_code,
+                                            genedCourses: genedCoursesDailyCopy
+                                        });
                                     continue loop4;
                                 }
                             } else if (
@@ -349,10 +355,11 @@ const generateYearGene = async ({
                                 if (schoolDay != 'W') {
                                     console.log('sa gap');
                                     genedCoursesDailyCopy =
-                                    removeFromGenedCoursesCompleteUnits({
-                                        subjectCode: courseDetails.subject_code,
-                                        genedCourses: genedCoursesDailyCopy
-                                    });
+                                        removeFromGenedCoursesCompleteUnits({
+                                            subjectCode:
+                                                courseDetails.subject_code,
+                                            genedCourses: genedCoursesDailyCopy
+                                        });
                                     continue loop4;
                                 }
                             } else if (
@@ -364,10 +371,11 @@ const generateYearGene = async ({
                                 if (schoolDay != 'TH') {
                                     console.log('sa gap');
                                     genedCoursesDailyCopy =
-                                    removeFromGenedCoursesCompleteUnits({
-                                        subjectCode: courseDetails.subject_code,
-                                        genedCourses: genedCoursesDailyCopy
-                                    });
+                                        removeFromGenedCoursesCompleteUnits({
+                                            subjectCode:
+                                                courseDetails.subject_code,
+                                            genedCourses: genedCoursesDailyCopy
+                                        });
                                     continue loop4;
                                 }
                             } else if (
@@ -379,10 +387,11 @@ const generateYearGene = async ({
                                 if (schoolDay != 'S' && schoolDay != 'F') {
                                     console.log('sa gap');
                                     genedCoursesDailyCopy =
-                                    removeFromGenedCoursesCompleteUnits({
-                                        subjectCode: courseDetails.subject_code,
-                                        genedCourses: genedCoursesDailyCopy
-                                    });
+                                        removeFromGenedCoursesCompleteUnits({
+                                            subjectCode:
+                                                courseDetails.subject_code,
+                                            genedCourses: genedCoursesDailyCopy
+                                        });
                                     continue loop4;
                                 }
                             } else if (
@@ -394,10 +403,11 @@ const generateYearGene = async ({
                                 if (schoolDay != 'S') {
                                     console.log('sa gap');
                                     genedCoursesDailyCopy =
-                                    removeFromGenedCoursesCompleteUnits({
-                                        subjectCode: courseDetails.subject_code,
-                                        genedCourses: genedCoursesDailyCopy
-                                    });
+                                        removeFromGenedCoursesCompleteUnits({
+                                            subjectCode:
+                                                courseDetails.subject_code,
+                                            genedCourses: genedCoursesDailyCopy
+                                        });
                                     continue loop4;
                                 }
                             } else {
@@ -408,26 +418,31 @@ const generateYearGene = async ({
                             }
                         }
 
-
                         // add sa units nung course
                         if (courseDetails) {
                             // console.log("course: ", courseDetails);
 
                             // check if may time slot pa na pwede
-                            let assignableTimeRanges = checkAssignableTimeRanges({
-                                courseDetails,
-                                yearLevelTimeConstraints,
-                                weeklyTimeBlockConstraints,
-                                schoolDay
-                            });
+                            let assignableTimeRanges =
+                                checkAssignableTimeRanges({
+                                    courseDetails,
+                                    yearLevelTimeConstraints,
+                                    weeklyTimeBlockConstraints,
+                                    schoolDay
+                                });
 
-                            if (assignableTimeRanges.length <= 0){
-                                console.log('no more assignable time ranges for day')
+                            if (assignableTimeRanges.length <= 0) {
+                                console.log(
+                                    'no more assignable time ranges for day'
+                                );
                                 continue loop2;
                             }
 
                             // get random time slot for course
-                            let timeBlock = getTimeBlockFromCourse({assignableTimeRanges, courseDetails});
+                            let timeBlock = getTimeBlockFromCourse({
+                                assignableTimeRanges,
+                                courseDetails
+                            });
                             if (timeBlock) {
                                 if (
                                     courseDetails.subject_code.startsWith(
@@ -714,7 +729,9 @@ const generateYearGene = async ({
                                 subject_code: courseDetails.subject_code,
                                 type: courseDetails.type,
                                 category: courseDetails.category,
-                                units: courseDetails.units_per_class
+                                units: courseDetails.units_per_class,
+                                specific_room_assignment:
+                                    courseDetails.specific_room_assignment ?? ''
                             };
 
                             console.log(timeBlock.timeBlock);
@@ -874,7 +891,7 @@ const removeFromGenedCoursesCompleteUnits = ({
     subjectCode: string;
     genedCourses: string[];
 }) => {
-    return genedCourses.filter(course => course !== subjectCode);
+    return genedCourses.filter((course) => course !== subjectCode);
 };
 
 const removeFromMajorCoursesCompleteUnits = ({
@@ -884,7 +901,7 @@ const removeFromMajorCoursesCompleteUnits = ({
     subjectCode: string;
     majorCourses: string[];
 }) => {
-    return majorCourses.filter(course => course !== subjectCode);
+    return majorCourses.filter((course) => course !== subjectCode);
 };
 
 const checkNumberOfAssignedDays = (schedule: any) => {
@@ -1113,6 +1130,25 @@ const getRoomFromCourse = async ({
     schoolDay: any;
     timeBlock: any;
 }) => {
+    
+    // try muna ung specific room na need
+    if (courseDetails?.specific_room_assignment) {
+        const query0 = 'SELECT * FROM rooms WHERE room_id = $1';
+        const res0 = await client.query(query0, [
+            courseDetails.specific_room_assignment
+        ]);
+        const room = res0.rows[0];
+
+        // check if pwede pa from the course units
+        let roomConstraints = weeklyRoomUnits[room.room_id]
+            ? weeklyRoomUnits[room.room_id][schoolDay]
+            : [];
+
+        if (isTimeBlockValid({ constraints: roomConstraints, timeBlock })) {
+            return room;
+        }
+    }
+
     const query =
         'SELECT * FROM rooms WHERE main_department = $1 AND type = $2';
     const res = await client.query(query, [dept, courseDetails.type]);
@@ -1248,7 +1284,6 @@ const checkAssignableTimeRanges = ({
     weeklyTimeBlockConstraints: any;
     schoolDay: string;
 }) => {
-
     let assignableRanges = [];
 
     let availableRanges = getPossibleTimeRanges({
@@ -1258,16 +1293,18 @@ const checkAssignableTimeRanges = ({
         schoolDay
     });
 
-    for (let i = 0; i < availableRanges.length; i++){
-        let timeDuration = timeToMinutes(availableRanges[i].end) - timeToMinutes(availableRanges[i].start)
+    for (let i = 0; i < availableRanges.length; i++) {
+        let timeDuration =
+            timeToMinutes(availableRanges[i].end) -
+            timeToMinutes(availableRanges[i].start);
 
-        if (timeDuration >= 90){
-            assignableRanges.push(availableRanges[i])
+        if (timeDuration >= 90) {
+            assignableRanges.push(availableRanges[i]);
         }
     }
 
     return assignableRanges;
-}
+};
 
 const getTimeBlockFromCourse = ({
     assignableTimeRanges,
@@ -1276,8 +1313,8 @@ const getTimeBlockFromCourse = ({
     assignableTimeRanges: {
         start: string;
         end: string;
-    }[],
-    courseDetails: any
+    }[];
+    courseDetails: any;
 }) => {
     let availableRanges = assignableTimeRanges;
 
