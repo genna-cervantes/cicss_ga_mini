@@ -1096,6 +1096,57 @@ const getProfFromCourse = async ({
         return prof;
     }
 
+    
+    // kahit sinong prof na
+    const query3 = 'SELECT * FROM teaching_academic_staff';
+    const res3 = await client.query(query3);
+
+    const subAvailableProfs2 = res3.rows;
+
+    let profAssigned3 = false;
+    let tries3 = 0;
+    // Try to assign a valid course for the current day
+
+    if (subAvailableProfs2.length < 0) {
+        return null;
+    }
+
+    loop3: while (!profAssigned3) {
+        // pick random don
+        let prof =
+        subAvailableProfs2[
+                Math.floor(Math.random() * subAvailableProfs2.length)
+            ];
+            tries3++;
+
+        if (tries3 >= 30) {
+            // wala n tlga beh
+            break loop3;
+        }
+
+        if (!prof || !prof?.tas_id) {
+            continue loop3;
+        }
+
+        // check if pwede pa from the course units
+        let profConstraints = weeklyProfTimeBlocks[prof.tas_id]
+            ? weeklyProfTimeBlocks[prof.tas_id][schoolDay]
+            : [];
+        if (!isTimeBlockValid({ constraints: profConstraints, timeBlock })) {
+            continue loop3;
+        }
+
+        let assignedUnits = weeklyProfUnits[prof.tas_id]?.units || 0;
+        if (assignedUnits >= prof.units) {
+            continue loop3;
+        }
+
+        // return ung prof na un
+        return prof;
+    }
+
+
+    
     return null;
 };
 
