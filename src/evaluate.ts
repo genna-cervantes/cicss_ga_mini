@@ -229,9 +229,65 @@ const evaluateRoomAssignment = (chromosome: any) => {
                             schedBlock1.course.subject_code,
                             schedBlock2.course.subject_code
                         ],
-                        time: {day: SCHOOL_DAYS[j], time: schedBlock2.timeBlock.start},
+                        time: {
+                            day: SCHOOL_DAYS[j],
+                            time: schedBlock2.timeBlock.start
+                        },
                         sections: [schedBlock1.section, schedBlock2.section]
                     });
+                }
+            }
+        }
+    }
+
+    return violations;
+};
+
+const evaluateRoomTypeAssignment = (chromosome: any) => {
+
+    let violationCount = 0;
+    let violations = [];
+
+    for (let i = 0; i < chromosome.length; i++) {
+        let perYear = chromosome[i];
+        let yearAndDepartmentKey = Object.keys(perYear)[0];
+        let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
+
+        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
+            let specSection = yearAndDepartmentSchedule[j];
+            let specSectionKey = Object.keys(specSection)[0];
+            let specSectionSchedule = specSection[specSectionKey];
+
+            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                let dailySched = specSectionSchedule[SCHOOL_DAYS[k]]
+
+                for (let l = 0; l < dailySched.length; l++){
+
+                    if (dailySched[l].course.subject_code.startsWith('PATHFIT')){
+                        continue;
+                    }
+
+                    // check course per sched block
+                    if (dailySched[l].course.type !== dailySched[l].room.type){
+                        
+                        if (!dailySched[l].course.subject_code.includes('CSELEC')){
+                            violationCount++;
+                            violations.push({
+                                course: dailySched[l].course.subject_code,
+                                section: specSectionKey,
+                                type: 'room type assignment',
+                                description: 'lec course assigned to lab and vice versa',
+                                time: {
+                                    day: SCHOOL_DAYS[k],
+                                    time: dailySched[l].timeBlock
+                                },
+                                room: dailySched[l].room.room_id
+                            })
+
+                        }
+                    }
+
+                    // check specific room constraint (IT)
                 }
             }
         }
@@ -278,7 +334,10 @@ const groupSchedByRoom = (chromosome: any) => {
                                 S: []
                             };
                         }
-                        accumulator[room][SCHOOL_DAYS[k]].push({...schedBlock, section: specSectionKey});
+                        accumulator[room][SCHOOL_DAYS[k]].push({
+                            ...schedBlock,
+                            section: specSectionKey
+                        });
                         return accumulator;
                     },
                     {}
@@ -361,7 +420,9 @@ const mergeObjects2 = ({ obj1, obj2 }: { obj1: any; obj2: any }) => {
 export const evaluate = async () => {
     // let violations = await evaluateCoursesAssignment({ semester: 2, chromosome: chromosome });
 
-    let violations = evaluateRoomAssignment(chromosome);
+    // let violations = evaluateRoomAssignment(chromosome);
+
+    let violations = evaluateRoomTypeAssignment(chromosome);
 
     return violations;
     // return true;
