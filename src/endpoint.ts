@@ -1,6 +1,7 @@
 import express from 'express';
 import { runScript } from './script';
 import { generateChromosome } from './generate';
+import { evaluate } from './evaluate';
 
 const app = express();
 const port = 3000;
@@ -23,6 +24,11 @@ app.get('/test', async (req, res) => {
     console.log('test endpoint hit')
     let csChromosome = await generateChromosome();
     res.json(csChromosome)
+})
+
+app.get('/fitness', async (req, res) => {
+    let violations = await evaluate();
+    res.json({violations})
 })
 
 app.listen(port, () => {

@@ -186,8 +186,6 @@ const generateYearGene = async ({
                         let profDetails;
                         let roomDetails;
 
-                        // get random course
-
                         if (
                             genedCoursesDailyCopy.length <= 0 &&
                             majorCoursesDailyCopy.length <= 0
@@ -200,9 +198,10 @@ const generateYearGene = async ({
                             console.log('assigned n lahat wla na gened nd major courses copy')
                             continue loop2;
                         }
-
+                        
+                        // get random course
                         let probabilityGened =
-                            1 - genedAssignedCourses / genedCourses.length;
+                        1 - genedAssignedCourses / genedCourses.length;
                         let course;
 
                         // nassturck siya here
@@ -714,7 +713,8 @@ const generateYearGene = async ({
                             let miniCourseDetails = {
                                 subject_code: courseDetails.subject_code,
                                 type: courseDetails.type,
-                                category: courseDetails.category
+                                category: courseDetails.category,
+                                units: courseDetails.units_per_class
                             };
 
                             console.log(timeBlock.timeBlock);
@@ -781,17 +781,15 @@ export const generateChromosome = async () => {
         dept: 'CS',
         year: 1,
         sem: 2,
-        sections: 2
+        sections: 4
     });
     chromosome.push({ cs_1st: CSYearGene1 });
-
-    return chromosome;
 
     let CSYearGene2 = await generateYearGene({
         dept: 'CS',
         year: 2,
         sem: 2,
-        sections: 2
+        sections: 3
     });
     chromosome.push({ cs_2nd: CSYearGene2 });
 
