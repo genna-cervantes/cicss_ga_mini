@@ -833,13 +833,12 @@ const evaluateAllowedTimePerYearLevel = async (chromosome: any) => {
 
             for (let k = 0; k < SCHOOL_DAYS.length; k++) {
                 let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
-                let constraints = specAllowedTime.restrictions[SCHOOL_DAYS[k]]
+                let constraints = specAllowedTime.restrictions[SCHOOL_DAYS[k]];
 
-                for (let l = 0; l < daySched.length; l++){
-                    let schedBlock = daySched[l]
+                for (let l = 0; l < daySched.length; l++) {
+                    let schedBlock = daySched[l];
 
                     for (let m = 0; m < constraints.length; m++) {
-
                         if (
                             parseInt(schedBlock.timeBlock.start) >
                                 parseInt(constraints[m].start) &&
@@ -857,8 +856,42 @@ const evaluateAllowedTimePerYearLevel = async (chromosome: any) => {
                         }
                     }
                 }
+            }
+        }
+    }
 
+    return violations;
+};
 
+// atleast 2 days
+const evaluateRestDays = (chromosome: any) => {
+    let violationCount = 0;
+    let violations = [];
+
+    for (let i = 0; i < chromosome.length; i++) {
+        let perYear = chromosome[i];
+        let yearAndDepartmentKey = Object.keys(perYear)[0];
+        let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
+
+        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
+            let specSection = yearAndDepartmentSchedule[j];
+            let specSectionKey = Object.keys(specSection)[0];
+            let specSectionSchedule = specSection[specSectionKey];
+
+            let restDays = 1; // Sunday kasama
+            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
+                if (daySched.length <= 0) {
+                    restDays++;
+                }
+            }
+
+            if (restDays < 2) {
+                violationCount++;
+                violations.push({
+                    type: 'Rest days less than ideal',
+                    section: specSectionKey
+                });
             }
         }
     }
@@ -1066,7 +1099,9 @@ export const evaluate = async () => {
 
     // let violations = evaluateAllowedDaysPerYearLevel(chromosome);
 
-    let violations = evaluateAllowedTimePerYearLevel(chromosome)
+    // let violations = evaluateAllowedTimePerYearLevel(chromosome);
+
+    let violations = evaluateRestDays(chromosome)
 
     return violations;
     // return true;
