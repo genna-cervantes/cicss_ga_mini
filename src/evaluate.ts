@@ -603,7 +603,7 @@ const evaluateGenedCoursesAssignment = async (chromosome: any) => {
         let perYear = chromosome[i];
         let yearAndDepartmentKey = Object.keys(perYear)[0];
         let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
-        
+
         for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
             let specSection = yearAndDepartmentSchedule[j];
             let specSectionKey = Object.keys(specSection)[0];
@@ -645,6 +645,43 @@ const evaluateGenedCoursesAssignment = async (chromosome: any) => {
 
     return violations;
 };
+
+const evaluateNumberOfCoursesAssignedInADay = (chromosome: any) => {
+
+    let violationCount = 0;
+    let violations = [];
+
+    for (let i = 0; i < chromosome.length; i++) {
+        let perYear = chromosome[i];
+        let yearAndDepartmentKey = Object.keys(perYear)[0];
+        let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
+
+        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
+            let specSection = yearAndDepartmentSchedule[j];
+            let specSectionKey = Object.keys(specSection)[0];
+            let specSectionSchedule = specSection[specSectionKey];
+
+            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
+
+                if (daySched.length === 1){
+                    violationCount++;
+                    violations.push({
+                        type: 'Gened course constraint not followed',
+                        section: specSectionKey,
+                        day: SCHOOL_DAYS[k],
+                        courses: [
+                            daySched[0].course.subject_code
+                        ]
+                    })
+
+                }
+            }
+        }
+    }
+
+    return violations;
+}
 
 // helper functions
 const groupSchedByTAS = (chromosome: any) => {
@@ -840,7 +877,9 @@ export const evaluate = async () => {
 
     // let violations = evaluateConsecutiveClassHoursPerSection(chromosome);
 
-    let violations = evaluateGenedCoursesAssignment(chromosome);
+    // let violations = evaluateGenedCoursesAssignment(chromosome);
+
+    let violations = evaluateNumberOfCoursesAssignedInADay(chromosome)
 
     return violations;
     // return true;
