@@ -736,10 +736,10 @@ const evaluateAllowedDaysPerYearLevel = async (chromosome: any) => {
             let assignedDays = 0;
             for (let k = 0; k < SCHOOL_DAYS.length; k++) {
                 let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
-                
+
                 if (daySched.length >= 1) {
                     assignedDays++;
-    
+
                     if (
                         !specAllowedDays.available_days.includes(SCHOOL_DAYS[k])
                     ) {
@@ -752,13 +752,113 @@ const evaluateAllowedDaysPerYearLevel = async (chromosome: any) => {
                     }
                 }
             }
-            
-            if (assignedDays > specAllowedDays.max_days){
+
+            if (assignedDays > specAllowedDays.max_days) {
                 violationCount++;
                 violations.push({
                     type: 'Year level assigned classes on more than the allowed days',
                     section: specSectionKey
                 });
+            }
+        }
+    }
+
+    return violations;
+};
+
+const evaluateAllowedTimePerYearLevel = async (chromosome: any) => {
+    let violationCount = 0;
+    let violations = [];
+
+    const allowedTimePerYearAndDepartment: any = {};
+    const allowedTimeQuery =
+        'SELECT department, year, restrictions FROM year_time_restrictions';
+    const res = await client.query(allowedTimeQuery);
+    const allowedTime = res.rows;
+
+    allowedTime.forEach((ad: any) => {
+        if (
+            !allowedTimePerYearAndDepartment[ad.department] ||
+            !allowedTimePerYearAndDepartment[ad.department][ad.year]
+        ) {
+            allowedTimePerYearAndDepartment[ad.department] = {
+                ...allowedTimePerYearAndDepartment[ad.department],
+                [ad.year]: { restrictions: [] }
+            };
+        }
+
+        allowedTimePerYearAndDepartment[ad.department][ad.year][
+            'restrictions'
+        ] = ad.restrictions;
+    });
+
+    // loop thru ung year levels tapos check per section if may violated b n section
+    for (let i = 0; i < chromosome.length; i++) {
+        let perYear = chromosome[i];
+        let yearAndDepartmentKey = Object.keys(perYear)[0];
+        let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
+
+        let departmentKey = yearAndDepartmentKey.split('_')[0].toUpperCase();
+        let yearKey = yearAndDepartmentKey.split('_')[1].slice(0, 1);
+
+        // defaullt
+        let specAllowedTime = allowedTimePerYearAndDepartment[departmentKey]
+            ? allowedTimePerYearAndDepartment[departmentKey][yearKey]
+                ? allowedTimePerYearAndDepartment[departmentKey][yearKey]
+                : {
+                      restrictions: {
+                          F: [],
+                          M: [],
+                          S: [],
+                          T: [],
+                          W: [],
+                          TH: []
+                      }
+                  }
+            : {
+                  restrictions: {
+                      F: [],
+                      M: [],
+                      S: [],
+                      T: [],
+                      W: [],
+                      TH: []
+                  }
+              };
+
+        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
+            let specSection = yearAndDepartmentSchedule[j];
+            let specSectionKey = Object.keys(specSection)[0];
+            let specSectionSchedule = specSection[specSectionKey];
+
+            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
+                let constraints = specAllowedTime.restrictions[SCHOOL_DAYS[k]]
+
+                for (let l = 0; l < daySched.length; l++){
+                    let schedBlock = daySched[l]
+
+                    for (let m = 0; m < constraints.length; m++) {
+
+                        if (
+                            parseInt(schedBlock.timeBlock.start) >
+                                parseInt(constraints[m].start) &&
+                            parseInt(schedBlock.timeBlock.end) <
+                                parseInt(constraints[m].end)
+                        ) {
+                            violationCount++;
+                            violations.push({
+                                type: 'Year level time constraint not followed',
+                                section: specSectionKey,
+                                day: SCHOOL_DAYS[k],
+                                course: schedBlock.course.subject_code,
+                                time: schedBlock.timeBlock.start
+                            });
+                        }
+                    }
+                }
+
+
             }
         }
     }
@@ -964,7 +1064,9 @@ export const evaluate = async () => {
 
     /// let violations = evaluateNumberOfCoursesAssignedInADay(chromosome);
 
-    let violations = evaluateAllowedDaysPerYearLevel(chromosome);
+    // let violations = evaluateAllowedDaysPerYearLevel(chromosome);
+
+    let violations = evaluateAllowedTimePerYearLevel(chromosome)
 
     return violations;
     // return true;
