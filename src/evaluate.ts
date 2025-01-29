@@ -546,8 +546,7 @@ const evaluateConsecutiveClassHoursPerSection = (chromosome: any) => {
                 );
 
                 let hours = 0;
-                for (let l = 0; l < (ascendingSched.length - 1); l++) {
-                    
+                for (let l = 0; l < ascendingSched.length - 1; l++) {
                     if (ascendingSched[l].course.type === 'lec') {
                         hours += ascendingSched[l].course.units;
                     } else {
@@ -564,13 +563,81 @@ const evaluateConsecutiveClassHoursPerSection = (chromosome: any) => {
                             time: ascendingSched[l].timeBlock.start
                         });
                     }
-                    
+
                     if (
                         ascendingSched[l].timeBlock.end <
                         ascendingSched[l + 1].timeBlock.start
                     ) {
                         hours = 0;
                     }
+                }
+            }
+        }
+    }
+
+    return violations;
+};
+
+const evaluateGenedCoursesAssignment = async (chromosome: any) => {
+    // get all gened courses and their constraints
+    // loop thru each schedule and check if gened ung course
+    // find ung constraint na un
+    // cross check sa constraints if pasok b
+    // add sa violation if ndi
+
+    let violationCount = 0;
+    let violations = [];
+
+    const genedCoursesAndConstraints: any = {};
+
+    const getGenedConstraintsQuery =
+        "SELECT subject_code, restrictions FROM courses WHERE category = 'gened'";
+    const res = await client.query(getGenedConstraintsQuery);
+    const genedCoursesAndConstraintsRes = res.rows;
+
+    genedCoursesAndConstraintsRes.forEach((ge: any) => {
+        genedCoursesAndConstraints[ge.subject_code] = ge.restrictions;
+    });
+
+    for (let i = 0; i < chromosome.length; i++) {
+        let perYear = chromosome[i];
+        let yearAndDepartmentKey = Object.keys(perYear)[0];
+        let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
+        
+        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
+            let specSection = yearAndDepartmentSchedule[j];
+            let specSectionKey = Object.keys(specSection)[0];
+            let specSectionSchedule = specSection[specSectionKey];
+
+            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
+
+                for (let l = 0; l < daySched.length; l++) {
+                    let schedBlock = daySched[l];
+
+                    if (schedBlock.course.category !== 'gened') {
+                        continue;
+                    }
+
+                    let constraints = genedCoursesAndConstraints[schedBlock.course.subject_code][SCHOOL_DAYS[k]];
+                    for (let m = 0; m < constraints.length; m++) {
+                        if (
+                            parseInt(schedBlock.timeBlock.start) > parseInt(constraints[m].start) &&
+                            parseInt(schedBlock.timeBlock.end) < parseInt(constraints[m].end)
+                        ) {
+                            violationCount++;
+                            violations.push({
+                                type: 'Gened course constraint not followed',
+                                section: specSectionKey,
+                                day: SCHOOL_DAYS[k],
+                                courses: [
+                                    schedBlock.course.subject_code
+                                ],
+                                time: schedBlock.timeBlock.start
+                            });
+                        }
+                    }
+                    // check if within ung timeslot neto don sa constraint ng
                 }
             }
         }
@@ -771,7 +838,9 @@ export const evaluate = async () => {
 
     // let violations = evaluateMaxClassDayLength(chromosome);
 
-    let violations = evaluateConsecutiveClassHoursPerSection(chromosome);
+    // let violations = evaluateConsecutiveClassHoursPerSection(chromosome);
+
+    let violations = evaluateGenedCoursesAssignment(chromosome);
 
     return violations;
     // return true;
