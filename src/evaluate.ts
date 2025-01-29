@@ -965,6 +965,57 @@ const evaluateTASRequestAssignments = async (chromosome: any) => {
     return violations;
 };
 
+const evaluateRoomProximity = (chromosome: any) => {
+    let violationCount = 0;
+    let violations: any = [];
+
+    for (let i = 0; i < chromosome.length; i++) {
+        let perYear = chromosome[i];
+        let yearAndDepartmentKey = Object.keys(perYear)[0];
+        let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
+
+        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
+            let specSection = yearAndDepartmentSchedule[j];
+            let specSectionKey = Object.keys(specSection)[0];
+            let specSectionSchedule = specSection[specSectionKey];
+
+            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
+
+                for (let l = 0; l < daySched.length - 1; l++) {
+                    let schedBlock = daySched[l];
+                    let nextSchedBlock = daySched[l + 1];
+
+                    if (schedBlock.room.room_id === 'PE ROOM') {
+                        continue;
+                    }
+
+                    let firstRoomFloor = Math.floor(
+                        parseInt(schedBlock.room.room_id.slice(2)) / 100
+                    );
+                    let secondRoomFloor = Math.floor(
+                        parseInt(nextSchedBlock.room.room_id.slice(2)) / 100
+                    );
+
+                    if (Math.abs(firstRoomFloor - secondRoomFloor) > 1) {
+                        violationCount++;
+                        violations.push({
+                            type: 'Room proximity ideal not followed',
+                            section: specSectionKey,
+                            day: SCHOOL_DAYS[k],
+                            courses: [schedBlock.course.subject_code, nextSchedBlock.course.subject_code],
+                            time: [schedBlock.timeBlock, nextSchedBlock.timeBlock],
+                            rooms: [schedBlock.room.room_id, nextSchedBlock.room.room_id]
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    return violations;
+};
+
 // helper functions
 const groupSchedByTAS = (chromosome: any) => {
     let schedByTAS;
@@ -1169,7 +1220,9 @@ export const evaluate = async () => {
 
     // let violations = evaluateRestDays(chromosome)
 
-    let violations = evaluateTASRequestAssignments(chromosome);
+    // let violations = evaluateTASRequestAssignments(chromosome);
+
+    let violations = evaluateRoomProximity(chromosome);
 
     return violations;
     // return true;
