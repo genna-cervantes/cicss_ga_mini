@@ -462,7 +462,6 @@ const evaluateTASUnitsAssignment = async (chromosome: any) => {
 };
 
 const evaluateMaxClassDayLength = (chromosome: any) => {
-
     let violationCount = 0;
     let violations = [];
 
@@ -480,7 +479,7 @@ const evaluateMaxClassDayLength = (chromosome: any) => {
             for (let k = 0; k < SCHOOL_DAYS.length; k++) {
                 let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
 
-                if (daySched.length <= 0){
+                if (daySched.length <= 0) {
                     continue;
                 }
 
@@ -504,8 +503,74 @@ const evaluateMaxClassDayLength = (chromosome: any) => {
                         type: 'Section assigned more than 8 hours in a day',
                         section: specSectionKey,
                         day: SCHOOL_DAYS[k],
-                        assignedUnits: (dayEnd - dayStart)
+                        assignedUnits: dayEnd - dayStart
                     });
+                }
+            }
+        }
+    }
+
+    return violations;
+};
+
+const evaluateConsecutiveClassHoursPerSection = (chromosome: any) => {
+    let violationCount = 0;
+    let violations = [];
+
+    for (let i = 0; i < chromosome.length; i++) {
+        let perYear = chromosome[i];
+
+        let yearAndDepartmentKey = Object.keys(perYear)[0];
+
+        let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
+        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
+            let specSection = yearAndDepartmentSchedule[j];
+            let specSectionKey = Object.keys(specSection)[0];
+            let specSectionSchedule = specSection[specSectionKey];
+
+            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
+
+                // ascending order
+                // check ung end and start if walang break tapos ayun ung iggroup
+                // check ung length nung group
+
+                // sort by ascending order tapos compare magkakasunod
+                let ascendingSched = daySched.sort(
+                    (schedBlock1: any, schedBlock2: any) => {
+                        return (
+                            parseInt(schedBlock1.timeBlock.start, 10) -
+                            parseInt(schedBlock2.timeBlock.start, 10)
+                        );
+                    }
+                );
+
+                let hours = 0;
+                for (let l = 0; l < (ascendingSched.length - 1); l++) {
+                    
+                    if (ascendingSched[l].course.type === 'lec') {
+                        hours += ascendingSched[l].course.units;
+                    } else {
+                        hours += ascendingSched[l].course.units * 3;
+                    }
+
+                    if (hours > 3) {
+                        violationCount++;
+                        violations.push({
+                            type: 'Section assigned more than 3 consecutive hours of class',
+                            section: specSectionKey,
+                            day: SCHOOL_DAYS[k],
+                            courses: [ascendingSched[l].course.subject_code],
+                            time: ascendingSched[l].timeBlock.start
+                        });
+                    }
+                    
+                    if (
+                        ascendingSched[l].timeBlock.end <
+                        ascendingSched[l + 1].timeBlock.start
+                    ) {
+                        hours = 0;
+                    }
                 }
             }
         }
@@ -704,7 +769,9 @@ export const evaluate = async () => {
 
     // let violations = evaluateTASUnitsAssignment(chromosome);
 
-    let violations = evaluateMaxClassDayLength(chromosome);
+    // let violations = evaluateMaxClassDayLength(chromosome);
+
+    let violations = evaluateConsecutiveClassHoursPerSection(chromosome);
 
     return violations;
     // return true;
