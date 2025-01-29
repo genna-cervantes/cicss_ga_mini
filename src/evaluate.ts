@@ -619,20 +619,23 @@ const evaluateGenedCoursesAssignment = async (chromosome: any) => {
                         continue;
                     }
 
-                    let constraints = genedCoursesAndConstraints[schedBlock.course.subject_code][SCHOOL_DAYS[k]];
+                    let constraints =
+                        genedCoursesAndConstraints[
+                            schedBlock.course.subject_code
+                        ][SCHOOL_DAYS[k]];
                     for (let m = 0; m < constraints.length; m++) {
                         if (
-                            parseInt(schedBlock.timeBlock.start) > parseInt(constraints[m].start) &&
-                            parseInt(schedBlock.timeBlock.end) < parseInt(constraints[m].end)
+                            parseInt(schedBlock.timeBlock.start) >
+                                parseInt(constraints[m].start) &&
+                            parseInt(schedBlock.timeBlock.end) <
+                                parseInt(constraints[m].end)
                         ) {
                             violationCount++;
                             violations.push({
                                 type: 'Gened course constraint not followed',
                                 section: specSectionKey,
                                 day: SCHOOL_DAYS[k],
-                                courses: [
-                                    schedBlock.course.subject_code
-                                ],
+                                courses: [schedBlock.course.subject_code],
                                 time: schedBlock.timeBlock.start
                             });
                         }
@@ -647,7 +650,6 @@ const evaluateGenedCoursesAssignment = async (chromosome: any) => {
 };
 
 const evaluateNumberOfCoursesAssignedInADay = (chromosome: any) => {
-
     let violationCount = 0;
     let violations = [];
 
@@ -664,24 +666,105 @@ const evaluateNumberOfCoursesAssignedInADay = (chromosome: any) => {
             for (let k = 0; k < SCHOOL_DAYS.length; k++) {
                 let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
 
-                if (daySched.length === 1){
+                if (daySched.length === 1) {
                     violationCount++;
                     violations.push({
                         type: 'Gened course constraint not followed',
                         section: specSectionKey,
                         day: SCHOOL_DAYS[k],
-                        courses: [
-                            daySched[0].course.subject_code
-                        ]
-                    })
-
+                        courses: [daySched[0].course.subject_code]
+                    });
                 }
             }
         }
     }
 
     return violations;
-}
+};
+
+const evaluateAllowedDaysPerYearLevel = async (chromosome: any) => {
+    let violationCount = 0;
+    let violations = [];
+
+    const allowedDaysPerYearAndDepartment: any = {};
+    const allowedDaysQuery =
+        'SELECT department, year, available_days, max_days FROM year_day_restrictions';
+    const res = await client.query(allowedDaysQuery);
+    const allowedDays = res.rows;
+
+    allowedDays.forEach((ad: any) => {
+        if (
+            !allowedDaysPerYearAndDepartment[ad.department] ||
+            !allowedDaysPerYearAndDepartment[ad.department][ad.year]
+        ) {
+            allowedDaysPerYearAndDepartment[ad.department] = {
+                ...allowedDaysPerYearAndDepartment[ad.department],
+                [ad.year]: { available_days: [], max_days: 0 }
+            };
+        }
+
+        allowedDaysPerYearAndDepartment[ad.department][ad.year][
+            'available_days'
+        ] = ad.available_days;
+        allowedDaysPerYearAndDepartment[ad.department][ad.year]['max_days'] =
+            ad.max_days;
+    });
+
+    // loop thru ung year levels tapos check per section if may violated b n section
+    for (let i = 0; i < chromosome.length; i++) {
+        let perYear = chromosome[i];
+        let yearAndDepartmentKey = Object.keys(perYear)[0];
+        let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
+
+        let departmentKey = yearAndDepartmentKey.split('_')[0].toUpperCase();
+        let yearKey = yearAndDepartmentKey.split('_')[1].slice(0, 1);
+
+        // defaullt
+        let specAllowedDays = allowedDaysPerYearAndDepartment[departmentKey]
+            ? allowedDaysPerYearAndDepartment[departmentKey][yearKey]
+                ? allowedDaysPerYearAndDepartment[departmentKey][yearKey]
+                : { available_days: SCHOOL_DAYS, max_days: 6 }
+            : { available_days: SCHOOL_DAYS, max_days: 6 };
+
+        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
+            let specSection = yearAndDepartmentSchedule[j];
+            let specSectionKey = Object.keys(specSection)[0];
+            let specSectionSchedule = specSection[specSectionKey];
+
+            // allowedDaysPerYearAndDepartment[]
+
+            let assignedDays = 0;
+            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
+                
+                if (daySched.length >= 1) {
+                    assignedDays++;
+    
+                    if (
+                        !specAllowedDays.available_days.includes(SCHOOL_DAYS[k])
+                    ) {
+                        violationCount++;
+                        violations.push({
+                            type: 'Course(s) assigned to restricted day',
+                            section: specSectionKey,
+                            day: SCHOOL_DAYS[k]
+                        });
+                    }
+                }
+            }
+            
+            if (assignedDays > specAllowedDays.max_days){
+                violationCount++;
+                violations.push({
+                    type: 'Year level assigned classes on more than the allowed days',
+                    section: specSectionKey
+                });
+            }
+        }
+    }
+
+    return violations;
+};
 
 // helper functions
 const groupSchedByTAS = (chromosome: any) => {
@@ -879,7 +962,9 @@ export const evaluate = async () => {
 
     // let violations = evaluateGenedCoursesAssignment(chromosome);
 
-    let violations = evaluateNumberOfCoursesAssignedInADay(chromosome)
+    /// let violations = evaluateNumberOfCoursesAssignedInADay(chromosome);
+
+    let violations = evaluateAllowedDaysPerYearLevel(chromosome);
 
     return violations;
     // return true;
