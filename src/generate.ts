@@ -812,7 +812,7 @@ export const generateChromosome = async () => {
 
     // console.log('done with cs')
 
-    // return chromosome;
+    return chromosome;
 
     let ITYearGene = await generateYearGene({
         dept: 'IT',

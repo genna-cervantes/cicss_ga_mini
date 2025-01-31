@@ -1,5 +1,5 @@
 import express from 'express';
-import { runScript } from './script';
+import { runAlgo, runScript } from './script';
 import { generateChromosome } from './generate';
 import { evaluate } from './evaluate';
 
@@ -16,7 +16,10 @@ app.get('/health', (req, res) => {
 
 app.get('/schedule', async (req, res) => {
     console.log('endpoint hit')
-    let schedule = await runScript();
+    // let schedule = await runScript();
+    let {schedule, score, violations} = await runAlgo();
+    console.log(violations)
+    console.log(score)
     res.json(schedule); // Send the schedule data as JSON response
 });
 
@@ -26,10 +29,10 @@ app.get('/test', async (req, res) => {
     res.json(csChromosome)
 })
 
-app.get('/fitness', async (req, res) => {
-    let violations = await evaluate();
-    res.json({violations})
-})
+// app.get('/fitness', async (req, res) => {
+//     let {violations, violationCount, score} = await evaluate();
+//     res.json({violations, violationCount, score})
+// })
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
