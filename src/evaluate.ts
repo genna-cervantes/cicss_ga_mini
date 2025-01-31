@@ -37,155 +37,80 @@ const evaluateCoursesAssignment = async ({
     let violationCount = 0;
     let violations: any = [];
 
+    let curriculum: any = { CS: [], IT: [], IS: [] };
+
     const queryCS =
-        "SELECT courses FROM curriculum WHERE semester = $1 AND department = 'CS' ORDER BY year";
+        "SELECT year, courses FROM curriculum WHERE semester = $1 AND department = 'CS' ORDER BY year";
     const res = await client.query(queryCS, [semester]);
     const curriculumCS = res.rows;
 
-    const firstCSCurriculum = curriculumCS[0].courses;
-    const secondCSCurriculum = curriculumCS[1].courses;
-    const thirdCSCurriculum = curriculumCS[2].courses;
-    const fourthCSCurriculum = curriculumCS[3].courses;
-
     const queryIT =
-        "SELECT courses FROM curriculum WHERE semester = $1 AND department = 'IT' ORDER BY year";
+        "SELECT year, courses FROM curriculum WHERE semester = $1 AND department = 'IT' ORDER BY year";
     const resIT = await client.query(queryIT, [semester]);
     const curriculumIT = resIT.rows;
 
-    const firstITCurriculum = curriculumIT[0].courses;
-    // const secondITCurriculum = curriculumIT[1].courses;
-    // const thirdITCurriculum = curriculumIT[2].courses;
-    // const fourthITCurriculum = curriculumIT[3].courses;
-
     const queryIS =
-        "SELECT courses FROM curriculum WHERE semester = $1 AND department = 'IS' ORDER BY year";
+        "SELECT year, courses FROM curriculum WHERE semester = $1 AND department = 'IS' ORDER BY year";
     const resIS = await client.query(queryIS, [semester]);
     const curriculumIS = resIS.rows;
 
-    const firstISCurriculum = curriculumIS[0].courses;
-    // const secondISCurriculum = curriculumIS[1].courses;
-    // const thirdISCurriculum = curriculumIS[2].courses;
-    // const fourthISCurriculum = curriculumIS[3].courses;
+    for (let i = 0; i < curriculumCS.length; i++) {
+        curriculum['CS'][curriculumCS[i].year] = curriculumCS[i].courses;
+    }
+    
+    for (let i = 0; i < curriculumIT.length; i++) {
+        curriculum['IT'][curriculumIT[i].year] = curriculumIT[i].courses;
+    }
+    
+    for (let i = 0; i < curriculumIS.length; i++) {
+        curriculum['IS'][curriculumIS[i].year] = curriculumIS[i].courses;
+    }
 
-    // first year muna
-    // loop thru the courses
-    // query the total units
-    // cross check with all units in weekly sched per 1st year section
+    // // loop thru the sectins
+    // // get the section
+    // // get total units per section
+    // // get the curriculum for that section
+    // // loop thru curriculum
 
-    // cs 1st year
-    for (let j = 0; j < chromosome[0].cs_1st.length; j++) {
-        let section = chromosome[0].cs_1st[j];
-
-        let totalUnitsPerSection = getTotalUnitsFromWeeklySchedule({
-            sectionSchedule: section
-        });
-
-        for (let i = 0; i < firstCSCurriculum.length; i++) {
-            const querySubj =
+    for (let i = 0; i < chromosome.length; i++) {
+        let perYear = chromosome[i];
+        let yearAndDepartmentKey = Object.keys(perYear)[0];
+        let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
+        
+        let department = yearAndDepartmentKey.split('_')[0].toUpperCase();
+        let year = yearAndDepartmentKey.split('_')[1].slice(0, 1);
+        
+        let requiredUnits = curriculum[department][year];
+        
+        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
+            let specSection = yearAndDepartmentSchedule[j];
+            let specSectionKey = Object.keys(specSection)[0];
+            let specSectionSchedule = specSection[specSectionKey];
+            
+            let totalUnitsPerSection = getTotalUnitsFromWeeklySchedule({
+                sectionSchedule: specSectionSchedule
+            });
+            
+            for (let k = 0; k < requiredUnits.length; k++) {
+                const subjectCode = requiredUnits[k];
+                const querySubj =
                 'SELECT total_units, type FROM courses WHERE subject_code = $1';
-            const res = await client.query(querySubj, [firstCSCurriculum[i]]);
-            const totalUnits = res.rows[0].total_units;
-            const subjectCode = firstCSCurriculum[i];
+                const res = await client.query(querySubj, [
+                    subjectCode
+                ]);
+                const totalUnits = res.rows[0].total_units;
 
-            if ((totalUnitsPerSection[subjectCode] ?? 0) < totalUnits) {
-                violationCount++;
-                violations.push({
-                    course: subjectCode,
-                    description: 'kulang units',
-                    section: Object.keys(section)[0]
-                });
+                if ((totalUnitsPerSection[subjectCode] ?? 0) < totalUnits) {
+                    violationCount++;
+                    violations.push({
+                        course: subjectCode,
+                        description: 'kulang units',
+                        section: specSectionKey
+                    });
+                }
             }
         }
     }
-
-    // cs 2nd year
-    for (let j = 0; j < chromosome[1].cs_2nd.length; j++) {
-        let section = chromosome[1].cs_2nd[j];
-
-        let totalUnitsPerSection = getTotalUnitsFromWeeklySchedule({
-            sectionSchedule: section
-        });
-
-        for (let i = 0; i < secondCSCurriculum.length; i++) {
-            const querySubj =
-                'SELECT total_units, type FROM courses WHERE subject_code = $1';
-            const res = await client.query(querySubj, [secondCSCurriculum[i]]);
-            const totalUnits = res.rows[0].total_units;
-            const subjectCode = secondCSCurriculum[i];
-
-            if ((totalUnitsPerSection[subjectCode] ?? 0) < totalUnits) {
-                violationCount++;
-                violations.push({
-                    course: subjectCode,
-                    description: 'kulang units',
-                    section: Object.keys(section)[0]
-                });
-            }
-        }
-    }
-
-    // third year
-    // fourth year
-
-    // it
-    for (let j = 0; j < chromosome[2].it_1st.length; j++) {
-        let section = chromosome[2].it_1st[j];
-
-        let totalUnitsPerSection = getTotalUnitsFromWeeklySchedule({
-            sectionSchedule: section
-        });
-
-        for (let i = 0; i < firstITCurriculum.length; i++) {
-            const querySubj =
-                'SELECT total_units, type FROM courses WHERE subject_code = $1';
-            const res = await client.query(querySubj, [firstITCurriculum[i]]);
-            const totalUnits = res.rows[0].total_units;
-            const subjectCode = firstITCurriculum[i];
-
-            if ((totalUnitsPerSection[subjectCode] ?? 0) < totalUnits) {
-                violationCount++;
-                violations.push({
-                    course: subjectCode,
-                    description: 'kulang units',
-                    section: Object.keys(section)[0]
-                });
-            }
-        }
-    }
-
-    // 2nd
-    // 3rd
-    // 4th
-
-    // is
-    for (let j = 0; j < chromosome[3].is_1st.length; j++) {
-        let section = chromosome[3].is_1st[j];
-
-        let totalUnitsPerSection = getTotalUnitsFromWeeklySchedule({
-            sectionSchedule: section
-        });
-
-        for (let i = 0; i < firstISCurriculum.length; i++) {
-            const querySubj =
-                'SELECT total_units, type FROM courses WHERE subject_code = $1';
-            const res = await client.query(querySubj, [firstISCurriculum[i]]);
-            const totalUnits = res.rows[0].total_units;
-            const subjectCode = firstISCurriculum[i];
-
-            if ((totalUnitsPerSection[subjectCode] ?? 0) < totalUnits) {
-                violationCount++;
-                violations.push({
-                    course: subjectCode,
-                    description: 'kulang units',
-                    section: Object.keys(section)[0]
-                });
-            }
-        }
-    }
-
-    // 2nd
-    // 3rd
-    // 4th
 
     return violations;
 };
@@ -1003,9 +928,18 @@ const evaluateRoomProximity = (chromosome: any) => {
                             type: 'Room proximity ideal not followed',
                             section: specSectionKey,
                             day: SCHOOL_DAYS[k],
-                            courses: [schedBlock.course.subject_code, nextSchedBlock.course.subject_code],
-                            time: [schedBlock.timeBlock, nextSchedBlock.timeBlock],
-                            rooms: [schedBlock.room.room_id, nextSchedBlock.room.room_id]
+                            courses: [
+                                schedBlock.course.subject_code,
+                                nextSchedBlock.course.subject_code
+                            ],
+                            time: [
+                                schedBlock.timeBlock,
+                                nextSchedBlock.timeBlock
+                            ],
+                            rooms: [
+                                schedBlock.room.room_id,
+                                nextSchedBlock.room.room_id
+                            ]
                         });
                     }
                 }
@@ -1139,10 +1073,7 @@ const getTotalUnitsFromWeeklySchedule = ({
     // may obj nlng to store lahat ng units
 
     const totalUnitsPerCourse: any = {};
-
-    const keys = Object.keys(sectionSchedule);
-    const sectionName = keys[0];
-    const schedule = sectionSchedule[sectionName];
+    const schedule = sectionSchedule;
 
     for (let i = 0; i < SCHOOL_DAYS.length; i++) {
         for (let j = 0; j < schedule[SCHOOL_DAYS[i]].length; j++) {
@@ -1194,7 +1125,10 @@ const mergeObjects2 = ({ obj1, obj2 }: { obj1: any; obj2: any }) => {
 };
 
 export const evaluate = async () => {
-    // let violations = await evaluateCoursesAssignment({ semester: 2, chromosome: chromosome });
+    let violations = await evaluateCoursesAssignment({
+        semester: 2,
+        chromosome: chromosome
+    });
 
     // let violations = evaluateRoomAssignment(chromosome);
 
@@ -1222,7 +1156,7 @@ export const evaluate = async () => {
 
     // let violations = evaluateTASRequestAssignments(chromosome);
 
-    let violations = evaluateRoomProximity(chromosome);
+    // let violations = evaluateRoomProximity(chromosome);
 
     return violations;
     // return true;
