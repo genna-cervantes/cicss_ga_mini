@@ -2,6 +2,7 @@ import express from 'express';
 import { runAlgo, runScript } from './script';
 import { generateChromosome } from './generate';
 import { evaluate } from './evaluate';
+import { chromosome } from './data';
 
 const app = express();
 const port = 3000;
@@ -27,6 +28,22 @@ app.get('/test', async (req, res) => {
     console.log('test endpoint hit')
     let csChromosome = await generateChromosome();
     res.json(csChromosome)
+})
+
+app.get('/time-sched', async (req, res) => {
+    console.log('testing generation time')
+    for (let i = 0; i < 500; i++) {
+        const chromosome = await generateChromosome();
+    }
+    res.json('done')
+})
+
+app.get('/time-eval', async (req, res) => {
+    console.log('testing evaluation time')
+    for (let i = 0; i < 500; i++){
+        const score = await evaluate(chromosome);
+    }
+    res.json('done')
 })
 
 // app.get('/fitness', async (req, res) => {

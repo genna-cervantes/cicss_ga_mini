@@ -69,6 +69,7 @@ export const runAlgo = async () => {
         const chromosome = await generateChromosome();
         // console.log('generated chromosome')
         // console.log('evaluating chromosome')
+        // gawing isang loop ung eval para bumilis
         const {score, violationType} = await evaluate(chromosome);
         // console.log('evaluated chromosome')
         population.push({ chromosome, score, violations: violationType });
@@ -81,7 +82,9 @@ export const runAlgo = async () => {
             .slice(0, 50); // Get the top 50
     };
 
-    for (let generation = 0; generation < 100; generation++) {
+    // try this without ung merging to see if better ba tlga na nag ssplit and merge
+
+    for (let generation = 0; generation < 200; generation++) {
         // console.log(`Generation ${generation + 1}: Selecting top 50 chromosomes...`);
         const top50 = findTop50(population);
 
@@ -161,7 +164,7 @@ const splitChromosome = (chromosome: any[]) => {
                 throw new Error(`Invalid group structure for ${key}`);
             }
 
-            const splitPoint = Math.floor(group.length / 2);
+            const splitPoint = Math.floor(group.length / 2); // randomize this point
 
             // Create split for the current group
             const groupParent1 = group.slice(0, splitPoint);

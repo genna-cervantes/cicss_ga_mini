@@ -99,7 +99,6 @@ const generateYearGene = async ({
 
         // loop through sections
         loop1: for (let i = 0; i < sectionNames.length; i++) {
-            console.log(sectionNames[i]);
 
             let sectionName = sectionNames[i];
             let weeklyCourseUnits: any = {};
@@ -154,11 +153,8 @@ const generateYearGene = async ({
                 // check if max days reached
                 let assignedDays = checkNumberOfAssignedDays(schedule);
                 if (assignedDays >= yearLevelMaxDays) {
-                    console.log('max assigend days');
                     break loop2;
                 }
-
-                console.log('SCHOOL DAY: ', schoolDay);
 
                 // Try to assign a valid course for the current day
                 // habang may avail time pa mag assign pa ng course
@@ -180,7 +176,7 @@ const generateYearGene = async ({
                             courses
                         });
                         if (tries >= 100 || unitsComplete) {
-                            console.log('enough tries || complete assignment');
+                            // console.log('enough tries || complete assignment');
                             break loop3;
                         }
                         let courseDetails;
@@ -192,13 +188,9 @@ const generateYearGene = async ({
                             majorCoursesDailyCopy.length <= 0
                         ) {
                             // assigned na lahat ng courses
-                            console.log(genedCourses);
-                            console.log(majorCourses);
-                            console.log(genedCoursesCopy);
-                            console.log(majorCoursesCopy);
-                            console.log(
-                                'assigned n lahat wla na gened nd major courses copy'
-                            );
+                            // console.log(
+                            //     'assigned n lahat wla na gened nd major courses copy'
+                            // );
                             continue loop2;
                         }
 
@@ -264,8 +256,6 @@ const generateYearGene = async ({
                                 ];
                         }
 
-                        console.log(course);
-
                         // check if pwede pa from the course units
 
                         courseAssigned = true;
@@ -277,7 +267,7 @@ const generateYearGene = async ({
 
                         // check if pwede pa sa units
                         if (assignedUnits >= courseDetails.total_units) {
-                            console.log('sobra na units');
+                            // console.log('sobra na units');
 
                             if (courseDetails.category == 'gened') {
                                 genedCoursesCopy =
@@ -320,7 +310,7 @@ const generateYearGene = async ({
                             ) {
                                 // make sure this is the gap day
                                 if (schoolDay != 'W' && schoolDay != 'M') {
-                                    console.log('sa gap');
+                                    // console.log('sa gap');
                                     // pag ganito tanggalin n sa daily copy ??
                                     genedCoursesDailyCopy =
                                         removeFromGenedCoursesCompleteUnits({
@@ -337,7 +327,7 @@ const generateYearGene = async ({
                             ) {
                                 // make sure this is the gap day
                                 if (schoolDay != 'TH' && schoolDay != 'T') {
-                                    console.log('sa gap');
+                                    // console.log('sa gap');
                                     genedCoursesDailyCopy =
                                         removeFromGenedCoursesCompleteUnits({
                                             subjectCode:
@@ -353,7 +343,7 @@ const generateYearGene = async ({
                             ) {
                                 // make sure this is the gap day
                                 if (schoolDay != 'W') {
-                                    console.log('sa gap');
+                                    // console.log('sa gap');
                                     genedCoursesDailyCopy =
                                         removeFromGenedCoursesCompleteUnits({
                                             subjectCode:
@@ -369,7 +359,7 @@ const generateYearGene = async ({
                             ) {
                                 // make sure this is the gap day
                                 if (schoolDay != 'TH') {
-                                    console.log('sa gap');
+                                    // console.log('sa gap');
                                     genedCoursesDailyCopy =
                                         removeFromGenedCoursesCompleteUnits({
                                             subjectCode:
@@ -385,7 +375,7 @@ const generateYearGene = async ({
                             ) {
                                 // make sure this is the gap day
                                 if (schoolDay != 'S' && schoolDay != 'F') {
-                                    console.log('sa gap');
+                                    // console.log('sa gap');
                                     genedCoursesDailyCopy =
                                         removeFromGenedCoursesCompleteUnits({
                                             subjectCode:
@@ -401,7 +391,7 @@ const generateYearGene = async ({
                             ) {
                                 // make sure this is the gap day
                                 if (schoolDay != 'S') {
-                                    console.log('sa gap');
+                                    // console.log('sa gap');
                                     genedCoursesDailyCopy =
                                         removeFromGenedCoursesCompleteUnits({
                                             subjectCode:
@@ -432,9 +422,9 @@ const generateYearGene = async ({
                                 });
 
                             if (assignableTimeRanges.length <= 0) {
-                                console.log(
-                                    'no more assignable time ranges for day'
-                                );
+                                // console.log(
+                                //     'no more assignable time ranges for day'
+                                // );
                                 continue loop2;
                             }
 
@@ -461,7 +451,7 @@ const generateYearGene = async ({
                                 // console.log(
                                 //     'no more time block possibilities for school day'
                                 // );
-                                console.log('no time possiblities');
+                                // console.log('no time possiblities');
                                 // kasi pwede para lng sa course na un walang time pero sa iba pwede (lab)
                                 continue loop4; // next day na
                             }
@@ -565,9 +555,9 @@ const generateYearGene = async ({
                                             }
                                         }
                                     } else {
-                                        console.log(
-                                            'no more prof possibilities 1'
-                                        );
+                                        // console.log(
+                                        //     'no more prof possibilities 1'
+                                        // );
                                         break loop4; // try diff course
                                     }
                                 }
@@ -645,7 +635,7 @@ const generateYearGene = async ({
                                         }
                                     }
                                 } else {
-                                    console.log('no more prof possibilities 2');
+                                    // console.log('no more prof possibilities 2');
                                     break loop4; // try different prof
                                 }
                             }
@@ -701,7 +691,7 @@ const generateYearGene = async ({
                                         // };
                                     }
                                 } else {
-                                    console.log('no more room possibilities');
+                                    // console.log('no more room possibilities');
                                     break loop4; // try different course
                                 }
                             }
@@ -734,9 +724,6 @@ const generateYearGene = async ({
                                     courseDetails.specific_room_assignment ?? ''
                             };
 
-                            console.log(timeBlock.timeBlock);
-                            console.log('assigned');
-
                             if (courseDetails.category == 'gened') {
                                 genedAssignedCourses++;
                             }
@@ -763,7 +750,7 @@ const generateYearGene = async ({
                             //     weeklyCourseUnits
                             // );
                         } else {
-                            console.log('no more course possibilities');
+                            // console.log('no more course possibilities');
                             break loop2;
                         }
                     }
@@ -1004,8 +991,6 @@ const getProfFromCourse = async ({
     const res = await client.query(query, [courseDetails.subject_code, dept]);
 
     const mainAvailableProfs = res.rows;
-
-    console.log(mainAvailableProfs);
 
     let profAssigned = false;
     let tries = 0;
@@ -1368,8 +1353,6 @@ const getTimeBlockFromCourse = ({
     courseDetails: any;
 }) => {
     let availableRanges = assignableTimeRanges;
-
-    console.log(availableRanges);
 
     let timeBlockAssigned = false;
     let tries = 0;
