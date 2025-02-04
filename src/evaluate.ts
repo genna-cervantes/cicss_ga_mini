@@ -1185,11 +1185,29 @@ export const evaluateFast = async ({
                 }
             }
 
-            console.log(violationTracker)
-
         
             for (let k = 0; k < SCHOOL_DAYS.length; k++) {
                 let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
+
+                let {
+                    violationCount: roomTypeAssignmentViolationCount,
+                    violations: roomTypeAssignmentViolations
+                } = evaluateRoomTypeAssignmentFast({dailySched: daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]})
+
+                if (roomTypeAssignmentViolationCount > 0){
+                    // check if may ganon na na object, append nlng if meron na
+                    let violationTrackerRoomTypeAssignmentObj = violationTracker.filter((v: any) => v.violation === 'room_type_assignment')[0];
+                    if (violationTrackerRoomTypeAssignmentObj){
+                        violationTrackerRoomTypeAssignmentObj.violationCount += roomTypeAssignmentViolationCount
+                        violationTrackerRoomTypeAssignmentObj.violations = [...violationTrackerRoomTypeAssignmentObj.violations, ...roomTypeAssignmentViolations]
+                    }else{
+                        violationTracker.push({
+                            violation: 'room_type_assignment',
+                            violationCount: roomTypeAssignmentViolationCount,
+                            violations: roomTypeAssignmentViolations
+                        })
+                    }
+                }
             }
         }
     }
@@ -1240,6 +1258,74 @@ export const evaluateCourseAssignmentFast = async ({
 
     return { violationCount, violations };
 };
+
+const evaluateRoomTypeAssignmentFast = ({dailySched, specSectionKey, schoolDay}: {dailySched: any, specSectionKey: string, schoolDay: string}) => {
+
+    let violationCount = 0;
+    let violations = [];
+
+    for (let l = 0; l < dailySched.length; l++) {
+        if (
+            dailySched[l].course.subject_code.startsWith('PATHFIT')
+        ) {
+            continue;
+        }
+
+        // check course per sched block
+        if (dailySched[l].course.type !== dailySched[l].room.type) {
+            if (
+                !dailySched[l].course.subject_code.includes(
+                    'CSELEC'
+                )
+            ) {
+                violationCount++;
+                violations.push({
+                    course: dailySched[l].course.subject_code,
+                    section: specSectionKey,
+                    type: 'room type assignment',
+                    description:
+                        'lec course assigned to lab and vice versa',
+                    time: {
+                        day: schoolDay,
+                        time: dailySched[l].timeBlock
+                    },
+                    room: dailySched[l].room.room_id
+                });
+            }
+        }
+
+        // check specific room constraint (IT)
+        if (dailySched[l].course.specific_room_assignment !== '') {
+            if (
+                dailySched[l].course.specific_room_assignment !==
+                dailySched[l].room.room_id
+            ) {
+                violationCount++;
+                violations.push({
+                    course: dailySched[l].course.subject_code,
+                    section: specSectionKey,
+                    type: 'room type assignment',
+                    description:
+                        'specific room assignment not followed',
+                    time: {
+                        day: schoolDay,
+                        time: dailySched[l].timeBlock
+                    },
+                    required_room:
+                        dailySched[l].course
+                            .specific_room_assignment,
+                    room: dailySched[l].room.room_id
+                });
+            }
+        }
+    }
+
+    return {
+        violations,
+        violationCount
+    }
+    
+}
 
 const getCurriculumObject = async (semester: number) => {
     let curriculum: any = { CS: [], IT: [], IS: [] };
