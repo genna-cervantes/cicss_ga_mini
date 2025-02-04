@@ -1,7 +1,7 @@
 import express from 'express';
 import { runAlgo, runScript } from './script';
 import { generateChromosome } from './generate';
-import { evaluate } from './evaluate';
+import { evaluate, evaluateFast } from './evaluate';
 import { chromosome } from './data';
 
 const app = express();
@@ -44,6 +44,11 @@ app.get('/time-eval', async (req, res) => {
         const score = await evaluate(chromosome);
     }
     res.json('done')
+})
+
+app.get('/evaluate-fast', async (req, res) => {
+    let violationTracker = await evaluateFast({chromosome, semester: 2 })
+    res.json(violationTracker)
 })
 
 // app.get('/fitness', async (req, res) => {

@@ -1,6 +1,11 @@
 import { Client } from 'pg';
 import { chromosome } from './data';
-import { HARD_CONSTRAINT_WEIGHT, MEDIUM_CONSTRAINT_WEIGHT, SCHOOL_DAYS, SOFT_CONSTRAINT_WEIGHT } from './constants';
+import {
+    HARD_CONSTRAINT_WEIGHT,
+    MEDIUM_CONSTRAINT_WEIGHT,
+    SCHOOL_DAYS,
+    SOFT_CONSTRAINT_WEIGHT
+} from './constants';
 
 const DB_HOST = 'localhost';
 const DB_PORT = 5432;
@@ -57,11 +62,11 @@ const evaluateCoursesAssignment = async ({
     for (let i = 0; i < curriculumCS.length; i++) {
         curriculum['CS'][curriculumCS[i].year] = curriculumCS[i].courses;
     }
-    
+
     for (let i = 0; i < curriculumIT.length; i++) {
         curriculum['IT'][curriculumIT[i].year] = curriculumIT[i].courses;
     }
-    
+
     for (let i = 0; i < curriculumIS.length; i++) {
         curriculum['IS'][curriculumIS[i].year] = curriculumIS[i].courses;
     }
@@ -76,28 +81,26 @@ const evaluateCoursesAssignment = async ({
         let perYear = chromosome[i];
         let yearAndDepartmentKey = Object.keys(perYear)[0];
         let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
-        
+
         let department = yearAndDepartmentKey.split('_')[0].toUpperCase();
         let year = yearAndDepartmentKey.split('_')[1].slice(0, 1);
-        
+
         let requiredUnits = curriculum[department][year];
-        
+
         for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
             let specSection = yearAndDepartmentSchedule[j];
             let specSectionKey = Object.keys(specSection)[0];
             let specSectionSchedule = specSection[specSectionKey];
-            
+
             let totalUnitsPerSection = getTotalUnitsFromWeeklySchedule({
                 sectionSchedule: specSectionSchedule
             });
-            
+
             for (let k = 0; k < requiredUnits.length; k++) {
                 const subjectCode = requiredUnits[k];
                 const querySubj =
-                'SELECT total_units, type FROM courses WHERE subject_code = $1';
-                const res = await client.query(querySubj, [
-                    subjectCode
-                ]);
+                    'SELECT total_units, type FROM courses WHERE subject_code = $1';
+                const res = await client.query(querySubj, [subjectCode]);
                 const totalUnits = res.rows[0].total_units;
 
                 if ((totalUnitsPerSection[subjectCode] ?? 0) < totalUnits) {
@@ -1124,6 +1127,153 @@ const mergeObjects2 = ({ obj1, obj2 }: { obj1: any; obj2: any }) => {
     return result;
 };
 
+export const evaluateFast = async ({
+    chromosome,
+    semester
+}: {
+    chromosome: any;
+    semester: number;
+}) => {
+
+    // violations
+    let violationTracker: any = [];
+
+    // define needed variables
+
+    // course assignment
+    let curriculum = await getCurriculumObject(semester);
+
+    for (let i = 0; i < chromosome.length; i++) {
+        let perYear = chromosome[i];
+
+        let yearAndDepartmentKey = Object.keys(perYear)[0];
+
+        // course assignment
+        let department = yearAndDepartmentKey.split('_')[0].toUpperCase();
+        let year = parseInt(yearAndDepartmentKey.split('_')[1].slice(0, 1));
+
+        let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
+        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
+            let specSection = yearAndDepartmentSchedule[j];
+            let specSectionKey = Object.keys(specSection)[0];
+            let specSectionSchedule = specSection[specSectionKey];
+
+            // course assignment
+            let {
+                violationCount: courseAssignmentViolationCount,
+                violations: courseAssignmentViolations
+            } = await evaluateCourseAssignmentFast({
+                curriculum,
+                department,
+                year,
+                specSectionSchedule,
+                specSectionKey
+            });
+
+            if (courseAssignmentViolationCount > 0){
+                // check if may ganon na na object, append nlng if meron na
+                let violationTrackerCourseAssignmentObj = violationTracker.filter((v: any) => v.violation === 'course_assignment')[0];
+                if (violationTrackerCourseAssignmentObj){
+                    violationTrackerCourseAssignmentObj.violationCount += courseAssignmentViolationCount
+                    violationTrackerCourseAssignmentObj.violations = [...violationTrackerCourseAssignmentObj.violations, ...courseAssignmentViolations]
+                }else{
+                    violationTracker.push({
+                        violation: 'course_assignment',
+                        violationCount: courseAssignmentViolationCount,
+                        violations: courseAssignmentViolations
+                    })
+                }
+            }
+
+            console.log(violationTracker)
+
+        
+            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
+            }
+        }
+    }
+
+    return violationTracker;
+};
+
+export const evaluateCourseAssignmentFast = async ({
+    curriculum,
+    department,
+    year,
+    specSectionSchedule,
+    specSectionKey
+}: {
+    curriculum: any;
+    department: string;
+    year: number;
+    specSectionSchedule: any;
+    specSectionKey: any;
+}) => {
+    let violationCount = 0;
+    let violations: any = [];
+
+    let requiredUnits = curriculum[department][year];
+
+    let totalUnitsPerSection = getTotalUnitsFromWeeklySchedule({
+        sectionSchedule: specSectionSchedule
+    });
+
+    for (let k = 0; k < requiredUnits.length; k++) {
+        const subjectCode = requiredUnits[k];
+        const querySubj =
+            'SELECT total_units, type FROM courses WHERE subject_code = $1';
+        const res = await client.query(querySubj, [subjectCode]);
+        const totalUnits = res.rows[0].total_units;
+
+        if ((totalUnitsPerSection[subjectCode] ?? 0) < totalUnits) {
+            violationCount++;
+            violations.push({
+                course: subjectCode,
+                description: 'kulang units',
+                section: specSectionKey
+            });
+        }
+    }
+
+    console.log(violations)
+
+    return { violationCount, violations };
+};
+
+const getCurriculumObject = async (semester: number) => {
+    let curriculum: any = { CS: [], IT: [], IS: [] };
+
+    const queryCS =
+        "SELECT year, courses FROM curriculum WHERE semester = $1 AND department = 'CS' ORDER BY year";
+    const res = await client.query(queryCS, [semester]);
+    const curriculumCS = res.rows;
+
+    const queryIT =
+        "SELECT year, courses FROM curriculum WHERE semester = $1 AND department = 'IT' ORDER BY year";
+    const resIT = await client.query(queryIT, [semester]);
+    const curriculumIT = resIT.rows;
+
+    const queryIS =
+        "SELECT year, courses FROM curriculum WHERE semester = $1 AND department = 'IS' ORDER BY year";
+    const resIS = await client.query(queryIS, [semester]);
+    const curriculumIS = resIS.rows;
+
+    for (let i = 0; i < curriculumCS.length; i++) {
+        curriculum['CS'][curriculumCS[i].year] = curriculumCS[i].courses;
+    }
+
+    for (let i = 0; i < curriculumIT.length; i++) {
+        curriculum['IT'][curriculumIT[i].year] = curriculumIT[i].courses;
+    }
+
+    for (let i = 0; i < curriculumIS.length; i++) {
+        curriculum['IS'][curriculumIS[i].year] = curriculumIS[i].courses;
+    }
+
+    return curriculum;
+};
+
 export const evaluate = async (chromosome: any) => {
     let violations: any = [];
     let violationType: any = [];
@@ -1134,110 +1284,171 @@ export const evaluate = async (chromosome: any) => {
         semester: 2,
         chromosome: chromosome
     });
-    violations = [...violations, ...courseAssignmentViolations]
-    const courseAssignmentViolationsLength = courseAssignmentViolations.length
-    violationCount += courseAssignmentViolationsLength
-    violationType.push({violationType: 'course assignment violation', violationCount: courseAssignmentViolationsLength})
-    score -= (courseAssignmentViolationsLength * HARD_CONSTRAINT_WEIGHT)
-    
+    violations = [...violations, ...courseAssignmentViolations];
+    const courseAssignmentViolationsLength = courseAssignmentViolations.length;
+    violationCount += courseAssignmentViolationsLength;
+    violationType.push({
+        violationType: 'course assignment violation',
+        violationCount: courseAssignmentViolationsLength
+    });
+    score -= courseAssignmentViolationsLength * HARD_CONSTRAINT_WEIGHT;
+
     let roomAssignmentViolations = evaluateRoomAssignment(chromosome);
-    const roomAssignmentViolationsLength = roomAssignmentViolations.length
-    violations = [...violations, ...roomAssignmentViolations]
-    violationCount += roomAssignmentViolationsLength
-    violationType.push({violationType: 'room assignment violation', violationCount: roomAssignmentViolationsLength})
-    score -= (roomAssignmentViolationsLength * HARD_CONSTRAINT_WEIGHT)
-    
+    const roomAssignmentViolationsLength = roomAssignmentViolations.length;
+    violations = [...violations, ...roomAssignmentViolations];
+    violationCount += roomAssignmentViolationsLength;
+    violationType.push({
+        violationType: 'room assignment violation',
+        violationCount: roomAssignmentViolationsLength
+    });
+    score -= roomAssignmentViolationsLength * HARD_CONSTRAINT_WEIGHT;
+
     let roomTypeAssignmentViolations = evaluateRoomTypeAssignment(chromosome);
-    const roomTypeAssignmentViolationsLength = roomTypeAssignmentViolations.length
-    violations = [...violations, ...roomTypeAssignmentViolations]
-    violationCount += roomTypeAssignmentViolationsLength
-    violationType.push({violationType: 'room type assignment violation', violationCount: roomTypeAssignmentViolationsLength})
-    score -= (roomTypeAssignmentViolationsLength * HARD_CONSTRAINT_WEIGHT)
-    
-    let TASAssignmentViolations = evaluateTASAssignment(chromosome)
-    const TASAssignmentViolationsLength = TASAssignmentViolations.length
-    violations = [...violations, ...TASAssignmentViolations]
-    violationCount += TASAssignmentViolationsLength
-    violationType.push({violationType: 'tas assignment violation', violationCount: TASAssignmentViolationsLength})
-    score -= (TASAssignmentViolationsLength * HARD_CONSTRAINT_WEIGHT)
-    
-    let TASSpecializationAssignmentViolations = await evaluateTASSpecializationAssignment(chromosome);
-    const TASSpecializationAssignmentViolationsLength = TASSpecializationAssignmentViolations.length
-    violations = [...violations, ...TASSpecializationAssignmentViolations]
-    violationCount += TASSpecializationAssignmentViolationsLength
-    violationType.push({violationType: 'tas specialization assignment violation', violationCount: TASSpecializationAssignmentViolationsLength})
-    score -= (TASSpecializationAssignmentViolationsLength * HARD_CONSTRAINT_WEIGHT)
-    
+    const roomTypeAssignmentViolationsLength =
+        roomTypeAssignmentViolations.length;
+    violations = [...violations, ...roomTypeAssignmentViolations];
+    violationCount += roomTypeAssignmentViolationsLength;
+    violationType.push({
+        violationType: 'room type assignment violation',
+        violationCount: roomTypeAssignmentViolationsLength
+    });
+    score -= roomTypeAssignmentViolationsLength * HARD_CONSTRAINT_WEIGHT;
+
+    let TASAssignmentViolations = evaluateTASAssignment(chromosome);
+    const TASAssignmentViolationsLength = TASAssignmentViolations.length;
+    violations = [...violations, ...TASAssignmentViolations];
+    violationCount += TASAssignmentViolationsLength;
+    violationType.push({
+        violationType: 'tas assignment violation',
+        violationCount: TASAssignmentViolationsLength
+    });
+    score -= TASAssignmentViolationsLength * HARD_CONSTRAINT_WEIGHT;
+
+    let TASSpecializationAssignmentViolations =
+        await evaluateTASSpecializationAssignment(chromosome);
+    const TASSpecializationAssignmentViolationsLength =
+        TASSpecializationAssignmentViolations.length;
+    violations = [...violations, ...TASSpecializationAssignmentViolations];
+    violationCount += TASSpecializationAssignmentViolationsLength;
+    violationType.push({
+        violationType: 'tas specialization assignment violation',
+        violationCount: TASSpecializationAssignmentViolationsLength
+    });
+    score -=
+        TASSpecializationAssignmentViolationsLength * HARD_CONSTRAINT_WEIGHT;
+
     let TASUnitsViolations = await evaluateTASUnitsAssignment(chromosome);
-    const TASUnitsViolationsLength = TASUnitsViolations.length
-    violations = [...violations, ...TASUnitsViolations]
-    violationCount += TASUnitsViolationsLength
-    violationType.push({violationType: 'tas units violation', violationCount: TASUnitsViolationsLength})
-    score -= (TASUnitsViolationsLength * HARD_CONSTRAINT_WEIGHT)
-    
+    const TASUnitsViolationsLength = TASUnitsViolations.length;
+    violations = [...violations, ...TASUnitsViolations];
+    violationCount += TASUnitsViolationsLength;
+    violationType.push({
+        violationType: 'tas units violation',
+        violationCount: TASUnitsViolationsLength
+    });
+    score -= TASUnitsViolationsLength * HARD_CONSTRAINT_WEIGHT;
+
     let maxClassDayLengthViolations = evaluateMaxClassDayLength(chromosome);
-    const maxClassDayLengthViolationsLength = maxClassDayLengthViolations.length
-    violations = [...violations, ...maxClassDayLengthViolations]
-    violationCount += maxClassDayLengthViolationsLength
-    violationType.push({violationType: 'max class day length violation', violationCount: maxClassDayLengthViolationsLength})
-    score -= (maxClassDayLengthViolationsLength * HARD_CONSTRAINT_WEIGHT)
-    
-    let consecutiveClassHoursViolations = evaluateConsecutiveClassHoursPerSection(chromosome);
-    const consecutiveClassHoursViolationsLength = consecutiveClassHoursViolations.length
-    violations = [...violations, ...consecutiveClassHoursViolations]
-    violationCount += consecutiveClassHoursViolationsLength
-    violationType.push({violationType: 'consecutive class hours violation', violationCount: consecutiveClassHoursViolationsLength})
-    score -= (consecutiveClassHoursViolationsLength * HARD_CONSTRAINT_WEIGHT)
-    
-    let genedCourseAssignmentViolations = await evaluateGenedCoursesAssignment(chromosome);
-    const genedCourseAssignmentViolationsLength = genedCourseAssignmentViolations.length
-    violations = [...violations, ...genedCourseAssignmentViolations]
-    violationCount += genedCourseAssignmentViolationsLength
-    violationType.push({violationType: 'gened courses assignment violation', violationCount: genedCourseAssignmentViolationsLength})
-    score -= (genedCourseAssignmentViolationsLength * HARD_CONSTRAINT_WEIGHT)
-    
-    let numberOfCourseAssignedPerDayViolations = evaluateNumberOfCoursesAssignedInADay(chromosome);
-    const numberOfCourseAssignedPerDayViolationsLength = numberOfCourseAssignedPerDayViolations.length
-    violations = [...violations, ...numberOfCourseAssignedPerDayViolations]
-    violationCount += numberOfCourseAssignedPerDayViolationsLength
-    violationType.push({violationType: 'number of course assigned per day violation', violationCount: numberOfCourseAssignedPerDayViolationsLength})
-    score -= (numberOfCourseAssignedPerDayViolationsLength * HARD_CONSTRAINT_WEIGHT)
-    
-    let allowedDaysPerYearLevelViolations = await evaluateAllowedDaysPerYearLevel(chromosome);
-    const allowedDaysPerYearLevelViolationsLength = allowedDaysPerYearLevelViolations.length
-    violations = [...violations, ...allowedDaysPerYearLevelViolations]
-    violationCount += allowedDaysPerYearLevelViolationsLength
-    violationType.push({violationType: 'allowed days per year level violation', violationCount: allowedDaysPerYearLevelViolationsLength})
-    score -= (allowedDaysPerYearLevelViolationsLength * HARD_CONSTRAINT_WEIGHT)
-    
-    let allowedTimePerYearLevelViolations = await evaluateAllowedTimePerYearLevel(chromosome);
-    const allowedTimePerYearLevelViolationsLength = allowedTimePerYearLevelViolations.length
-    violations = [...violations, ...allowedTimePerYearLevelViolations]
-    violationCount += allowedTimePerYearLevelViolationsLength
-    violationType.push({violationType: 'allowed time per year level violation', violationCount: allowedTimePerYearLevelViolationsLength})
-    score -= (allowedTimePerYearLevelViolationsLength * HARD_CONSTRAINT_WEIGHT)
-    
-    let restDaysViolations = evaluateRestDays(chromosome)
-    const restDaysViolationsLength = restDaysViolations.length
-    violations = [...violations, ...restDaysViolations]
-    violationCount += restDaysViolationsLength
-    violationType.push({violationType: 'rest days violation', violationCount: restDaysViolationsLength})
-    score -= (restDaysViolationsLength * MEDIUM_CONSTRAINT_WEIGHT)
-    
+    const maxClassDayLengthViolationsLength =
+        maxClassDayLengthViolations.length;
+    violations = [...violations, ...maxClassDayLengthViolations];
+    violationCount += maxClassDayLengthViolationsLength;
+    violationType.push({
+        violationType: 'max class day length violation',
+        violationCount: maxClassDayLengthViolationsLength
+    });
+    score -= maxClassDayLengthViolationsLength * HARD_CONSTRAINT_WEIGHT;
+
+    let consecutiveClassHoursViolations =
+        evaluateConsecutiveClassHoursPerSection(chromosome);
+    const consecutiveClassHoursViolationsLength =
+        consecutiveClassHoursViolations.length;
+    violations = [...violations, ...consecutiveClassHoursViolations];
+    violationCount += consecutiveClassHoursViolationsLength;
+    violationType.push({
+        violationType: 'consecutive class hours violation',
+        violationCount: consecutiveClassHoursViolationsLength
+    });
+    score -= consecutiveClassHoursViolationsLength * HARD_CONSTRAINT_WEIGHT;
+
+    let genedCourseAssignmentViolations =
+        await evaluateGenedCoursesAssignment(chromosome);
+    const genedCourseAssignmentViolationsLength =
+        genedCourseAssignmentViolations.length;
+    violations = [...violations, ...genedCourseAssignmentViolations];
+    violationCount += genedCourseAssignmentViolationsLength;
+    violationType.push({
+        violationType: 'gened courses assignment violation',
+        violationCount: genedCourseAssignmentViolationsLength
+    });
+    score -= genedCourseAssignmentViolationsLength * HARD_CONSTRAINT_WEIGHT;
+
+    let numberOfCourseAssignedPerDayViolations =
+        evaluateNumberOfCoursesAssignedInADay(chromosome);
+    const numberOfCourseAssignedPerDayViolationsLength =
+        numberOfCourseAssignedPerDayViolations.length;
+    violations = [...violations, ...numberOfCourseAssignedPerDayViolations];
+    violationCount += numberOfCourseAssignedPerDayViolationsLength;
+    violationType.push({
+        violationType: 'number of course assigned per day violation',
+        violationCount: numberOfCourseAssignedPerDayViolationsLength
+    });
+    score -=
+        numberOfCourseAssignedPerDayViolationsLength * HARD_CONSTRAINT_WEIGHT;
+
+    let allowedDaysPerYearLevelViolations =
+        await evaluateAllowedDaysPerYearLevel(chromosome);
+    const allowedDaysPerYearLevelViolationsLength =
+        allowedDaysPerYearLevelViolations.length;
+    violations = [...violations, ...allowedDaysPerYearLevelViolations];
+    violationCount += allowedDaysPerYearLevelViolationsLength;
+    violationType.push({
+        violationType: 'allowed days per year level violation',
+        violationCount: allowedDaysPerYearLevelViolationsLength
+    });
+    score -= allowedDaysPerYearLevelViolationsLength * HARD_CONSTRAINT_WEIGHT;
+
+    let allowedTimePerYearLevelViolations =
+        await evaluateAllowedTimePerYearLevel(chromosome);
+    const allowedTimePerYearLevelViolationsLength =
+        allowedTimePerYearLevelViolations.length;
+    violations = [...violations, ...allowedTimePerYearLevelViolations];
+    violationCount += allowedTimePerYearLevelViolationsLength;
+    violationType.push({
+        violationType: 'allowed time per year level violation',
+        violationCount: allowedTimePerYearLevelViolationsLength
+    });
+    score -= allowedTimePerYearLevelViolationsLength * HARD_CONSTRAINT_WEIGHT;
+
+    let restDaysViolations = evaluateRestDays(chromosome);
+    const restDaysViolationsLength = restDaysViolations.length;
+    violations = [...violations, ...restDaysViolations];
+    violationCount += restDaysViolationsLength;
+    violationType.push({
+        violationType: 'rest days violation',
+        violationCount: restDaysViolationsLength
+    });
+    score -= restDaysViolationsLength * MEDIUM_CONSTRAINT_WEIGHT;
+
     let TASRequestsViolations = await evaluateTASRequestAssignments(chromosome);
-    const TASRequestsViolationsLength = TASRequestsViolations.length
-    violations = [...violations, ...TASRequestsViolations]
-    violationCount += TASRequestsViolationsLength
-    violationType.push({violationType: 'tas requests violation', violationCount: TASRequestsViolationsLength})
-    score -= (TASRequestsViolationsLength * SOFT_CONSTRAINT_WEIGHT)
-    
+    const TASRequestsViolationsLength = TASRequestsViolations.length;
+    violations = [...violations, ...TASRequestsViolations];
+    violationCount += TASRequestsViolationsLength;
+    violationType.push({
+        violationType: 'tas requests violation',
+        violationCount: TASRequestsViolationsLength
+    });
+    score -= TASRequestsViolationsLength * SOFT_CONSTRAINT_WEIGHT;
+
     let roomProximityViolations = evaluateRoomProximity(chromosome);
-    const roomProximityViolationsLength = roomProximityViolations.length
-    violations = [...violations, ...roomProximityViolations]
-    violationCount += roomProximityViolationsLength
-    violationType.push({violationType: 'room proximity violation', violationCount: roomProximityViolationsLength})
-    score -= (roomProximityViolationsLength * SOFT_CONSTRAINT_WEIGHT)
-    
-    return {score, violationType};
+    const roomProximityViolationsLength = roomProximityViolations.length;
+    violations = [...violations, ...roomProximityViolations];
+    violationCount += roomProximityViolationsLength;
+    violationType.push({
+        violationType: 'room proximity violation',
+        violationCount: roomProximityViolationsLength
+    });
+    score -= roomProximityViolationsLength * SOFT_CONSTRAINT_WEIGHT;
+
+    return { score, violationType };
     // return true;
 };
