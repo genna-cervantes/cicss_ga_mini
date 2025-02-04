@@ -1195,20 +1195,7 @@ export const evaluateFast = async ({
                     violations: roomTypeAssignmentViolations
                 } = evaluateRoomTypeAssignmentFast({dailySched: daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]})
 
-                if (roomTypeAssignmentViolationCount > 0){
-                    // check if may ganon na na object, append nlng if meron na
-                    let violationTrackerRoomTypeAssignmentObj = violationTracker.filter((v: any) => v.violation === 'room_type_assignment')[0];
-                    if (violationTrackerRoomTypeAssignmentObj){
-                        violationTrackerRoomTypeAssignmentObj.violationCount += roomTypeAssignmentViolationCount
-                        violationTrackerRoomTypeAssignmentObj.violations = [...violationTrackerRoomTypeAssignmentObj.violations, ...roomTypeAssignmentViolations]
-                    }else{
-                        violationTracker.push({
-                            violation: 'room_type_assignment',
-                            violationCount: roomTypeAssignmentViolationCount,
-                            violations: roomTypeAssignmentViolations
-                        })
-                    }
-                }
+                violationTracker = addToViolationTracker({violationTracker, violationCount: roomTypeAssignmentViolationCount, violations: roomTypeAssignmentViolations, violationName: 'room_type_assignment'})
 
                 // max class length in day
                 let {
@@ -1216,20 +1203,7 @@ export const evaluateFast = async ({
                     violations: maxClassDayLengthAssignmentViolations
                 } = evaluateMaxClassDayLengthFast({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]})
 
-                if (maxClassDayLengthViolationCount > 0){
-                    // check if may ganon na na object, append nlng if meron na
-                    let violationTrackerMaxClassDayLengthObj = violationTracker.filter((v: any) => v.violation === 'max_class_day_length_assignment')[0];
-                    if (violationTrackerMaxClassDayLengthObj){
-                        violationTrackerMaxClassDayLengthObj.violationCount += maxClassDayLengthViolationCount
-                        violationTrackerMaxClassDayLengthObj.violations = [...violationTrackerMaxClassDayLengthObj.violations, ...maxClassDayLengthAssignmentViolations]
-                    }else{
-                        violationTracker.push({
-                            violation: 'max_class_day_length_assignment',
-                            violationCount: maxClassDayLengthViolationCount,
-                            violations: maxClassDayLengthAssignmentViolations
-                        })
-                    }
-                }
+                violationTracker = addToViolationTracker({violationTracker, violationCount: maxClassDayLengthViolationCount, violations: maxClassDayLengthAssignmentViolations, violationName: 'max_class_day_length_assignment'})
                 
                 // max consecutive class hours
                 let {
@@ -1237,20 +1211,16 @@ export const evaluateFast = async ({
                     violations: consecutiveClassHoursPerSectionViolations
                 } = evaluateConsecutiveClassHoursPerSectionFast({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]});
                 
-                if (consecutiveClassHoursPerSectionViolationCount > 0){
-                    // check if may ganon na na object, append nlng if meron na
-                    let violationTrackerConsecutiveClassHoursPerSectionObj = violationTracker.filter((v: any) => v.violation === 'consecutive_class_hours')[0];
-                    if (violationTrackerConsecutiveClassHoursPerSectionObj){
-                        violationTrackerConsecutiveClassHoursPerSectionObj.violationCount += consecutiveClassHoursPerSectionViolationCount
-                        violationTrackerConsecutiveClassHoursPerSectionObj.violations = [...violationTrackerConsecutiveClassHoursPerSectionObj.violations, ...consecutiveClassHoursPerSectionViolations]
-                    }else{
-                        violationTracker.push({
-                            violation: 'consecutive_class_hours',
-                            violationCount: consecutiveClassHoursPerSectionViolationCount,
-                            violations: consecutiveClassHoursPerSectionViolations
-                        })
-                    }
-                }
+                violationTracker = addToViolationTracker({violationTracker, violationCount: consecutiveClassHoursPerSectionViolationCount, violations: consecutiveClassHoursPerSectionViolations, violationName: 'consecutive_class_hours'})
+                
+                // gened specific constraints
+                let {
+                    violationCount: genedCourseAssignmentViolationCount,
+                    violations: genedCourseAssignmentViolations
+                } = await evaluateFastGenedCourseAssignment({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]});
+                
+                violationTracker = addToViolationTracker({violationTracker, violationCount: genedCourseAssignmentViolationCount, violations: genedCourseAssignmentViolations, violationName: 'gened_course_assignment'})
+
             }
         }
     }
@@ -1259,6 +1229,28 @@ export const evaluateFast = async ({
 
     return violationTracker;
 };
+
+const addToViolationTracker = ({violationTracker, violations, violationCount, violationName}: {violationTracker: any, violations: any, violationCount: number, violationName: string}) => {
+
+    let localTracker = violationTracker ?? [];    
+
+    if (violationCount > 0){
+        // check if may ganon na na object, append nlng if meron na
+        let violationTrackerObj = violationTracker.filter((v: any) => v.violation === violationName)[0];
+        if (violationTrackerObj){
+            violationTrackerObj.violationCount += violationCount
+            violationTrackerObj.violations = [...violationTrackerObj.violations, ...violations]
+        }else{
+            localTracker.push({
+                violation: violationName,
+                violationCount: violationCount,
+                violations: violations
+            })
+        }
+    }
+
+    return localTracker
+}
 
 export const evaluateCourseAssignmentFast = async ({
     curriculum,
@@ -1452,6 +1444,59 @@ const evaluateConsecutiveClassHoursPerSectionFast = ({daySched, specSectionKey, 
         ) {
             hours = 0;
         }
+    }
+
+    return {
+        violationCount,
+        violations
+    }
+}
+
+const evaluateFastGenedCourseAssignment = async ({daySched, specSectionKey, schoolDay}: {daySched: any, specSectionKey: string, schoolDay: string}) => {
+
+    let violationCount = 0;
+    let violations = [];
+    
+    const genedCoursesAndConstraints: any = {};
+
+    const getGenedConstraintsQuery =
+        "SELECT subject_code, restrictions FROM courses WHERE category = 'gened'";
+    const res = await client.query(getGenedConstraintsQuery);
+    const genedCoursesAndConstraintsRes = res.rows;
+
+    genedCoursesAndConstraintsRes.forEach((ge: any) => {
+        genedCoursesAndConstraints[ge.subject_code] = ge.restrictions;
+    });
+
+    for (let l = 0; l < daySched.length; l++) {
+        let schedBlock = daySched[l];
+
+        if (schedBlock.course.category !== 'gened') {
+            continue;
+        }
+
+        let constraints =
+            genedCoursesAndConstraints[
+                schedBlock.course.subject_code
+            ][schoolDay];
+        for (let m = 0; m < constraints.length; m++) {
+            if (
+                parseInt(schedBlock.timeBlock.start) >
+                    parseInt(constraints[m].start) &&
+                parseInt(schedBlock.timeBlock.end) <
+                    parseInt(constraints[m].end)
+            ) {
+                violationCount++;
+                violations.push({
+                    type: 'Gened course constraint not followed',
+                    section: specSectionKey,
+                    day: schoolDay,
+                    courses: [schedBlock.course.subject_code],
+                    time: schedBlock.timeBlock.start
+                });
+            }
+        }
+        // check if within ung timeslot neto don sa constraint ng
     }
 
     return {
