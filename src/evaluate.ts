@@ -1230,9 +1230,32 @@ export const evaluateFast = async ({
                         })
                     }
                 }
+                
+                // max consecutive class hours
+                let {
+                    violationCount: consecutiveClassHoursPerSectionViolationCount,
+                    violations: consecutiveClassHoursPerSectionViolations
+                } = evaluateConsecutiveClassHoursPerSectionFast({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]});
+                
+                if (consecutiveClassHoursPerSectionViolationCount > 0){
+                    // check if may ganon na na object, append nlng if meron na
+                    let violationTrackerConsecutiveClassHoursPerSectionObj = violationTracker.filter((v: any) => v.violation === 'consecutive_class_hours')[0];
+                    if (violationTrackerConsecutiveClassHoursPerSectionObj){
+                        violationTrackerConsecutiveClassHoursPerSectionObj.violationCount += consecutiveClassHoursPerSectionViolationCount
+                        violationTrackerConsecutiveClassHoursPerSectionObj.violations = [...violationTrackerConsecutiveClassHoursPerSectionObj.violations, ...consecutiveClassHoursPerSectionViolations]
+                    }else{
+                        violationTracker.push({
+                            violation: 'consecutive_class_hours',
+                            violationCount: consecutiveClassHoursPerSectionViolationCount,
+                            violations: consecutiveClassHoursPerSectionViolations
+                        })
+                    }
+                }
             }
         }
     }
+
+    // do here the other evaluations that are not applicable in the main loop
 
     return violationTracker;
 };
@@ -1389,6 +1412,52 @@ const evaluateMaxClassDayLengthFast = ({daySched, specSectionKey, schoolDay }: {
         violations,
         violationCount
     };
+}
+
+const evaluateConsecutiveClassHoursPerSectionFast = ({daySched, specSectionKey, schoolDay}: {daySched: any, specSectionKey: string, schoolDay: string}) => {
+    let violationCount = 0;
+    let violations = [];
+
+    let ascendingSched = daySched.sort(
+        (schedBlock1: any, schedBlock2: any) => {
+            return (
+                parseInt(schedBlock1.timeBlock.start, 10) -
+                parseInt(schedBlock2.timeBlock.start, 10)
+            );
+        }
+    );
+
+    let hours = 0;
+    for (let l = 0; l < ascendingSched.length - 1; l++) {
+        if (ascendingSched[l].course.type === 'lec') {
+            hours += ascendingSched[l].course.units;
+        } else {
+            hours += ascendingSched[l].course.units * 3;
+        }
+
+        if (hours > 3) {
+            violationCount++;
+            violations.push({
+                type: 'Section assigned more than 3 consecutive hours of class',
+                section: specSectionKey,
+                day: schoolDay,
+                courses: [ascendingSched[l].course.subject_code],
+                time: ascendingSched[l].timeBlock.start
+            });
+        }
+
+        if (
+            ascendingSched[l].timeBlock.end <
+            ascendingSched[l + 1].timeBlock.start
+        ) {
+            hours = 0;
+        }
+    }
+
+    return {
+        violationCount,
+        violations
+    }
 }
 
 const getCurriculumObject = async (semester: number) => {
