@@ -1228,8 +1228,14 @@ export const evaluateFast = async ({
                 } = evaluateFastNumberOfCoursesAssignedInADay({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]})
                 
                 violationTracker = addToViolationTracker({violationTracker, violationCount: numberOfCoursesAssignedInADayViolationCount, violations: numberOfCoursesAssignedInADayViolatins, violationName: 'courses_assigned_in_a_day'})
-
-
+                
+                // allowed specific days
+                let specificDaysReturn = evalFastAllowedSpecificDaysPerYearLevel({daySched, specAllowedDays, specSectionKey, schoolDay: SCHOOL_DAYS[k]});
+                if (typeof specificDaysReturn !== 'number'){
+                    violationTracker = addToViolationTracker({violationTracker, violationCount: specificDaysReturn.violationCount, violations: specificDaysReturn.violations, violationName: 'allowed_specific_days'})
+                }else{
+                    assignedDays += specificDaysReturn;
+                }
 
             }
         }
@@ -1563,6 +1569,33 @@ const evaluateFastNumberOfCoursesAssignedInADay = ({daySched, specSectionKey, sc
         violationCount,
         violations
     }
+}
+
+const evalFastAllowedSpecificDaysPerYearLevel = ({daySched, specAllowedDays, specSectionKey, schoolDay}: {daySched: any, specAllowedDays: any, specSectionKey: string, schoolDay: string}) => {
+    let violationCount = 0;
+    let violations = [];
+
+    if (daySched.length >= 1) {
+
+        if (
+            !specAllowedDays.available_days.includes(schoolDay)
+        ) {
+            violationCount++;
+            violations.push({
+                type: 'Course(s) assigned to restricted day',
+                section: specSectionKey,
+                day: schoolDay
+            });
+
+            return {
+                violationCount,
+                violations
+            }
+        }
+
+        return 1
+    }
+    return 0
 }
 
 const getCurriculumObject = async (semester: number) => {
