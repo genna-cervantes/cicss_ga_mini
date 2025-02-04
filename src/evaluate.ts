@@ -1229,15 +1229,24 @@ export const evaluateFast = async ({
                 
                 violationTracker = addToViolationTracker({violationTracker, violationCount: numberOfCoursesAssignedInADayViolationCount, violations: numberOfCoursesAssignedInADayViolatins, violationName: 'courses_assigned_in_a_day'})
                 
-                // allowed specific days
+                // allowed specific days per year level
                 let specificDaysReturn = evalFastAllowedSpecificDaysPerYearLevel({daySched, specAllowedDays, specSectionKey, schoolDay: SCHOOL_DAYS[k]});
                 if (typeof specificDaysReturn !== 'number'){
                     violationTracker = addToViolationTracker({violationTracker, violationCount: specificDaysReturn.violationCount, violations: specificDaysReturn.violations, violationName: 'allowed_specific_days'})
                 }else{
                     assignedDays += specificDaysReturn;
                 }
-
+                
             }
+
+            // allowed number of days per year level
+            let {
+                violationCount: allowedNumberOfDaysPerYearLevelViolationCount,
+                violations: allowedNumberOfDaysPerYearLevelViolations
+            } = evalFastAllowedNumberOfDaysPerYearLevel({assignedDays, specAllowedDays, specSectionKey})
+            
+            violationTracker = addToViolationTracker({violationTracker, violationCount: allowedNumberOfDaysPerYearLevelViolationCount, violations: allowedNumberOfDaysPerYearLevelViolations, violationName: 'allowed_number_of_days'})
+            
         }
     }
 
@@ -1596,6 +1605,24 @@ const evalFastAllowedSpecificDaysPerYearLevel = ({daySched, specAllowedDays, spe
         return 1
     }
     return 0
+}
+
+const evalFastAllowedNumberOfDaysPerYearLevel = ({assignedDays, specAllowedDays, specSectionKey}: {assignedDays: number, specAllowedDays: any, specSectionKey: string}) => {
+    let violationCount = 0;
+    let violations = []
+
+    if (assignedDays > specAllowedDays.max_days) {
+        violationCount++;
+        violations.push({
+            type: 'Year level assigned classes on more than the allowed days',
+            section: specSectionKey
+        });
+    }
+
+    return {
+        violationCount,
+        violations
+    }
 }
 
 const getCurriculumObject = async (semester: number) => {
