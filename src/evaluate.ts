@@ -1143,6 +1143,9 @@ export const evaluateFast = async ({
     // course assignment
     let curriculum = await getCurriculumObject(semester);
 
+    // allowedDaysPerYearAndDepartment
+    let allowedDaysPerYearAndDepartment: any = await getAllowedDaysPerYearAndDepartment()
+
     for (let i = 0; i < chromosome.length; i++) {
         let perYear = chromosome[i];
 
@@ -1152,12 +1155,20 @@ export const evaluateFast = async ({
         let department = yearAndDepartmentKey.split('_')[0].toUpperCase();
         let year = parseInt(yearAndDepartmentKey.split('_')[1].slice(0, 1));
 
+        // allowedDaysPerYearAndDepartment
+        let specAllowedDays = allowedDaysPerYearAndDepartment[department]
+        ? allowedDaysPerYearAndDepartment[department][year]
+        ? allowedDaysPerYearAndDepartment[department][year]
+        : { available_days: SCHOOL_DAYS, max_days: 6 }
+        : { available_days: SCHOOL_DAYS, max_days: 6 };
+        
+        
         let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
         for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
             let specSection = yearAndDepartmentSchedule[j];
             let specSectionKey = Object.keys(specSection)[0];
             let specSectionSchedule = specSection[specSectionKey];
-
+            
             // course assignment
             let {
                 violationCount: courseAssignmentViolationCount,
@@ -1169,23 +1180,12 @@ export const evaluateFast = async ({
                 specSectionSchedule,
                 specSectionKey
             });
-
-            if (courseAssignmentViolationCount > 0){
-                // check if may ganon na na object, append nlng if meron na
-                let violationTrackerCourseAssignmentObj = violationTracker.filter((v: any) => v.violation === 'course_assignment')[0];
-                if (violationTrackerCourseAssignmentObj){
-                    violationTrackerCourseAssignmentObj.violationCount += courseAssignmentViolationCount
-                    violationTrackerCourseAssignmentObj.violations = [...violationTrackerCourseAssignmentObj.violations, ...courseAssignmentViolations]
-                }else{
-                    violationTracker.push({
-                        violation: 'course_assignment',
-                        violationCount: courseAssignmentViolationCount,
-                        violations: courseAssignmentViolations
-                    })
-                }
-            }
-
-        
+            
+            violationTracker = addToViolationTracker({violationTracker, violationCount: courseAssignmentViolationCount, violations: courseAssignmentViolations, violationName: 'course_assignment'})
+            
+            
+            // allowedDaysPerYearAndDepartment
+            let assignedDays = 0
             for (let k = 0; k < SCHOOL_DAYS.length; k++) {
                 let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
 
@@ -1220,6 +1220,16 @@ export const evaluateFast = async ({
                 } = await evaluateFastGenedCourseAssignment({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]});
                 
                 violationTracker = addToViolationTracker({violationTracker, violationCount: genedCourseAssignmentViolationCount, violations: genedCourseAssignmentViolations, violationName: 'gened_course_assignment'})
+                
+                // assigned classes in a day
+                let {
+                    violationCount: numberOfCoursesAssignedInADayViolationCount,
+                    violations: numberOfCoursesAssignedInADayViolatins
+                } = evaluateFastNumberOfCoursesAssignedInADay({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]})
+                
+                violationTracker = addToViolationTracker({violationTracker, violationCount: numberOfCoursesAssignedInADayViolationCount, violations: numberOfCoursesAssignedInADayViolatins, violationName: 'courses_assigned_in_a_day'})
+
+
 
             }
         }
@@ -1229,6 +1239,35 @@ export const evaluateFast = async ({
 
     return violationTracker;
 };
+
+const getAllowedDaysPerYearAndDepartment = async () => {
+
+    const allowedDaysPerYearAndDepartment: any = {};
+    const allowedDaysQuery =
+        'SELECT department, year, available_days, max_days FROM year_day_restrictions';
+    const res = await client.query(allowedDaysQuery);
+    const allowedDays = res.rows;
+
+    allowedDays.forEach((ad: any) => {
+        if (
+            !allowedDaysPerYearAndDepartment[ad.department] ||
+            !allowedDaysPerYearAndDepartment[ad.department][ad.year]
+        ) {
+            allowedDaysPerYearAndDepartment[ad.department] = {
+                ...allowedDaysPerYearAndDepartment[ad.department],
+                [ad.year]: { available_days: [], max_days: 0 }
+            };
+        }
+
+        allowedDaysPerYearAndDepartment[ad.department][ad.year][
+            'available_days'
+        ] = ad.available_days;
+        allowedDaysPerYearAndDepartment[ad.department][ad.year]['max_days'] =
+            ad.max_days;
+    });
+
+    return allowedDaysPerYearAndDepartment
+}
 
 const addToViolationTracker = ({violationTracker, violations, violationCount, violationName}: {violationTracker: any, violations: any, violationCount: number, violationName: string}) => {
 
@@ -1497,6 +1536,27 @@ const evaluateFastGenedCourseAssignment = async ({daySched, specSectionKey, scho
             }
         }
         // check if within ung timeslot neto don sa constraint ng
+    }
+
+    return {
+        violationCount,
+        violations
+    }
+}
+
+const evaluateFastNumberOfCoursesAssignedInADay = ({daySched, specSectionKey, schoolDay}: {daySched: any, specSectionKey: string, schoolDay: string}) => {
+
+    let violationCount = 0;
+    let violations = []
+
+    if (daySched.length === 1) {
+        violationCount++;
+        violations.push({
+            type: 'Gened course constraint not followed',
+            section: specSectionKey,
+            day: schoolDay,
+            courses: [daySched[0].course.subject_code]
+        });
     }
 
     return {
