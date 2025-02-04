@@ -1189,6 +1189,7 @@ export const evaluateFast = async ({
             for (let k = 0; k < SCHOOL_DAYS.length; k++) {
                 let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
 
+                // room type assignment
                 let {
                     violationCount: roomTypeAssignmentViolationCount,
                     violations: roomTypeAssignmentViolations
@@ -1205,6 +1206,27 @@ export const evaluateFast = async ({
                             violation: 'room_type_assignment',
                             violationCount: roomTypeAssignmentViolationCount,
                             violations: roomTypeAssignmentViolations
+                        })
+                    }
+                }
+
+                // max class length in day
+                let {
+                    violationCount: maxClassDayLengthViolationCount,
+                    violations: maxClassDayLengthAssignmentViolations
+                } = evaluateMaxClassDayLengthFast({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]})
+
+                if (maxClassDayLengthViolationCount > 0){
+                    // check if may ganon na na object, append nlng if meron na
+                    let violationTrackerMaxClassDayLengthObj = violationTracker.filter((v: any) => v.violation === 'max_class_day_length_assignment')[0];
+                    if (violationTrackerMaxClassDayLengthObj){
+                        violationTrackerMaxClassDayLengthObj.violationCount += maxClassDayLengthViolationCount
+                        violationTrackerMaxClassDayLengthObj.violations = [...violationTrackerMaxClassDayLengthObj.violations, ...maxClassDayLengthAssignmentViolations]
+                    }else{
+                        violationTracker.push({
+                            violation: 'max_class_day_length_assignment',
+                            violationCount: maxClassDayLengthViolationCount,
+                            violations: maxClassDayLengthAssignmentViolations
                         })
                     }
                 }
@@ -1325,6 +1347,48 @@ const evaluateRoomTypeAssignmentFast = ({dailySched, specSectionKey, schoolDay}:
         violationCount
     }
     
+}
+
+const evaluateMaxClassDayLengthFast = ({daySched, specSectionKey, schoolDay }: {daySched: any, specSectionKey: string, schoolDay: string}) => {
+
+    let violationCount = 0;
+    let violations: any = [];
+
+    if (daySched.length <= 0) {
+        return {
+            violations,
+            violationCount
+        };
+    }
+
+    let ascendingSched = daySched.sort(
+        (schedBlock1: any, schedBlock2: any) => {
+            return (
+                parseInt(schedBlock1.timeBlock.start, 10) -
+                parseInt(schedBlock2.timeBlock.start, 10)
+            );
+        }
+    );
+
+    let dayStart = parseInt(ascendingSched[0].timeBlock.start);
+    let dayEnd = parseInt(
+        ascendingSched[ascendingSched.length - 1].timeBlock.end
+    );
+
+    if (dayEnd - dayStart > 800) {
+        violationCount++;
+        violations.push({
+            type: 'Section assigned more than 8 hours in a day',
+            section: specSectionKey,
+            day: schoolDay,
+            assignedUnits: dayEnd - dayStart
+        });
+    }
+
+    return {
+        violations,
+        violationCount
+    };
 }
 
 const getCurriculumObject = async (semester: number) => {
