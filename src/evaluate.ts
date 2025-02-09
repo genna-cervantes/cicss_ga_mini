@@ -87,6 +87,9 @@ export const evaluateCoursesAssignment = async ({
 
         let requiredUnits = curriculum[department][year];
 
+        console.log(yearAndDepartmentKey)
+        console.log(yearAndDepartmentSchedule)
+
         for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
             let specSection = yearAndDepartmentSchedule[j];
             let specSectionKey = Object.keys(specSection)[0];
@@ -1027,10 +1030,12 @@ const groupSchedByRoom = (chromosome: any) => {
         let yearAndDepartmentKey = Object.keys(perYear)[0];
 
         let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
+        console.log('yds', yearAndDepartmentSchedule)
         for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
             let specSection = yearAndDepartmentSchedule[j];
             let specSectionKey = Object.keys(specSection)[0];
             let specSectionSchedule = specSection[specSectionKey];
+            console.log('ssk', specSectionSchedule)
 
             for (let k = 0; k < SCHOOL_DAYS.length; k++) {
                 let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
@@ -1085,7 +1090,7 @@ const getTotalUnitsFromWeeklySchedule = ({
     const schedule = sectionSchedule;
 
     for (let i = 0; i < SCHOOL_DAYS.length; i++) {
-        for (let j = 0; j < schedule[SCHOOL_DAYS[i]].length; j++) {
+        for (let j = 0; j < schedule[SCHOOL_DAYS[i]]?.length; j++) {
             if (
                 totalUnitsPerCourse[
                     schedule[SCHOOL_DAYS[i]][j].course.subject_code
