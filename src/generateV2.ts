@@ -168,6 +168,7 @@ const assignMissingCourses = async ({
                             timeBlock: timeDetails.timeBlock
                         };
 
+                        console.log('day', timeDetails.day)
                         specSectionSchedule[timeDetails.day].push(schedBlock);
                     }
                 }
@@ -285,8 +286,16 @@ const getTimeDetails = ({
 }) => {
     let unitsPerClass = miniCourseDetails.units;
     let courseType = miniCourseDetails.type;
-    let timeBlock: any;
-    let day: any;
+    let defaultEndTime = getEndTime({
+        timeStart: 700,
+        courseType,
+        missingUnitsPerClass: unitsPerClass
+    });
+    let timeBlock = {
+        start: '0700',
+        end: defaultEndTime.toString()
+    };
+    let day = 'M';
 
     loop1: for (let i = 0; i < SCHOOL_DAYS.length; i++) {
         let daySched = specSectionSched[SCHOOL_DAYS[i]];
@@ -300,8 +309,8 @@ const getTimeDetails = ({
 
         if (daySched.length < 1) {
             timeBlock = {
-                start: timeStart,
-                end: timeEnd
+                start: timeStart.toString(),
+                end: timeEnd.toString()
             };
             day = SCHOOL_DAYS[i]
             break loop1;
@@ -337,8 +346,8 @@ const getTimeDetails = ({
             }
 
             timeBlock = {
-                start: timeStart,
-                end: timeEnd
+                start: timeStart.toString(),
+                end: timeEnd.toString()
             };
             day = SCHOOL_DAYS[i]
 
