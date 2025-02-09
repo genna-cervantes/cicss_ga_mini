@@ -4,21 +4,23 @@ import { generateChromosomeV2 } from './generateV2';
 
 export const runGAV2 = async () => {
     let population: {
+        id: number,
         chromosome: any;
         score: number;
         violations: [{ violationType: string; violationCount: number }];
     }[] = [];
 
     console.log('Generating initial population...');
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 100; i++) {
         const chromosome = await generateChromosomeV2();
         const { score, violationType } = await evaluate(chromosome);
-        population.push({ chromosome, score, violations: violationType });
+        population.push({ chromosome, score, violations: violationType, id: i });
     }
 
     const findTop50 = (
         array: {
             chromosome: any;
+            id: number;
             score: number;
             violations: [{ violationType: string; violationCount: number }];
         }[]
@@ -28,15 +30,29 @@ export const runGAV2 = async () => {
             .slice(0, 50); // Get the top 50
     };
 
-    const top50 = findTop50(population);
-    population = top50;
+    console.log(population.length)
+    let ogtop50 = findTop50(population);
+    let ogtop50ids = [];
+    
+    for (let i = 0; i < ogtop50.length; i++){
+        ogtop50ids.push(ogtop50[i].id)
+    }
+    
+    population = ogtop50.slice(0);
 
     // cross over
-    for (let i = 0; i < population.length / 2; i++) {
+    let halfOfTop = population.length / 2
+    for (let i = 0; i < halfOfTop; i++) { // half ng top 50
         console.log('peforming crossover');
 
+
+        // try with i + 1 if better ung result
         let parent1 = population[i].chromosome;
-        let parent2 = population[population.length / 2 + i].chromosome;
+        let parent2 = population[halfOfTop + i].chromosome;
+
+        // generate this crossover point until is
+        // should depend on how many sections per year - randomize from 1 to num of sections - 1
+
         let crossoverPoint = {
             cs_1st: 2,
             cs_2nd: 1,
@@ -44,14 +60,39 @@ export const runGAV2 = async () => {
             cs_4th: 2
         };
 
-        crossover({ parent1, parent2, crossoverPoint });
+        let {newChromosome1, newChromosome2} = crossover({ parent1, parent2, crossoverPoint });
+
+        const { score: score1, violationType: violationType1 } = await evaluate(newChromosome1);
+        population.push({ chromosome: newChromosome1, score: score1, violations: violationType1 , id: 100 + i});
+
+        const { score: score2, violationType: violationType2 } = await evaluate(newChromosome2);
+        population.push({ chromosome: newChromosome2, score: score2, violations: violationType2, id: 100 + i });
+
+        console.log(`done with crossover with parent${i} and parent${(population.length / 2) + i}`)
+    }
+
+    // repair functions before finding top 50 again
+
+    let newtop50 = findTop50(population);
+    // population = top50;
+
+    // return {
+    //     schedule: top50[0].chromosome,
+    //     score: top50[0].score,
+    //     violations: top50[0].violations
+    // };
+    let newtop50ids = [];
+
+    for (let i = 0; i < newtop50.length; i++){
+        newtop50ids.push(newtop50[i].id)
     }
 
     return {
-        schedule: top50[0].chromosome,
-        score: top50[0].score,
-        violations: top50[0].violations
-    };
+        newtop50ids,
+        ogtop50ids
+    }
+
+
 };
 
 const crossover = ({ parent1, parent2, crossoverPoint }: { parent1: any; parent2: any; crossoverPoint: any }) => {
@@ -61,8 +102,8 @@ const crossover = ({ parent1, parent2, crossoverPoint }: { parent1: any; parent2
     let newChromosome2 = structuredClone(parent2);
     let copyOfParent2 = structuredClone(parent2);
 
-    console.log('parent1', parent1);
-    console.log('nc', newChromosome1);
+    // console.log('parent1', parent1);
+    // console.log('nc', newChromosome1);
     // loop thru parent 1
     // check the subject
     // get the schedule of that subject in parent 2
@@ -76,11 +117,11 @@ const crossover = ({ parent1, parent2, crossoverPoint }: { parent1: any; parent2
         let yearAndDepartmentKey = Object.keys(perYear)[0];
         let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
 
-        console.log('og sched', yearAndDepartmentSchedule) 
+        // console.log('og sched', yearAndDepartmentSchedule) 
 
         let parent1MinusCrossOverPoint = parent1Copy[i][yearAndDepartmentKey].splice(crossoverPoint[yearAndDepartmentKey])
 
-        console.log('crossover sched', parent1MinusCrossOverPoint)
+        // console.log('crossover sched', parent1MinusCrossOverPoint)
 
         for (let j = 0; j < parent1MinusCrossOverPoint.length; j++) {
             let specSection = parent1MinusCrossOverPoint[j];
@@ -124,32 +165,37 @@ const crossover = ({ parent1, parent2, crossoverPoint }: { parent1: any; parent2
                     // remove the previous timeblock
                     newChromosome1[i][yearAndDepartmentKey][sectionIndex][specSectionKey][SCHOOL_DAYS[k]].splice(l, 1);
 
-                    console.log('checking if nag switch nga')
-                    console.log('parent 1 loc')
-                    console.log('day', SCHOOL_DAYS[k])
-                    console.log('section', specSectionKey)
-                    console.log(parent1[i][yearAndDepartmentKey][sectionIndex][specSectionKey][SCHOOL_DAYS[k]][l])
+                    // console.log('checking if nag switch nga')
+                    // console.log('parent 1 loc')
+                    // console.log('day', SCHOOL_DAYS[k])
+                    // console.log('section', specSectionKey)
+                    // console.log(parent1[i][yearAndDepartmentKey][sectionIndex][specSectionKey][SCHOOL_DAYS[k]][l])
                     
-                    console.log('parent 2 loc')
-                    console.log('day', newDay)
-                    console.log('section', specSectionSwitched)
-                    console.log({
-                        ...schedBlock,
-                        timeBlock: newTimeBlock
-                    })
+                    // console.log('parent 2 loc')
+                    // console.log('day', newDay)
+                    // console.log('section', specSectionSwitched)
+                    // console.log({
+                    //     ...schedBlock,
+                    //     timeBlock: newTimeBlock
+                    // })
                     
-                    console.log('chromosome 1 should contain parent 2 loc')
-                    console.log('day', newDay)
-                    console.log(newChromosome1[i][yearAndDepartmentKey][sectionIndex][specSectionKey][newDay])
+                    // console.log('chromosome 1 should contain parent 2 loc')
+                    // console.log('day', newDay)
+                    // console.log(newChromosome1[i][yearAndDepartmentKey][sectionIndex][specSectionKey][newDay])
                     
-                    console.log('chromosome 2 should contain parent 1 loc')
-                    console.log('day', SCHOOL_DAYS[k])
-                    console.log(newChromosome2[i][yearAndDepartmentKey][specSectionIndex][specSectionSwitched][SCHOOL_DAYS[k]])
+                    // console.log('chromosome 2 should contain parent 1 loc')
+                    // console.log('day', SCHOOL_DAYS[k])
+                    // console.log(newChromosome2[i][yearAndDepartmentKey][specSectionIndex][specSectionSwitched][SCHOOL_DAYS[k]])
 
-                    return;
+                    // return;
                 }
             }
         }
+    }
+
+    return {
+        newChromosome1,
+        newChromosome2
     }
 };
 

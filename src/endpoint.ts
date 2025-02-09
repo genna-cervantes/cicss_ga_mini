@@ -10,61 +10,61 @@ const app = express();
 const port = 3001;
 
 app.get('/', (req, res) => {
-    res.json({auth: true});
-})
+    res.json({ auth: true });
+});
 
 app.get('/health', (req, res) => {
     res.send('goods');
-})
+});
 
 // with cross over
 app.get('/schedule', async (req, res) => {
-    console.log('endpoint hit')
+    console.log('endpoint hit');
     // let schedule = await runScript();
-    let {schedule, score, violations} = await runAlgo();
-    console.log(violations)
-    console.log(score)
+    let { schedule, score, violations } = await runAlgo();
+    console.log(violations);
+    console.log(score);
     res.json(schedule); // Send the schedule data as JSON response
 });
 
 // test generation
 app.get('/test', async (req, res) => {
-    console.log('test endpoint hit')
+    console.log('test endpoint hit');
     let csChromosome = await generateChromosome();
-    res.json(csChromosome)
-})
+    res.json(csChromosome);
+});
 
 // to time generation time
 app.get('/time-sched', async (req, res) => {
-    console.log('testing generation time')
+    console.log('testing generation time');
     for (let i = 0; i < 500; i++) {
         const chromosome = await generateChromosome();
     }
-    res.json('done')
-})
+    res.json('done');
+});
 
 // to time original evaluation time
 app.get('/time-eval', async (req, res) => {
-    console.log('testing evaluation time')
-    for (let i = 0; i < 500; i++){
+    console.log('testing evaluation time');
+    for (let i = 0; i < 500; i++) {
         const score = await evaluate(chromosome);
     }
-    res.json('done')
-})
+    res.json('done');
+});
 
 // time new evaluation
 app.get('/evaluate-fast', async (req, res) => {
-    let violationTracker = await evaluateFast({chromosome, semester: 2 })
-    res.json(violationTracker)
-})
+    let violationTracker = await evaluateFast({ chromosome, semester: 2 });
+    res.json(violationTracker);
+});
 
 // no cross over
 app.get('/schedule-no-crossover', async (req, res) => {
-    let {schedule, score, violations} = await runAlgoNoCrossOver();
-    console.log(violations)
-    console.log(score)
-    res.json(schedule)
-})
+    let { schedule, score, violations } = await runAlgoNoCrossOver();
+    console.log(violations);
+    console.log(score);
+    res.json(schedule);
+});
 
 // app.get('/fitness', async (req, res) => {
 //     let {violations, violationCount, score} = await evaluate();
@@ -73,11 +73,37 @@ app.get('/schedule-no-crossover', async (req, res) => {
 
 app.get('/test-ga-v2', async (req, res) => {
     // await generateChromosomeV2();
-    let {schedule, score, violations} = await runGAV2()
-    console.log(violations)
-    console.log(score)
-    res.json(schedule)
-})
+    // let {schedule, score, violations} = await runGAV2()
+    let { ogtop50ids, newtop50ids } = await runGAV2();
+    // console.log(violations)
+    // console.log(score)
+    res.json({ ogtop50ids, newtop50ids });
+});
+
+app.get('/sametop', (req, res) => {
+    let arr1 = [
+        24, 10, 9, 20, 45, 83, 55, 73, 6, 50, 82, 81, 33, 34, 2, 43, 58, 97, 56,
+        60, 19, 44, 17, 66, 54, 51, 28, 80, 89, 22, 48, 74, 38, 61, 5, 46, 26,
+        30, 98, 15, 99, 31, 91, 4, 65, 72, 0, 14, 16, 36
+    ];
+    let arr2 = [
+        24, 10, 9, 20, 45, 83, 55, 73, 6, 50, 82, 81, 102, 33, 34, 2, 43, 100,
+        58, 97, 116, 103, 56, 60, 19, 44, 17, 66, 54, 51, 28, 80, 89, 22, 48,
+        74, 38, 119, 104, 61, 5, 46, 26, 30, 98, 15, 109, 118, 99, 31
+    ];
+
+    if (arr1.length !== arr2.length) {
+        res.json(false);
+    }
+
+    let sortedArr1 = [...arr1].sort((a, b) => a - b);
+    let sortedArr2 = [...arr2].sort((a, b) => a - b);
+
+    let isEqual = sortedArr1.every((val, index) => val === sortedArr2[index]);
+
+    res.json(isEqual);
+});
+
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
