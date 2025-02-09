@@ -1030,12 +1030,12 @@ const groupSchedByRoom = (chromosome: any) => {
         let yearAndDepartmentKey = Object.keys(perYear)[0];
 
         let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
-        console.log('yds', yearAndDepartmentSchedule)
+        
         for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
             let specSection = yearAndDepartmentSchedule[j];
             let specSectionKey = Object.keys(specSection)[0];
             let specSectionSchedule = specSection[specSectionKey];
-            console.log('ssk', specSectionSchedule)
+            
 
             for (let k = 0; k < SCHOOL_DAYS.length; k++) {
                 let daySched = specSectionSchedule[SCHOOL_DAYS[k]];

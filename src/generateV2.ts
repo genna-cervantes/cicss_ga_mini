@@ -111,16 +111,19 @@ const assignMissingCourses = async ({chromosome, violations}: {chromosome: any, 
                         // make this possible time nlng
                         let timeEnd = getEndTime(violation);
                         let miniCourseDetails = await getMiniCourseDetails(violation.course);
+                        let roomDetails = await getRoomDetails({courseType: miniCourseDetails.type, specificRoomAssignment: miniCourseDetails.specific_room_assignment});
+                        let profDetails = await getProfDetails({course: miniCourseDetails.subject_code})
                 
                         let timeBlock = {
                             start: '0700',
                             end: timeEnd,
                         };
                 
+                        // wag nlng toh inull kung ano nlng ung matic na pwede
                         let schedBlock = {
                             course: miniCourseDetails,
-                            prof: null,
-                            room: null,
+                            prof: profDetails,
+                            room: roomDetails,
                             timeBlock,
                         };
                 
@@ -186,4 +189,29 @@ const getEndTime = (violation: any) => {
 
     return timeStart < 1000 ? '0' + timeStart : timeStart
 
+}
+
+const getRoomDetails = async ({courseType, specificRoomAssignment}: {courseType: string, specificRoomAssignment: string}) => {
+    if (specificRoomAssignment){
+        const query = 'SELECT * FROM rooms WHERE id = $1'
+        const res = await client.query(query, [specificRoomAssignment]);
+        const room = res.rows[0]
+
+        return room
+    }
+
+    const query = 'SELECT * FROM rooms WHERE type = $1'
+    const res = await client.query(query, [courseType]);
+    const room = res.rows[0]
+
+    return room
+}
+
+const getProfDetails = async ({course}: {course: string}) => {
+
+    const query = 'SELECT * FROM teaching_academic_staff WHERE $1 = ANY(courses)';
+    const res = await client.query(query, [course])
+    const tas = res.rows[0]
+
+    return tas;
 }
