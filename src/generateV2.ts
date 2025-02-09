@@ -1,6 +1,7 @@
-import { Client } from "pg";
-import { evaluateCoursesAssignment } from "./evaluate";
-import { generateYearGene } from "./generate";
+import { Client } from 'pg';
+import { evaluateCoursesAssignment } from './evaluate';
+import { generateYearGene } from './generate';
+import { SCHOOL_DAYS } from './constants';
 
 const DB_HOST = 'localhost';
 const DB_PORT = 5432;
@@ -26,7 +27,6 @@ client
         console.error('Connection error', err.stack);
     });
 
-
 export const generateChromosomeV2 = async () => {
     let chromosome = [];
 
@@ -36,58 +36,88 @@ export const generateChromosomeV2 = async () => {
         sem: 2,
         sections: 4
     });
-    CSYearGene1 = [{cs_1st: CSYearGene1}]
+    CSYearGene1 = [{ cs_1st: CSYearGene1 }];
 
     // dito ung pag chekc if complete and insert bago ipush sa chromosome
-    let violationsCS1 = await evaluateCoursesAssignment({semester: 2, chromosome: CSYearGene1})
-    let completeGeneCS1 = await assignMissingCourses({chromosome: CSYearGene1, violations: violationsCS1})
-    
+    let violationsCS1 = await evaluateCoursesAssignment({
+        semester: 2,
+        chromosome: CSYearGene1
+    });
+    let completeGeneCS1 = await assignMissingCourses({
+        chromosome: CSYearGene1,
+        violations: violationsCS1
+    });
+
     chromosome.push(completeGeneCS1[0]);
-    
+
     let CSYearGene2 = await generateYearGene({
         dept: 'CS',
         year: 2,
         sem: 2,
         sections: 3
     });
-    CSYearGene2 = [{cs_2nd: CSYearGene2}]
-    
+    CSYearGene2 = [{ cs_2nd: CSYearGene2 }];
+
     // dito ung pag chekc if complete and insert bago ipush sa chromosome
-    let violationsCS2 = await evaluateCoursesAssignment({semester: 2, chromosome: CSYearGene2})
-    let completeGeneCS2 = await assignMissingCourses({chromosome: CSYearGene2, violations: violationsCS2})
+    let violationsCS2 = await evaluateCoursesAssignment({
+        semester: 2,
+        chromosome: CSYearGene2
+    });
+    let completeGeneCS2 = await assignMissingCourses({
+        chromosome: CSYearGene2,
+        violations: violationsCS2
+    });
     chromosome.push(completeGeneCS2[0]);
-    
+
     let CSYearGene3 = await generateYearGene({
         dept: 'CS',
         year: 3,
         sem: 2,
         sections: 3
     });
-    CSYearGene3 = [{cs_3rd: CSYearGene3}]
-    
+    CSYearGene3 = [{ cs_3rd: CSYearGene3 }];
+
     // dito ung pag chekc if complete and insert bago ipush sa chromosome
-    let violationsCS3 = await evaluateCoursesAssignment({semester: 2, chromosome: CSYearGene3})
-    let completeGeneCS3 = await assignMissingCourses({chromosome: CSYearGene3, violations: violationsCS3})
+    let violationsCS3 = await evaluateCoursesAssignment({
+        semester: 2,
+        chromosome: CSYearGene3
+    });
+    let completeGeneCS3 = await assignMissingCourses({
+        chromosome: CSYearGene3,
+        violations: violationsCS3
+    });
     chromosome.push(completeGeneCS3[0]);
-    
+
     let CSYearGene4 = await generateYearGene({
         dept: 'CS',
         year: 4,
         sem: 2,
         sections: 3
     });
-    CSYearGene4 = [{cs_4th: CSYearGene4}]
-    
+    CSYearGene4 = [{ cs_4th: CSYearGene4 }];
+
     // dito ung pag chekc if complete and insert bago ipush sa chromosome
-    let violationsCS4 = await evaluateCoursesAssignment({semester: 2, chromosome: CSYearGene4})
-    let completeGeneCS4 = await assignMissingCourses({chromosome: CSYearGene4, violations: violationsCS4})
+    let violationsCS4 = await evaluateCoursesAssignment({
+        semester: 2,
+        chromosome: CSYearGene4
+    });
+    let completeGeneCS4 = await assignMissingCourses({
+        chromosome: CSYearGene4,
+        violations: violationsCS4
+    });
     chromosome.push(completeGeneCS4[0]);
-    
+
     return chromosome;
 };
 
-const assignMissingCourses = async ({chromosome, violations}: {chromosome: any, violations: any}) => {
-    let sortedViolationBySection = sortViolationsBySection(violations)
+const assignMissingCourses = async ({
+    chromosome,
+    violations
+}: {
+    chromosome: any;
+    violations: any;
+}) => {
+    let sortedViolationBySection = sortViolationsBySection(violations);
 
     for (let i = 0; i < chromosome.length; i++) {
         let perYear = chromosome[i];
@@ -99,36 +129,51 @@ const assignMissingCourses = async ({chromosome, violations}: {chromosome: any, 
             let specSectionKey = Object.keys(specSection)[0];
             let specSectionSchedule = specSection[specSectionKey];
 
-            console.log(specSectionKey)
-            if ((sortedViolationBySection[specSectionKey]?.length ?? 0) > 0){
-                // assign that 
+            console.log(specSectionKey);
+            if ((sortedViolationBySection[specSectionKey]?.length ?? 0) > 0) {
+                // assign that
 
-                for (let k = 0; k < sortedViolationBySection[specSectionKey].length; k++) {
-                    let violation = sortedViolationBySection[specSectionKey][k]
+                for (
+                    let k = 0;
+                    k < sortedViolationBySection[specSectionKey].length;
+                    k++
+                ) {
+                    let violation = sortedViolationBySection[specSectionKey][k];
 
                     for (let l = 0; l < violation.missing_class; l++) {
-                        
                         // make this possible time nlng
-                        let timeEnd = getEndTime(violation);
-                        let miniCourseDetails = await getMiniCourseDetails(violation.course);
-                        let roomDetails = await getRoomDetails({courseType: miniCourseDetails.type, specificRoomAssignment: miniCourseDetails.specific_room_assignment});
-                        let profDetails = await getProfDetails({course: miniCourseDetails.subject_code})
-                
+                        // let timeEnd = getEndTime(violation);
+
+                        let miniCourseDetails = await getMiniCourseDetails(
+                            violation.course
+                        );
+                        let timeDetails = getTimeDetails({
+                            miniCourseDetails,
+                            specSectionSched: specSectionSchedule
+                        });
+                        let roomDetails = await getRoomDetails({
+                            courseType: miniCourseDetails.type,
+                            specificRoomAssignment:
+                                miniCourseDetails.specific_room_assignment
+                        });
+                        let profDetails = await getProfDetails({
+                            course: miniCourseDetails.subject_code
+                        });
+
                         let timeBlock = {
                             start: '0700',
-                            end: timeEnd,
+                            end: 'timeEnd'
                         };
-                
+
                         // wag nlng toh inull kung ano nlng ung matic na pwede
                         let schedBlock = {
                             course: miniCourseDetails,
                             prof: profDetails,
                             room: roomDetails,
-                            timeBlock,
+                            timeBlock: timeDetails
                         };
-                
+
                         specSectionSchedule['M'].push(schedBlock);
-                        
                     }
                 }
             }
@@ -136,26 +181,25 @@ const assignMissingCourses = async ({chromosome, violations}: {chromosome: any, 
     }
 
     return chromosome;
-
-}
+};
 
 const sortViolationsBySection = (violations: any) => {
     let violationsSortedBySection: any = {};
 
     violations.forEach((violation: any) => {
-        if (!violationsSortedBySection[violation.section]){
-            violationsSortedBySection[violation.section] = []
+        if (!violationsSortedBySection[violation.section]) {
+            violationsSortedBySection[violation.section] = [];
         }
 
-        violationsSortedBySection[violation.section].push(violation)
+        violationsSortedBySection[violation.section].push(violation);
     });
 
     return violationsSortedBySection;
-}
+};
 
 const getMiniCourseDetails = async (courseCode: string) => {
-
-    const query = "SELECT type, category, units_per_class, specific_room_assignment FROM courses WHERE subject_code = $1";
+    const query =
+        'SELECT type, category, units_per_class, specific_room_assignment FROM courses WHERE subject_code = $1';
     const res = await client.query(query, [courseCode]);
     const courseDetails = res.rows[0];
 
@@ -164,54 +208,149 @@ const getMiniCourseDetails = async (courseCode: string) => {
         type: courseDetails.type,
         category: courseDetails.category,
         units: courseDetails.units_per_class,
-        specific_room_assignment:
-            courseDetails.specific_room_assignment ?? ''
+        specific_room_assignment: courseDetails.specific_room_assignment ?? ''
     };
 
     return miniCourseDetails;
-}
+};
 
-const getEndTime = (violation: any) => {
-    let timeStart = 700;
+const getEndTime = ({
+    timeStart,
+    courseType,
+    missingUnitsPerClass
+}: {
+    timeStart: number;
+    courseType: string;
+    missingUnitsPerClass: any;
+}) => {
     let timeEnd;
 
-    if (violation.course_type === 'lec'){
-        timeEnd = (violation.missing_units_per_class * 60)
-    }else {
-        timeEnd = (violation.missing_units_per_class * 180) // 3 hrs
+    if (courseType === 'lec') {
+        timeEnd = missingUnitsPerClass * 60;
+    } else {
+        timeEnd = missingUnitsPerClass * 180; // 3 hrs
     }
 
-    let timeEndHours = Math.floor(timeEnd / 60)
-    let timeEndMinutes = timeEnd % 60
+    let timeEndHours = Math.floor(timeEnd / 60);
+    let timeEndMinutes = timeEnd % 60;
 
-    timeStart += (timeEndHours * 100) // hours
-    timeStart += timeEndMinutes
+    let startHours = Math.floor(timeStart / 100); // Extract hours (e.g., 14 from 1430)
+    let startMinutes = timeStart % 100; // Extract minutes (e.g., 30 from 1430)
 
-    return timeStart < 1000 ? '0' + timeStart : timeStart
+    // Add time
+    let newMinutes = startMinutes + timeEndMinutes;
+    let newHours = startHours + timeEndHours;
 
-}
+    // If minutes exceed 60, adjust hours and minutes
+    if (newMinutes >= 60) {
+        newHours += Math.floor(newMinutes / 60);
+        newMinutes %= 60;
+    }
 
-const getRoomDetails = async ({courseType, specificRoomAssignment}: {courseType: string, specificRoomAssignment: string}) => {
-    if (specificRoomAssignment){
-        const query = 'SELECT * FROM rooms WHERE id = $1'
+    return newHours * 100 + newMinutes; // Convert back to military time format
+};
+
+const getRoomDetails = async ({
+    courseType,
+    specificRoomAssignment
+}: {
+    courseType: string;
+    specificRoomAssignment: string;
+}) => {
+    if (specificRoomAssignment) {
+        const query = 'SELECT * FROM rooms WHERE id = $1';
         const res = await client.query(query, [specificRoomAssignment]);
-        const room = res.rows[0]
+        const room = res.rows[0];
 
-        return room
+        return room;
     }
 
-    const query = 'SELECT * FROM rooms WHERE type = $1'
+    const query = 'SELECT * FROM rooms WHERE type = $1';
     const res = await client.query(query, [courseType]);
-    const room = res.rows[0]
+    const room = res.rows[0];
 
-    return room
-}
+    return room;
+};
 
-const getProfDetails = async ({course}: {course: string}) => {
-
-    const query = 'SELECT * FROM teaching_academic_staff WHERE $1 = ANY(courses)';
-    const res = await client.query(query, [course])
-    const tas = res.rows[0]
+const getProfDetails = async ({ course }: { course: string }) => {
+    const query =
+        'SELECT * FROM teaching_academic_staff WHERE $1 = ANY(courses)';
+    const res = await client.query(query, [course]);
+    const tas = res.rows[0];
 
     return tas;
-}
+};
+
+const getTimeDetails = ({
+    miniCourseDetails,
+    specSectionSched
+}: {
+    miniCourseDetails: any;
+    specSectionSched: any;
+}) => {
+    let unitsPerClass = miniCourseDetails.units;
+    let courseType = miniCourseDetails.type;
+    let timeBlock: any;
+
+    loop1: for (let i = 0; i < SCHOOL_DAYS.length; i++) {
+        let daySched = specSectionSched[SCHOOL_DAYS[i]];
+
+        let timeStart = 700; //0700
+        let timeEnd = getEndTime({
+            timeStart,
+            courseType,
+            missingUnitsPerClass: unitsPerClass
+        });
+
+        console.log('initial');
+        console.log(timeStart);
+        console.log(timeEnd);
+
+        if (daySched.length < 1) {
+            timeBlock = {
+                start: timeStart,
+                end: timeEnd
+            };
+            break loop1;
+        }
+
+        let ascendingSched = daySched.sort(
+            (schedBlock1: any, schedBlock2: any) => {
+                return (
+                    parseInt(schedBlock1.timeBlock.start, 10) -
+                    parseInt(schedBlock2.timeBlock.start, 10)
+                );
+            }
+        );
+
+        for (let j = 0; j < ascendingSched.length - 1; j++) {
+            // check if kasya
+            // if ndi add sa time start ung time end ng current class
+
+            // dapat nakabase den sa next class
+            if (
+                (timeStart >= ascendingSched[j].timeBlock.start && timeStart <= ascendingSched[j].timeBlock.end) ||
+                (timeEnd >= ascendingSched[j].timeBlock.start && timeEnd <= ascendingSched[j].timeBlock.end) ||
+                (timeStart >= ascendingSched[j + 1].timeBlock.start && timeStart <= ascendingSched[j + 1].timeBlock.end) ||
+                (timeEnd >= ascendingSched[j + 1].timeBlock.start && timeEnd <= ascendingSched[j + 1].timeBlock.end) 
+            ) {
+                timeStart = parseInt(daySched[j].timeBlock.end);
+                timeEnd = getEndTime({
+                    timeStart,
+                    courseType,
+                    missingUnitsPerClass: unitsPerClass
+                });
+                continue;
+            }
+
+            timeBlock = {
+                start: timeStart,
+                end: timeEnd
+            };
+
+            break loop1;
+        }
+    }
+
+    return timeBlock
+};
