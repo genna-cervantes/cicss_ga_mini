@@ -34,7 +34,7 @@ client
 
 let chromosomes = [];
 
-const generateYearGene = async ({
+export const generateYearGene = async ({
     dept,
     year,
     sem,
@@ -1129,8 +1129,6 @@ const getProfFromCourse = async ({
         // return ung prof na un
         return prof;
     }
-
-
     
     return null;
 };

@@ -32,7 +32,7 @@ client
     });
 
 // check if complete ung assignment based sa curriculum
-const evaluateCoursesAssignment = async ({
+export const evaluateCoursesAssignment = async ({
     semester,
     chromosome
 }: {
@@ -99,14 +99,20 @@ const evaluateCoursesAssignment = async ({
             for (let k = 0; k < requiredUnits.length; k++) {
                 const subjectCode = requiredUnits[k];
                 const querySubj =
-                    'SELECT total_units, type FROM courses WHERE subject_code = $1';
+                    'SELECT total_units, type, units_per_class FROM courses WHERE subject_code = $1';
                 const res = await client.query(querySubj, [subjectCode]);
+                const unitsPerClass = res.rows[0].units_per_class;
+                const type = res.rows[0].type;
                 const totalUnits = res.rows[0].total_units;
 
                 if ((totalUnitsPerSection[subjectCode] ?? 0) < totalUnits) {
+
                     violationCount++;
                     violations.push({
                         course: subjectCode,
+                        course_type: type,
+                        missing_units_per_class: unitsPerClass,
+                        missing_class: (totalUnits - (totalUnitsPerSection[subjectCode] ?? 0))/unitsPerClass,
                         description: 'kulang units',
                         section: specSectionKey
                     });
