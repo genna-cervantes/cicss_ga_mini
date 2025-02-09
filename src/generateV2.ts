@@ -39,21 +39,50 @@ export const generateChromosomeV2 = async () => {
     CSYearGene1 = [{cs_1st: CSYearGene1}]
 
     // dito ung pag chekc if complete and insert bago ipush sa chromosome
-    let violations = await evaluateCoursesAssignment({semester: 2, chromosome: CSYearGene1})
-    let completeGene = assignMissingCourses({chromosome: CSYearGene1, violations})
-    chromosome.push({ cs_1st: completeGene });
+    let violationsCS1 = await evaluateCoursesAssignment({semester: 2, chromosome: CSYearGene1})
+    let completeGeneCS1 = assignMissingCourses({chromosome: CSYearGene1, violations: violationsCS1})
+    chromosome.push({ cs_1st: completeGeneCS1 });
+    
+    let CSYearGene2 = await generateYearGene({
+        dept: 'CS',
+        year: 2,
+        sem: 2,
+        sections: 3
+    });
+    CSYearGene2 = [{cs_2nd: CSYearGene1}]
 
-    console.log(chromosome);
+    // dito ung pag chekc if complete and insert bago ipush sa chromosome
+    let violationsCS2 = await evaluateCoursesAssignment({semester: 2, chromosome: CSYearGene2})
+    let completeGeneCS2 = assignMissingCourses({chromosome: CSYearGene2, violations: violationsCS2})
+    chromosome.push({ cs_2nd: completeGeneCS2 });
 
-    // let CSYearGene2 = await generateYearGene({
-    //     dept: 'CS',
-    //     year: 2,
-    //     sem: 2,
-    //     sections: 3
-    // });
-    // chromosome.push({ cs_2nd: CSYearGene2 });
+    let CSYearGene3 = await generateYearGene({
+        dept: 'CS',
+        year: 3,
+        sem: 2,
+        sections: 3
+    });
+    CSYearGene3 = [{cs_3rd: CSYearGene3}]
 
-    // return chromosome;
+    // dito ung pag chekc if complete and insert bago ipush sa chromosome
+    let violationsCS3 = await evaluateCoursesAssignment({semester: 2, chromosome: CSYearGene3})
+    let completeGeneCS3 = assignMissingCourses({chromosome: CSYearGene3, violations: violationsCS3})
+    chromosome.push({ cs_3rd: completeGeneCS3 });
+
+    let CSYearGene4 = await generateYearGene({
+        dept: 'CS',
+        year: 3,
+        sem: 2,
+        sections: 3
+    });
+    CSYearGene4 = [{cs_4th: CSYearGene4}]
+
+    // dito ung pag chekc if complete and insert bago ipush sa chromosome
+    let violationsCS4 = await evaluateCoursesAssignment({semester: 2, chromosome: CSYearGene4})
+    let completeGeneCS4 = assignMissingCourses({chromosome: CSYearGene4, violations: violationsCS4})
+    chromosome.push({ cs_4th: completeGeneCS4 });
+    
+    return chromosome;
 };
 
 const assignMissingCourses = async ({chromosome, violations}: {chromosome: any, violations: any}) => {

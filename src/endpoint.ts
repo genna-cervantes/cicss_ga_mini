@@ -4,6 +4,7 @@ import { generateChromosome } from './generate';
 import { evaluate, evaluateFast } from './evaluate';
 import { chromosome } from './data';
 import { generateChromosomeV2 } from './generateV2';
+import { runGAV2 } from './scriptV2';
 
 const app = express();
 const port = 3001;
@@ -71,8 +72,11 @@ app.get('/schedule-no-crossover', async (req, res) => {
 // })
 
 app.get('/test-ga-v2', async (req, res) => {
-    await generateChromosomeV2();
-    res.json('done')
+    // await generateChromosomeV2();
+    let {schedule, score, violations} = await runGAV2()
+    console.log(violations)
+    console.log(score)
+    res.json(schedule)
 })
 
 app.listen(port, () => {
