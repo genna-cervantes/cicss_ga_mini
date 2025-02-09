@@ -160,20 +160,15 @@ const assignMissingCourses = async ({
                             course: miniCourseDetails.subject_code
                         });
 
-                        let timeBlock = {
-                            start: '0700',
-                            end: 'timeEnd'
-                        };
-
                         // wag nlng toh inull kung ano nlng ung matic na pwede
                         let schedBlock = {
                             course: miniCourseDetails,
                             prof: profDetails,
                             room: roomDetails,
-                            timeBlock: timeDetails
+                            timeBlock: timeDetails.timeBlock
                         };
 
-                        specSectionSchedule['M'].push(schedBlock);
+                        specSectionSchedule[timeDetails.day].push(schedBlock);
                     }
                 }
             }
@@ -291,6 +286,7 @@ const getTimeDetails = ({
     let unitsPerClass = miniCourseDetails.units;
     let courseType = miniCourseDetails.type;
     let timeBlock: any;
+    let day: any;
 
     loop1: for (let i = 0; i < SCHOOL_DAYS.length; i++) {
         let daySched = specSectionSched[SCHOOL_DAYS[i]];
@@ -302,15 +298,12 @@ const getTimeDetails = ({
             missingUnitsPerClass: unitsPerClass
         });
 
-        console.log('initial');
-        console.log(timeStart);
-        console.log(timeEnd);
-
         if (daySched.length < 1) {
             timeBlock = {
                 start: timeStart,
                 end: timeEnd
             };
+            day = SCHOOL_DAYS[i]
             break loop1;
         }
 
@@ -347,10 +340,11 @@ const getTimeDetails = ({
                 start: timeStart,
                 end: timeEnd
             };
+            day = SCHOOL_DAYS[i]
 
             break loop1;
         }
     }
 
-    return timeBlock
+    return {timeBlock, day}
 };
