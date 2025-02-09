@@ -87,9 +87,6 @@ export const evaluateCoursesAssignment = async ({
 
         let requiredUnits = curriculum[department][year];
 
-        console.log(yearAndDepartmentKey)
-        console.log(yearAndDepartmentSchedule)
-
         for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
             let specSection = yearAndDepartmentSchedule[j];
             let specSectionKey = Object.keys(specSection)[0];
@@ -983,6 +980,7 @@ const groupSchedByTAS = (chromosome: any) => {
 
                 let schedByTASPerSectionPerDay = daySched.reduce(
                     (accumulator: any, schedBlock: any) => {
+                        
                         let TAS = schedBlock.prof.tas_id;
 
                         if (TAS === 'GENDED PROF') {
@@ -1355,8 +1353,6 @@ export const evaluateCourseAssignmentFast = async ({
             });
         }
     }
-
-    console.log(violations)
 
     return { violationCount, violations };
 };

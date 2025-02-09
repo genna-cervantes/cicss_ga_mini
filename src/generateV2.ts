@@ -129,7 +129,6 @@ const assignMissingCourses = async ({
             let specSectionKey = Object.keys(specSection)[0];
             let specSectionSchedule = specSection[specSectionKey];
 
-            console.log(specSectionKey);
             if ((sortedViolationBySection[specSectionKey]?.length ?? 0) > 0) {
                 // assign that
 
@@ -157,7 +156,7 @@ const assignMissingCourses = async ({
                                 miniCourseDetails.specific_room_assignment
                         });
                         let profDetails = await getProfDetails({
-                            course: miniCourseDetails.subject_code
+                            course: miniCourseDetails.subject_code, courseCategory: miniCourseDetails.category
                         });
 
                         // wag nlng toh inull kung ano nlng ung matic na pwede
@@ -168,7 +167,6 @@ const assignMissingCourses = async ({
                             timeBlock: timeDetails.timeBlock
                         };
 
-                        console.log('day', timeDetails.day)
                         specSectionSchedule[timeDetails.day].push(schedBlock);
                     }
                 }
@@ -268,7 +266,14 @@ const getRoomDetails = async ({
     return room;
 };
 
-const getProfDetails = async ({ course }: { course: string }) => {
+const getProfDetails = async ({ course, courseCategory }: { course: string, courseCategory: string }) => {
+
+    if (courseCategory === 'gened'){
+        return {
+            tas_id: 'GENDED PROF'
+        }
+    }
+
     const query =
         'SELECT * FROM teaching_academic_staff WHERE $1 = ANY(courses)';
     const res = await client.query(query, [course]);
