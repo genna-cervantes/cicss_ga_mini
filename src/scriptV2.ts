@@ -37,8 +37,14 @@ export const runGAV2 = async () => {
 
         let parent1 = population[i].chromosome;
         let parent2 = population[population.length / 2 + i].chromosome;
+        let crossoverPoint = {
+            cs_1st: 2,
+            cs_2nd: 1,
+            cs_3rd: 2,
+            cs_4th: 2
+        };
 
-        crossover({ parent1, parent2 });
+        crossover({ parent1, parent2, crossoverPoint });
     }
 
     return {
@@ -48,7 +54,9 @@ export const runGAV2 = async () => {
     };
 };
 
-const crossover = ({ parent1, parent2 }: { parent1: any; parent2: any }) => {
+const crossover = ({ parent1, parent2, crossoverPoint }: { parent1: any; parent2: any; crossoverPoint: any }) => {
+    let parent1Copy = structuredClone(parent1);
+    
     let newChromosome1 = structuredClone(parent1);
     let newChromosome2 = structuredClone(parent2);
     let copyOfParent2 = structuredClone(parent2);
@@ -68,8 +76,14 @@ const crossover = ({ parent1, parent2 }: { parent1: any; parent2: any }) => {
         let yearAndDepartmentKey = Object.keys(perYear)[0];
         let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
 
-        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
-            let specSection = yearAndDepartmentSchedule[j];
+        console.log('og sched', yearAndDepartmentSchedule) 
+
+        let parent1MinusCrossOverPoint = parent1Copy[i][yearAndDepartmentKey].splice(crossoverPoint[yearAndDepartmentKey])
+
+        console.log('crossover sched', parent1MinusCrossOverPoint)
+
+        for (let j = 0; j < parent1MinusCrossOverPoint.length; j++) {
+            let specSection = parent1MinusCrossOverPoint[j];
             let specSectionKey = Object.keys(specSection)[0];
             let specSectionSchedule = specSection[specSectionKey];
 
@@ -78,11 +92,7 @@ const crossover = ({ parent1, parent2 }: { parent1: any; parent2: any }) => {
 
                 for (let l = 0; l < daySched.length; l++) {
                     let schedBlock = daySched[l];
-
-                    // let schedBlockInNewChromosome1 =
-                    //     newChromosome1[i][yearAndDepartmentKey][j][
-                    //         specSectionKey
-                    //     ][SCHOOL_DAYS[k]][l];
+                    let sectionIndex = letterToIndex(specSectionKey.slice(-1)) - 1
 
                     // find the schedule in parent 2
                     let retClassInSched = findClassInSchedule({
@@ -90,7 +100,8 @@ const crossover = ({ parent1, parent2 }: { parent1: any; parent2: any }) => {
                         newChromosome2: newChromosome2, // ang ibigay is ung nababawasan
                         parent2: copyOfParent2, // ang ibigay is ung nababawasan
                         newTimeBlock: schedBlock.timeBlock,
-                        newDay: SCHOOL_DAYS[k]
+                        newDay: SCHOOL_DAYS[k],
+                        crossoverPoint
                     });
 
                     if (retClassInSched == null){
@@ -101,23 +112,27 @@ const crossover = ({ parent1, parent2 }: { parent1: any; parent2: any }) => {
                     copyOfParent2 = retClassInSched.parent2Copy;
                     let newDay = retClassInSched.day
                     let newTimeBlock = retClassInSched.newTimeBlock
+                    let specSectionSwitched = retClassInSched.sectionSwitched
+                    let specSectionIndex = letterToIndex(specSectionSwitched.slice(-1)) - 1
 
                     // add the new timeblock
-                    newChromosome1[i][yearAndDepartmentKey][j][specSectionKey][newDay].push({
+                    newChromosome1[i][yearAndDepartmentKey][sectionIndex][specSectionKey][newDay].push({
                         ...schedBlock,
                         timeBlock: newTimeBlock
                     })
 
                     // remove the previous timeblock
-                    newChromosome1[i][yearAndDepartmentKey][j][specSectionKey][SCHOOL_DAYS[k]].splice(l, 1);
+                    newChromosome1[i][yearAndDepartmentKey][sectionIndex][specSectionKey][SCHOOL_DAYS[k]].splice(l, 1);
 
                     console.log('checking if nag switch nga')
                     console.log('parent 1 loc')
                     console.log('day', SCHOOL_DAYS[k])
-                    console.log(parent1[i][yearAndDepartmentKey][j][specSectionKey][SCHOOL_DAYS[k]][l])
+                    console.log('section', specSectionKey)
+                    console.log(parent1[i][yearAndDepartmentKey][sectionIndex][specSectionKey][SCHOOL_DAYS[k]][l])
                     
                     console.log('parent 2 loc')
                     console.log('day', newDay)
+                    console.log('section', specSectionSwitched)
                     console.log({
                         ...schedBlock,
                         timeBlock: newTimeBlock
@@ -125,11 +140,11 @@ const crossover = ({ parent1, parent2 }: { parent1: any; parent2: any }) => {
                     
                     console.log('chromosome 1 should contain parent 2 loc')
                     console.log('day', newDay)
-                    console.log(newChromosome1[i][yearAndDepartmentKey][j][specSectionKey][newDay])
+                    console.log(newChromosome1[i][yearAndDepartmentKey][sectionIndex][specSectionKey][newDay])
                     
                     console.log('chromosome 2 should contain parent 1 loc')
                     console.log('day', SCHOOL_DAYS[k])
-                    console.log(newChromosome2[i][yearAndDepartmentKey][j][specSectionKey][SCHOOL_DAYS[k]])
+                    console.log(newChromosome2[i][yearAndDepartmentKey][specSectionIndex][specSectionSwitched][SCHOOL_DAYS[k]])
 
                     return;
                 }
@@ -143,14 +158,17 @@ const findClassInSchedule = ({
     newChromosome2,
     parent2,
     newTimeBlock,
-    newDay
+    newDay,
+    crossoverPoint
 }: {
     courseCode: string;
     newChromosome2: any;
     parent2: any;
     newTimeBlock: any;
     newDay: any
+    crossoverPoint: any
 }) => {
+    let parent2OgCopy = structuredClone(parent2)
     let parent2Copy = structuredClone(parent2);
 
     for (let i = 0; i < parent2.length; i++) {
@@ -158,8 +176,10 @@ const findClassInSchedule = ({
         let yearAndDepartmentKey = Object.keys(perYear)[0];
         let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
 
-        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
-            let specSection = yearAndDepartmentSchedule[j];
+        let parent2MinusCrossOverPoint = parent2OgCopy[i][yearAndDepartmentKey].splice(0, crossoverPoint[yearAndDepartmentKey])
+
+        for (let j = 0; j < parent2MinusCrossOverPoint.length; j++) {
+            let specSection = parent2MinusCrossOverPoint[j];
             let specSectionKey = Object.keys(specSection)[0];
             let specSectionSchedule = specSection[specSectionKey];
 
@@ -168,6 +188,7 @@ const findClassInSchedule = ({
 
                 for (let l = 0; l < daySched.length; l++) {
                     let schedBlock = daySched[l];
+                    let sectionIndex = letterToIndex(specSectionKey.slice(-1)) - 1
 
                     if (schedBlock.course.subject_code === courseCode) {
                         // let schedBlockInNewChromosome2 =
@@ -176,7 +197,7 @@ const findClassInSchedule = ({
                         //     ][SCHOOL_DAYS[k]][l];
 
                         // add ung new timeblock from chromosome1 to chromosome2
-                        newChromosome2[i][yearAndDepartmentKey][j][specSectionKey][newDay].push({
+                        newChromosome2[i][yearAndDepartmentKey][sectionIndex][specSectionKey][newDay].push({
                             ...schedBlock,
                             timeBlock: newTimeBlock
                         })
@@ -184,21 +205,22 @@ const findClassInSchedule = ({
                         // remove ung previous timeblock from chromosome 2
                         newChromosome2[i][
                             yearAndDepartmentKey
-                        ][j][specSectionKey][
+                        ][sectionIndex][specSectionKey][
                             SCHOOL_DAYS[k]
                         ].splice(l, 1);
                         
                         // remove sa parent2 copy para madali maghanap ng remaining courses na ndi pa nasswitch
                         parent2Copy[i][
                             yearAndDepartmentKey
-                        ][j][specSectionKey][
+                        ][sectionIndex][specSectionKey][
                             SCHOOL_DAYS[k]
                         ].splice(l, 1);
 
                         return {
                             day: SCHOOL_DAYS[k],
                             newTimeBlock: schedBlock.timeBlock,
-                            parent2Copy
+                            parent2Copy,
+                            sectionSwitched: specSectionKey
                         };
                     }
                 }
@@ -206,3 +228,7 @@ const findClassInSchedule = ({
         }
     }
 };
+
+const letterToIndex = (letter: string) => {
+    return letter.toLowerCase().charCodeAt(0) - 96;
+}
