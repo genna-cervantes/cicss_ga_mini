@@ -97,6 +97,40 @@ export const runGAV2 = async () => {
     // whats the most prominent problem
     let mostProminentProblem = checkMostProminentProblem(population);
 
+    switch (mostProminentProblem) {
+        case 'course_assignment':
+            break;
+        case 'room_assignment':
+            population = repairRoomAssignment(population); // new populationo every repair
+            break;
+        case 'room_type_assignment':
+            break;
+        case 'tas_assignment':
+            break;
+        case 'tas_type_assignment':
+            break;
+        case 'tas_load':
+            break;
+        case 'max_class_day_length_assignment':
+            break;
+        case 'consecutive_class_hours':
+            break;
+        case 'gened_course_assignment':
+            break;
+        case 'courses_assigned_in_a_day':
+            break;
+        case 'allowed_specific_days':
+            break;
+        case 'allowed_number_of_days':
+            break;
+        case 'rest_days':
+            break;
+        case 'tas_requests':
+            break;
+        case 'room_proximity':
+            break;
+    }
+
     // repair functions before finding top 50 again
 
     let newtop50 = findTop50(population);
@@ -132,6 +166,9 @@ const checkMostProminentProblem = (
         ];
     }[]
 ) => {
+
+    console.log(population.length)
+
     let violationCount = {
         course_assignment: 0,
         room_assignment: 0,
@@ -180,10 +217,22 @@ const checkMostProminentProblem = (
         }
     })
 
-    console.log(violationCount)
-
     return maxViolationKey;
 };
+
+const repairRoomAssignment = (population: {
+    id: number;
+    chromosome: any;
+    score: number;
+    violations: [
+        {
+            violationType: string;
+            violationCount: number;
+        }
+    ];
+}[]) => {
+    // start here tomo
+}
 
 const crossover = ({
     parent1,
