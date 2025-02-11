@@ -1140,8 +1140,6 @@ const mergeObjects2 = ({ obj1, obj2 }: { obj1: any; obj2: any }) => {
 // tas load -- separate
 // tas assignment -- separate
 // tas specialization -- separate
-// tas requests
-// room proximity
 // rest days
 export const evaluateFast = async ({
     chromosome,
@@ -1256,6 +1254,10 @@ export const evaluateFast = async ({
                 // allowed specific days per year level
                 let {violationCount: TASRequestsViolationCount, violations: TASRequestsViolations} = await evaluateTASRequestsFast({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]});
                 violationTracker = addToViolationTracker({violationTracker, violationCount: TASRequestsViolationCount, violations: TASRequestsViolations, violationName: 'tas_requests'})
+
+                // room proximity
+                let {violationCount: roomProximityViolationCount, violations: roomProximityViolations} = evaluateRoomProximityFast({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]})
+                violationTracker = addToViolationTracker({violationTracker, violationCount: roomProximityViolationCount, violations: roomProximityViolations, violationName: 'room_proximity'})
                 
                 
             }
@@ -1275,6 +1277,54 @@ export const evaluateFast = async ({
 
     return violationTracker;
 };
+
+const evaluateRoomProximityFast = ({daySched, specSectionKey, schoolDay}: {daySched: any, specSectionKey: string, schoolDay: string}) => {
+
+    let violations = [];
+    let violationCount = 0;
+
+    for (let l = 0; l < daySched.length - 1; l++) {
+        let schedBlock = daySched[l];
+        let nextSchedBlock = daySched[l + 1];
+
+        if (schedBlock.room.room_id === 'PE ROOM') {
+            continue;
+        }
+
+        let firstRoomFloor = Math.floor(
+            parseInt(schedBlock.room.room_id.slice(2)) / 100
+        );
+        let secondRoomFloor = Math.floor(
+            parseInt(nextSchedBlock.room.room_id.slice(2)) / 100
+        );
+
+        if (Math.abs(firstRoomFloor - secondRoomFloor) > 1) {
+            violationCount++;
+            violations.push({
+                type: 'Room proximity ideal not followed',
+                section: specSectionKey,
+                day: schoolDay,
+                courses: [
+                    schedBlock.course.subject_code,
+                    nextSchedBlock.course.subject_code
+                ],
+                time: [
+                    schedBlock.timeBlock,
+                    nextSchedBlock.timeBlock
+                ],
+                rooms: [
+                    schedBlock.room.room_id,
+                    nextSchedBlock.room.room_id
+                ]
+            });
+        }
+    }
+
+    return {
+        violationCount,
+        violations
+    }
+}
 
 const evaluateTASRequestsFast = async ({daySched, specSectionKey, schoolDay}: {daySched: any, specSectionKey: string, schoolDay: string}) => {
     let violationCount = 0;
