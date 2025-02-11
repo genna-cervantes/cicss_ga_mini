@@ -305,7 +305,7 @@ const evaluateTASAssignment = (chromosome: any) => {
         }
     }
 
-    return violations;
+    return {violations, violationCount};
 };
 
 const evaluateTASSpecializationAssignment = async (chromosome: any) => {
@@ -1283,8 +1283,11 @@ export const evaluateFast = async ({
             
         }
     }
-
+    
     // do here the other evaluations that are not applicable in the main loop
+    let {violationCount: TASAssignmentViolationCount, violations: TASAssignmentViolations} = evaluateTASAssignment(chromosome)
+    violationTracker = addToViolationTracker({violationTracker, violationCount: TASAssignmentViolationCount, violations: TASAssignmentViolations, violationName: 'tas_assignment'})
+
 
     return violationTracker;
 };
@@ -1848,7 +1851,7 @@ export const evaluate = async (chromosome: any) => {
     });
     score -= roomTypeAssignmentViolationsLength * HARD_CONSTRAINT_WEIGHT;
 
-    let TASAssignmentViolations = evaluateTASAssignment(chromosome);
+    let {violations: TASAssignmentViolations} = evaluateTASAssignment(chromosome);
     const TASAssignmentViolationsLength = TASAssignmentViolations.length;
     violations = [...violations, ...TASAssignmentViolations];
     violationCount += TASAssignmentViolationsLength;
