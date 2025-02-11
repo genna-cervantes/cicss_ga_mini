@@ -232,6 +232,12 @@ const repairRoomAssignment = (population: {
     ];
 }[]) => {
     // start here tomo
+
+    // loop thru the schedule
+    // check if violation sa sched block na un - thru the array
+    // resolve by changing THAT ONE to a possible kapalit -> another loop to check with all other scheds (shet) -> room order para di masyado maloop
+    // do until wala na OR until matapos lahat nung scheds
+
 }
 
 const crossover = ({

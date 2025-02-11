@@ -1137,12 +1137,12 @@ const mergeObjects2 = ({ obj1, obj2 }: { obj1: any; obj2: any }) => {
 };
 
 // mga kulang:
-// tas load
-// tas assignment
-// tas specialization
+// tas load -- separate
+// tas assignment -- separate
+// tas specialization -- separate
 // tas requests
 // room proximity
-// rest
+// rest days
 export const evaluateFast = async ({
     chromosome,
     semester
@@ -1253,6 +1253,11 @@ export const evaluateFast = async ({
                     assignedDays += specificDaysReturn;
                 }
                 
+                // allowed specific days per year level
+                let {violationCount: TASRequestsViolationCount, violations: TASRequestsViolations} = await evaluateTASRequestsFast({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]});
+                violationTracker = addToViolationTracker({violationTracker, violationCount: TASRequestsViolationCount, violations: TASRequestsViolations, violationName: 'tas_requests'})
+                
+                
             }
 
             // allowed number of days per year level
@@ -1270,6 +1275,56 @@ export const evaluateFast = async ({
 
     return violationTracker;
 };
+
+const evaluateTASRequestsFast = async ({daySched, specSectionKey, schoolDay}: {daySched: any, specSectionKey: string, schoolDay: string}) => {
+    let violationCount = 0;
+    let violations = [];
+
+    const TASRequests: any = {};
+
+    const getTASRequestsQuery =
+        'SELECT tas_id, restrictions FROM teaching_academic_staff';
+    const res = await client.query(getTASRequestsQuery);
+    const TASRequestsRes = res.rows;
+
+    TASRequestsRes.forEach((tas: any) => {
+        TASRequests[tas.tas_id] = tas.restrictions;
+    });
+
+    for (let l = 0; l < daySched.length; l++) {
+        let schedBlock = daySched[l];
+
+        if (schedBlock.course.category !== 'major') {
+            continue;
+        }
+
+        let constraints = TASRequests[schedBlock.prof.tas_id]
+            ? TASRequests[schedBlock.prof.tas_id][schoolDay]
+            : [];
+
+        for (let m = 0; m < constraints.length; m++) {
+            if (
+                parseInt(schedBlock.timeBlock.start) >
+                    parseInt(constraints[m].start) &&
+                parseInt(schedBlock.timeBlock.end) <
+                    parseInt(constraints[m].end)
+            ) {
+                violationCount++;
+                violations.push({
+                    type: 'TAS request not followed',
+                    section: specSectionKey,
+                    tas: schedBlock.prof.name,
+                    day: schoolDay,
+                    courses: [schedBlock.course.subject_code],
+                    time: schedBlock.timeBlock.start
+                });
+            }
+        }
+        // check if within ung timeslot neto don sa constraint ng
+    }
+
+    return {violationCount, violations}
+}
 
 const getAllowedDaysPerYearAndDepartment = async () => {
 
