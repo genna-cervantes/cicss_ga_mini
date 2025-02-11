@@ -1137,10 +1137,10 @@ const mergeObjects2 = ({ obj1, obj2 }: { obj1: any; obj2: any }) => {
 };
 
 // mga kulang:
+// ung sa rooms
 // tas load -- separate
 // tas assignment -- separate
 // tas specialization -- separate
-// rest days
 export const evaluateFast = async ({
     chromosome,
     semester
@@ -1200,6 +1200,8 @@ export const evaluateFast = async ({
             
             // allowedDaysPerYearAndDepartment
             let assignedDays = 0
+            // rest days
+            let restDays = 1 // sunday kasama
             for (let k = 0; k < SCHOOL_DAYS.length; k++) {
                 let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
 
@@ -1258,7 +1260,10 @@ export const evaluateFast = async ({
                 // room proximity
                 let {violationCount: roomProximityViolationCount, violations: roomProximityViolations} = evaluateRoomProximityFast({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]})
                 violationTracker = addToViolationTracker({violationTracker, violationCount: roomProximityViolationCount, violations: roomProximityViolations, violationName: 'room_proximity'})
-                
+
+                if (daySched.length <= 0) {
+                    restDays++;
+                }
                 
             }
 
@@ -1267,8 +1272,14 @@ export const evaluateFast = async ({
                 violationCount: allowedNumberOfDaysPerYearLevelViolationCount,
                 violations: allowedNumberOfDaysPerYearLevelViolations
             } = evalFastAllowedNumberOfDaysPerYearLevel({assignedDays, specAllowedDays, specSectionKey})
-            
             violationTracker = addToViolationTracker({violationTracker, violationCount: allowedNumberOfDaysPerYearLevelViolationCount, violations: allowedNumberOfDaysPerYearLevelViolations, violationName: 'allowed_number_of_days'})
+            
+            // rest days
+            let {
+                violationCount: restDaysViolationCount,
+                violations: restDaysViolations
+            } = evaluateRestDaysFast({restDays, specSectionKey})
+            violationTracker = addToViolationTracker({violationTracker, violationCount: restDaysViolationCount, violations: restDaysViolations, violationName: 'rest_days'})
             
         }
     }
@@ -1277,6 +1288,26 @@ export const evaluateFast = async ({
 
     return violationTracker;
 };
+
+const evaluateRestDaysFast = ({restDays, specSectionKey}: {restDays: number, specSectionKey: string}) => {
+    
+    let violations = []
+    let violationCount = 0
+    
+    if (restDays < 2) {
+        violationCount++;
+        violations.push({
+            type: 'Rest days less than ideal',
+            section: specSectionKey
+        });
+    }
+
+    return {
+        violationCount,
+        violations
+    }
+
+}
 
 const evaluateRoomProximityFast = ({daySched, specSectionKey, schoolDay}: {daySched: any, specSectionKey: string, schoolDay: string}) => {
 
