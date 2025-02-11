@@ -174,7 +174,7 @@ const evaluateRoomAssignment = (chromosome: any) => {
         }
     }
 
-    return violations;
+    return {violations, violationCount};
 };
 
 const evaluateRoomTypeAssignment = (chromosome: any) => {
@@ -1280,6 +1280,7 @@ export const evaluateFast = async ({
                 violations: restDaysViolations
             } = evaluateRestDaysFast({restDays, specSectionKey})
             violationTracker = addToViolationTracker({violationTracker, violationCount: restDaysViolationCount, violations: restDaysViolations, violationName: 'rest_days'})
+
             
         }
     }
@@ -1293,8 +1294,10 @@ export const evaluateFast = async ({
     
     let {violationCount: TASUnitsAssignmentViolationCount, violations: TASUnitsAssignmentViolations} = await evaluateTASUnitsAssignment(chromosome)
     violationTracker = addToViolationTracker({violationTracker, violationCount: TASUnitsAssignmentViolationCount, violations: TASUnitsAssignmentViolations, violationName: 'tas_load'})
-
-
+    
+    let {violationCount: roomAssignmentViolationCount, violations: roomAssignmentViolations} = evaluateRoomAssignment(chromosome)
+    violationTracker = addToViolationTracker({violationTracker, violationCount: roomAssignmentViolationCount, violations: roomAssignmentViolations, violationName: 'room_assignment'})
+    
     return violationTracker;
 };
 
@@ -1836,7 +1839,7 @@ export const evaluate = async (chromosome: any) => {
     });
     score -= courseAssignmentViolationsLength * HARD_CONSTRAINT_WEIGHT;
 
-    let roomAssignmentViolations = evaluateRoomAssignment(chromosome);
+    let {violations: roomAssignmentViolations} = evaluateRoomAssignment(chromosome);
     const roomAssignmentViolationsLength = roomAssignmentViolations.length;
     violations = [...violations, ...roomAssignmentViolations];
     violationCount += roomAssignmentViolationsLength;
