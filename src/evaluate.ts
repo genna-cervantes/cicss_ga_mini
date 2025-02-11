@@ -1136,6 +1136,13 @@ const mergeObjects2 = ({ obj1, obj2 }: { obj1: any; obj2: any }) => {
     return result;
 };
 
+// mga kulang:
+// tas load
+// tas assignment
+// tas specialization
+// tas requests
+// room proximity
+// rest
 export const evaluateFast = async ({
     chromosome,
     semester
