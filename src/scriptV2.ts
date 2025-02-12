@@ -1,5 +1,5 @@
 import { SCHOOL_DAYS } from './constants';
-import { evaluate } from './evaluate';
+import { evaluate, evaluateFast } from './evaluate';
 import { generateChromosomeV2 } from './generateV2';
 
 export const runGAV2 = async () => {
@@ -7,19 +7,21 @@ export const runGAV2 = async () => {
         id: number;
         chromosome: any;
         score: number;
-        violations: [{ violationType: string; violationCount: number }];
+        violations: [{ violationName: string; violationCount: number, violations: any }];
     }[] = [];
 
     console.log('Generating initial population...');
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 10; i++) {
         const chromosome = await generateChromosomeV2();
-        const { score, violationType } = await evaluate(chromosome); // do this ha kasi marami rin time toh nicconsume tapusin ung evaluate fast
+        const { score, violationTracker } = await evaluateFast({chromosome, semester: 2}); // do this ha kasi marami rin time toh nicconsume tapusin ung evaluate fast
         population.push({
             chromosome,
             score,
-            violations: violationType,
+            violations: violationTracker,
             id: i
         });
+
+        // console.log(i, score, violationTracker)
     }
 
     const findTop50 = (
@@ -27,7 +29,7 @@ export const runGAV2 = async () => {
             chromosome: any;
             id: number;
             score: number;
-            violations: [{ violationType: string; violationCount: number }];
+            violations: [{ violationName: string; violationCount: number, violations: any }];
         }[]
     ) => {
         return array
@@ -101,7 +103,7 @@ export const runGAV2 = async () => {
         case 'course_assignment':
             break;
         case 'room_assignment':
-            population = repairRoomAssignment(population); // new populationo every repair
+            // population = repairRoomAssignment(population); // new populationo every repair
             break;
         case 'room_type_assignment':
             break;
@@ -160,8 +162,9 @@ const checkMostProminentProblem = (
         score: number;
         violations: [
             {
-                violationType: string;
+                violationName: string;
                 violationCount: number;
+                violations: any
             }
         ];
     }[]
@@ -192,19 +195,23 @@ const checkMostProminentProblem = (
             id: number;
             chromosome: any;
             score: number;
-            violations: [{ violationType: string; violationCount: number }];
+            violations: [{ violationName: string; violationCount: number, violations: any }];
         }) => {
             let violations = val.violations;
 
             violations.forEach((v: {
-                violationType: string;
+                violationName: string;
                 violationCount: number;
+                violations: any
             }) => {
-                violationCount[v.violationType as keyof typeof violationCount] += v.violationCount;
+                violationCount[v.violationName as keyof typeof violationCount] += v.violationCount;
             })
-
+            
+            //     violationCount[v.violationName as keyof typeof violationCount] += v.violationCount;
         }
     );
+
+
 
     let violationKeys = Object.keys(violationCount);
 
@@ -216,6 +223,9 @@ const checkMostProminentProblem = (
             maxViolationKey = vk
         }
     })
+
+    console.log(violationCount)
+    console.log(maxViolationKey)
 
     return maxViolationKey;
 };

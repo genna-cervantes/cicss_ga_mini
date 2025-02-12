@@ -1149,6 +1149,9 @@ export const evaluateFast = async ({
     semester: number;
 }) => {
 
+    // score
+    let score = 100;
+
     // violations
     let violationTracker: any = [];
 
@@ -1196,7 +1199,7 @@ export const evaluateFast = async ({
             });
             
             violationTracker = addToViolationTracker({violationTracker, violationCount: courseAssignmentViolationCount, violations: courseAssignmentViolations, violationName: 'course_assignment'})
-            
+            score = trackScoreAndViolations({score, violationCount: courseAssignmentViolationCount, violationName: 'course_assignment', violationType: 'hard'})
             
             // allowedDaysPerYearAndDepartment
             let assignedDays = 0
@@ -1204,22 +1207,24 @@ export const evaluateFast = async ({
             let restDays = 1 // sunday kasama
             for (let k = 0; k < SCHOOL_DAYS.length; k++) {
                 let daySched = specSectionSchedule[SCHOOL_DAYS[k]];
-
+                
                 // room type assignment
                 let {
                     violationCount: roomTypeAssignmentViolationCount,
                     violations: roomTypeAssignmentViolations
                 } = evaluateRoomTypeAssignmentFast({dailySched: daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]})
-
+                
                 violationTracker = addToViolationTracker({violationTracker, violationCount: roomTypeAssignmentViolationCount, violations: roomTypeAssignmentViolations, violationName: 'room_type_assignment'})
-
+                score = trackScoreAndViolations({score, violationCount: roomTypeAssignmentViolationCount, violationName: 'room_type_assignment', violationType: 'hard'})
+                
                 // max class length in day
                 let {
                     violationCount: maxClassDayLengthViolationCount,
                     violations: maxClassDayLengthAssignmentViolations
                 } = evaluateMaxClassDayLengthFast({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]})
-
+                
                 violationTracker = addToViolationTracker({violationTracker, violationCount: maxClassDayLengthViolationCount, violations: maxClassDayLengthAssignmentViolations, violationName: 'max_class_day_length_assignment'})
+                score = trackScoreAndViolations({score, violationCount: maxClassDayLengthViolationCount, violationName: 'max_class_day_length_assignment', violationType: 'hard'})
                 
                 // max consecutive class hours
                 let {
@@ -1228,6 +1233,7 @@ export const evaluateFast = async ({
                 } = evaluateConsecutiveClassHoursPerSectionFast({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]});
                 
                 violationTracker = addToViolationTracker({violationTracker, violationCount: consecutiveClassHoursPerSectionViolationCount, violations: consecutiveClassHoursPerSectionViolations, violationName: 'consecutive_class_hours'})
+                score = trackScoreAndViolations({score, violationCount: consecutiveClassHoursPerSectionViolationCount, violationName: 'consecutive_class_hours', violationType: 'hard'})
                 
                 // gened specific constraints
                 let {
@@ -1236,6 +1242,7 @@ export const evaluateFast = async ({
                 } = await evaluateFastGenedCourseAssignment({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]});
                 
                 violationTracker = addToViolationTracker({violationTracker, violationCount: genedCourseAssignmentViolationCount, violations: genedCourseAssignmentViolations, violationName: 'gened_course_assignment'})
+                score = trackScoreAndViolations({score, violationCount: genedCourseAssignmentViolationCount, violationName: 'gened_course_assignment', violationType: 'hard'})
                 
                 // assigned classes in a day
                 let {
@@ -1244,11 +1251,13 @@ export const evaluateFast = async ({
                 } = evaluateFastNumberOfCoursesAssignedInADay({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]})
                 
                 violationTracker = addToViolationTracker({violationTracker, violationCount: numberOfCoursesAssignedInADayViolationCount, violations: numberOfCoursesAssignedInADayViolatins, violationName: 'courses_assigned_in_a_day'})
+                score = trackScoreAndViolations({score, violationCount: numberOfCoursesAssignedInADayViolationCount, violationName: 'courses_assigned_in_a_day', violationType: 'hard'})
                 
                 // allowed specific days per year level
                 let specificDaysReturn = evalFastAllowedSpecificDaysPerYearLevel({daySched, specAllowedDays, specSectionKey, schoolDay: SCHOOL_DAYS[k]});
                 if (typeof specificDaysReturn !== 'number'){
                     violationTracker = addToViolationTracker({violationTracker, violationCount: specificDaysReturn.violationCount, violations: specificDaysReturn.violations, violationName: 'allowed_specific_days'})
+                    score = trackScoreAndViolations({score, violationCount: specificDaysReturn.violationCount, violationName: 'allowed_specific_days', violationType: 'hard'})
                 }else{
                     assignedDays += specificDaysReturn;
                 }
@@ -1256,23 +1265,26 @@ export const evaluateFast = async ({
                 // allowed specific days per year level
                 let {violationCount: TASRequestsViolationCount, violations: TASRequestsViolations} = await evaluateTASRequestsFast({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]});
                 violationTracker = addToViolationTracker({violationTracker, violationCount: TASRequestsViolationCount, violations: TASRequestsViolations, violationName: 'tas_requests'})
-
+                score = trackScoreAndViolations({score, violationCount: TASRequestsViolationCount, violationName: 'tas_requests', violationType: 'soft'})
+                
                 // room proximity
                 let {violationCount: roomProximityViolationCount, violations: roomProximityViolations} = evaluateRoomProximityFast({daySched, specSectionKey, schoolDay: SCHOOL_DAYS[k]})
                 violationTracker = addToViolationTracker({violationTracker, violationCount: roomProximityViolationCount, violations: roomProximityViolations, violationName: 'room_proximity'})
-
+                score = trackScoreAndViolations({score, violationCount: roomProximityViolationCount, violationName: 'room_proximity', violationType: 'soft'})
+                
                 if (daySched.length <= 0) {
                     restDays++;
                 }
                 
             }
-
+            
             // allowed number of days per year level
             let {
                 violationCount: allowedNumberOfDaysPerYearLevelViolationCount,
                 violations: allowedNumberOfDaysPerYearLevelViolations
             } = evalFastAllowedNumberOfDaysPerYearLevel({assignedDays, specAllowedDays, specSectionKey})
             violationTracker = addToViolationTracker({violationTracker, violationCount: allowedNumberOfDaysPerYearLevelViolationCount, violations: allowedNumberOfDaysPerYearLevelViolations, violationName: 'allowed_number_of_days'})
+            score = trackScoreAndViolations({score, violationCount: allowedNumberOfDaysPerYearLevelViolationCount, violationName: 'allowed_number_of_days', violationType: 'hard'})
             
             // rest days
             let {
@@ -1280,25 +1292,28 @@ export const evaluateFast = async ({
                 violations: restDaysViolations
             } = evaluateRestDaysFast({restDays, specSectionKey})
             violationTracker = addToViolationTracker({violationTracker, violationCount: restDaysViolationCount, violations: restDaysViolations, violationName: 'rest_days'})
-
-            
+            score = trackScoreAndViolations({score, violationCount: restDaysViolationCount, violationName: 'rest_days', violationType: 'medium'})
         }
     }
     
     // do here the other evaluations that are not applicable in the main loop
     let {violationCount: TASAssignmentViolationCount, violations: TASAssignmentViolations} = evaluateTASAssignment(chromosome)
     violationTracker = addToViolationTracker({violationTracker, violationCount: TASAssignmentViolationCount, violations: TASAssignmentViolations, violationName: 'tas_assignment'})
+    score = trackScoreAndViolations({score, violationCount: TASAssignmentViolationCount, violationName: 'tas_assignment', violationType: 'hard'})
     
     let {violationCount: TASTypeAssignmentViolationCount, violations: TASTypeAssignmentViolations} = await evaluateTASSpecializationAssignment(chromosome)
     violationTracker = addToViolationTracker({violationTracker, violationCount: TASTypeAssignmentViolationCount, violations: TASTypeAssignmentViolations, violationName: 'tas_type_assignment'})
+    score = trackScoreAndViolations({score, violationCount: TASTypeAssignmentViolationCount, violationName: 'tas_type_assignment', violationType: 'hard'})
     
     let {violationCount: TASUnitsAssignmentViolationCount, violations: TASUnitsAssignmentViolations} = await evaluateTASUnitsAssignment(chromosome)
     violationTracker = addToViolationTracker({violationTracker, violationCount: TASUnitsAssignmentViolationCount, violations: TASUnitsAssignmentViolations, violationName: 'tas_load'})
+    score = trackScoreAndViolations({score, violationCount: TASUnitsAssignmentViolationCount, violationName: 'tas_load', violationType: 'hard'})
     
     let {violationCount: roomAssignmentViolationCount, violations: roomAssignmentViolations} = evaluateRoomAssignment(chromosome)
     violationTracker = addToViolationTracker({violationTracker, violationCount: roomAssignmentViolationCount, violations: roomAssignmentViolations, violationName: 'room_assignment'})
+    score = trackScoreAndViolations({score, violationCount: roomAssignmentViolationCount, violationName: 'room_assignment', violationType: 'hard'})
     
-    return violationTracker;
+    return {score, violationTracker};
 };
 
 const evaluateRestDaysFast = ({restDays, specSectionKey}: {restDays: number, specSectionKey: string}) => {
@@ -1318,6 +1333,27 @@ const evaluateRestDaysFast = ({restDays, specSectionKey}: {restDays: number, spe
         violationCount,
         violations
     }
+
+}
+
+const trackScoreAndViolations = ({score, violationCount, violationName, violationType}: {score: number, violationCount: number, violationName: string, violationType: string}) => {
+
+    let violationTracker = [];
+
+    violationTracker.push({
+        violationType: violationName,
+        violationCount: violationCount
+    });
+
+    if (violationType === 'soft'){
+        score -= (violationCount * SOFT_CONSTRAINT_WEIGHT)
+    }else if (violationType === 'medium'){
+        score -= (violationCount * MEDIUM_CONSTRAINT_WEIGHT)
+    }else if (violationType === 'hard'){
+        score -= (violationCount * HARD_CONSTRAINT_WEIGHT)
+    }
+
+    return score
 
 }
 
@@ -1454,13 +1490,13 @@ const addToViolationTracker = ({violationTracker, violations, violationCount, vi
 
     if (violationCount > 0){
         // check if may ganon na na object, append nlng if meron na
-        let violationTrackerObj = violationTracker.filter((v: any) => v.violation === violationName)[0];
+        let violationTrackerObj = violationTracker.filter((v: any) => v.violationName === violationName)[0];
         if (violationTrackerObj){
             violationTrackerObj.violationCount += violationCount
             violationTrackerObj.violations = [...violationTrackerObj.violations, ...violations]
         }else{
             localTracker.push({
-                violation: violationName,
+                violationName: violationName,
                 violationCount: violationCount,
                 violations: violations
             })
