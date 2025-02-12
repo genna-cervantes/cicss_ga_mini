@@ -1,19 +1,24 @@
 import { SCHOOL_DAYS } from './constants';
-import { evaluate, evaluateFast } from './evaluate';
+import { evaluateFast } from './evaluate';
 import { generateChromosomeV2 } from './generateV2';
 
-export const runGAV2 = async () => {
+export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     let population: {
         id: number;
         chromosome: any;
         score: number;
-        violations: [{ violationName: string; violationCount: number, violations: any }];
+        violations: [
+            { violationName: string; violationCount: number; violations: any }
+        ];
     }[] = [];
 
     console.log('Generating initial population...');
     for (let i = 0; i < 10; i++) {
         const chromosome = await generateChromosomeV2();
-        const { score, violationTracker } = await evaluateFast({chromosome, semester: 2}); // do this ha kasi marami rin time toh nicconsume tapusin ung evaluate fast
+        const { score, violationTracker } = await evaluateFast({
+            chromosome,
+            semester
+        }); // do this ha kasi marami rin time toh nicconsume tapusin ung evaluate fast
         population.push({
             chromosome,
             score,
@@ -29,7 +34,13 @@ export const runGAV2 = async () => {
             chromosome: any;
             id: number;
             score: number;
-            violations: [{ violationName: string; violationCount: number, violations: any }];
+            violations: [
+                {
+                    violationName: string;
+                    violationCount: number;
+                    violations: any;
+                }
+            ];
         }[]
     ) => {
         return array
@@ -73,8 +84,8 @@ export const runGAV2 = async () => {
             crossoverPoint
         });
 
-        const { score: score1, violationType: violationType1 } =
-            await evaluate(newChromosome1);
+        const { score: score1, violationTracker: violationType1 } =
+            await evaluateFast({ chromosome: newChromosome1, semester });
         population.push({
             chromosome: newChromosome1,
             score: score1,
@@ -82,8 +93,8 @@ export const runGAV2 = async () => {
             id: 100 + i
         });
 
-        const { score: score2, violationType: violationType2 } =
-            await evaluate(newChromosome2);
+        const { score: score2, violationTracker: violationType2 } =
+            await evaluateFast({ chromosome: newChromosome2, semester });
         population.push({
             chromosome: newChromosome2,
             score: score2,
@@ -99,39 +110,42 @@ export const runGAV2 = async () => {
     // whats the most prominent problem
     let mostProminentProblem = checkMostProminentProblem(population);
 
-    switch (mostProminentProblem) {
-        case 'course_assignment':
-            break;
-        case 'room_assignment':
-            // population = repairRoomAssignment(population); // new populationo every repair
-            break;
-        case 'room_type_assignment':
-            break;
-        case 'tas_assignment':
-            break;
-        case 'tas_type_assignment':
-            break;
-        case 'tas_load':
-            break;
-        case 'max_class_day_length_assignment':
-            break;
-        case 'consecutive_class_hours':
-            break;
-        case 'gened_course_assignment':
-            break;
-        case 'courses_assigned_in_a_day':
-            break;
-        case 'allowed_specific_days':
-            break;
-        case 'allowed_number_of_days':
-            break;
-        case 'rest_days':
-            break;
-        case 'tas_requests':
-            break;
-        case 'room_proximity':
-            break;
-    }
+    // run repair functions for each one in population
+    population.forEach((val) => {
+        switch (mostProminentProblem) {
+            case 'course_assignment':
+                break;
+            case 'room_assignment':
+                repairRoomAssignment(val); // new populationo every repair
+                break;
+            case 'room_type_assignment':
+                break;
+            case 'tas_assignment':
+                break;
+            case 'tas_type_assignment':
+                break;
+            case 'tas_load':
+                break;
+            case 'max_class_day_length_assignment':
+                break;
+            case 'consecutive_class_hours':
+                break;
+            case 'gened_course_assignment':
+                break;
+            case 'courses_assigned_in_a_day':
+                break;
+            case 'allowed_specific_days':
+                break;
+            case 'allowed_number_of_days':
+                break;
+            case 'rest_days':
+                break;
+            case 'tas_requests':
+                break;
+            case 'room_proximity':
+                break;
+        }
+    });
 
     // repair functions before finding top 50 again
 
@@ -164,13 +178,12 @@ const checkMostProminentProblem = (
             {
                 violationName: string;
                 violationCount: number;
-                violations: any
+                violations: any;
             }
         ];
     }[]
 ) => {
-
-    console.log(population.length)
+    console.log(population.length);
 
     let violationCount = {
         course_assignment: 0,
@@ -195,52 +208,65 @@ const checkMostProminentProblem = (
             id: number;
             chromosome: any;
             score: number;
-            violations: [{ violationName: string; violationCount: number, violations: any }];
+            violations: [
+                {
+                    violationName: string;
+                    violationCount: number;
+                    violations: any;
+                }
+            ];
         }) => {
             let violations = val.violations;
 
-            violations.forEach((v: {
-                violationName: string;
-                violationCount: number;
-                violations: any
-            }) => {
-                violationCount[v.violationName as keyof typeof violationCount] += v.violationCount;
-            })
-            
+            violations.forEach(
+                (v: {
+                    violationName: string;
+                    violationCount: number;
+                    violations: any;
+                }) => {
+                    violationCount[
+                        v.violationName as keyof typeof violationCount
+                    ] += v.violationCount;
+                }
+            );
+
             //     violationCount[v.violationName as keyof typeof violationCount] += v.violationCount;
         }
     );
-
-
 
     let violationKeys = Object.keys(violationCount);
 
     let maxViolationCount = -999;
     let maxViolationKey = '';
     violationKeys.forEach((vk: string) => {
-        if (violationCount[vk as keyof typeof violationCount] > maxViolationCount){
-            maxViolationCount = violationCount[vk as keyof typeof violationCount]
-            maxViolationKey = vk
+        if (
+            violationCount[vk as keyof typeof violationCount] >
+            maxViolationCount
+        ) {
+            maxViolationCount =
+                violationCount[vk as keyof typeof violationCount];
+            maxViolationKey = vk;
         }
-    })
+    });
 
-    console.log(violationCount)
-    console.log(maxViolationKey)
+    console.log(violationCount);
+    console.log(maxViolationKey);
 
     return maxViolationKey;
 };
 
-const repairRoomAssignment = (population: {
+const repairRoomAssignment = (val: {
     id: number;
     chromosome: any;
     score: number;
     violations: [
         {
-            violationType: string;
+            violationName: string;
             violationCount: number;
+            violations: any;
         }
     ];
-}[]) => {
+}) => {
     // start here tomo
 
     // loop thru the schedule
@@ -248,7 +274,59 @@ const repairRoomAssignment = (population: {
     // resolve by changing THAT ONE to a possible kapalit -> another loop to check with all other scheds (shet) -> room order para di masyado maloop
     // do until wala na OR until matapos lahat nung scheds
 
-}
+    // sort ko by room ung violations -
+    // sort ko by room ung sched mismo
+
+    // loop thru the room schedule
+    // check kung may violations ba sa room na un
+    // try to solve the violations IN THE SAME ROOM FIRST
+    // if mag fail try sa next room
+
+    console.log('this is running');
+
+    let violations = getSpecificViolation({
+        val,
+        violationName: 'room_assignment'
+    });
+
+    console.log(violations);
+};
+
+const getSpecificViolation = ({
+    val,
+    violationName
+}: {
+    val: {
+        id: number;
+        chromosome: any;
+        score: number;
+        violations: [
+            {
+                violationName: string;
+                violationCount: number;
+                violations: any;
+            }
+        ];
+    };
+    violationName: string;
+}) => {
+    let violations = val.violations;
+    let specificViolations: any = [];
+
+    violations.forEach(
+        (v: {
+            violationName: string;
+            violationCount: number;
+            violations: any;
+        }) => {
+            if (v.violationName === violationName) {
+                specificViolations = v.violations;
+            }
+        }
+    );
+
+    return specificViolations;
+};
 
 const crossover = ({
     parent1,
