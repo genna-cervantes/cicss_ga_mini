@@ -74,10 +74,11 @@ app.get('/schedule-no-crossover', async (req, res) => {
 app.get('/test-ga-v2', async (req, res) => {
     // await generateChromosomeV2();
     // let {schedule, score, violations} = await runGAV2()
-    let { ogtop50ids, newtop50ids } = await runGAV2({semester: 2});
+    // let { ogtop50ids, newtop50ids } = await runGAV2({semester: 2});
+    let ret = await runGAV2({semester: 2});
     // console.log(violations)
     // console.log(score)
-    res.json({ ogtop50ids, newtop50ids });
+    res.json(ret);
 });
 
 app.get('/sametop', (req, res) => {

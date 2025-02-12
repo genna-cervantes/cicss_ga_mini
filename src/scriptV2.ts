@@ -111,7 +111,10 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     let mostProminentProblem = checkMostProminentProblem(population);
 
     // run repair functions for each one in population
-    population.forEach((val) => {
+    for (let i = 0; i < population.length; i++){
+        let val = population[i]
+        
+        // repair functions before finding top 50 again
         switch (mostProminentProblem) {
             case 'course_assignment':
                 break;
@@ -145,9 +148,8 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
             case 'room_proximity':
                 break;
         }
-    });
-
-    // repair functions before finding top 50 again
+        return;
+    }
 
     let newtop50 = findTop50(population);
     // population = top50;
@@ -163,10 +165,12 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
         newtop50ids.push(newtop50[i].id);
     }
 
-    return {
-        newtop50ids,
-        ogtop50ids
-    };
+    // return {
+    //     newtop50ids,
+    //     ogtop50ids
+    // };
+
+    return true;
 };
 
 const checkMostProminentProblem = (
@@ -183,7 +187,7 @@ const checkMostProminentProblem = (
         ];
     }[]
 ) => {
-    console.log(population.length);
+    // console.log(population.length);
 
     let violationCount = {
         course_assignment: 0,
@@ -249,8 +253,8 @@ const checkMostProminentProblem = (
         }
     });
 
-    console.log(violationCount);
-    console.log(maxViolationKey);
+    // console.log(violationCount);
+    // console.log(maxViolationKey);
 
     return maxViolationKey;
 };
@@ -306,6 +310,8 @@ const repairRoomAssignment = (val: {
     });
 
     let roomKeys = Object.keys(sortedRoomSchedule);
+
+    loop1: 
     for (let i = 0; i < roomKeys.length; i++) {
         let roomKey = roomKeys[i];
         for (let j = 0; j < SCHOOL_DAYS.length; j++) {
@@ -332,17 +338,19 @@ const repairRoomAssignment = (val: {
                 }
             );
 
+            console.log(ascendingSched)
+
             for (let k = 0; k < ascendingSched.length - 1; k++) {
                 let schedBlock1 = ascendingSched[k];
                 let schedBlock2 = ascendingSched[k + 1];
 
                 resolveConflict({ schedBlock1, schedBlock2 });
-
-                // check if sobra sa 2100 ung dulo
-
-                console.log(ascendingSched)
-                return;
             }
+            // check if sobra sa 2100 ung dulo
+
+            console.log('resulting sched')
+            console.log(ascendingSched)
+            break loop1;
         }
     }
 };
@@ -355,28 +363,27 @@ const resolveConflict = ({
     schedBlock2: any;
 }) => {
     // check if may conflict
-    console.log(schedBlock1);
-    console.log(schedBlock2);
-
     if (
-        parseInt(schedBlock2.timeBlock.start) >= parseInt(schedBlock1.timeBlock.start) &&
+        // parseInt(schedBlock2.timeBlock.start) >= parseInt(schedBlock1.timeBlock.start) &&
         parseInt(schedBlock2.timeBlock.start) <= parseInt(schedBlock1.timeBlock.end)
     ) {
+        console.log('RESOLVING CONFLICT')
         console.log(schedBlock2.timeBlock)
 
-        let timeDifference =
-            parseInt(schedBlock1.timeBlock.end) -
-            parseInt(schedBlock2.timeBlock.start);
+        // let timeDifference =
+        //     parseInt(schedBlock1.timeBlock.end) -
+        //     parseInt(schedBlock2.timeBlock.start);
 
         // adjust next schedBlock
-        schedBlock2.timeBlock.start = (parseInt(schedBlock2.timeBlock.start) + timeDifference).toString();
-        console.log(schedBlock2.timeBlock)
-
+        schedBlock2.timeBlock.start = schedBlock1.timeBlock.end
+        
         schedBlock2.timeBlock.end = getEndTime({
             timeStart: schedBlock2.timeBlock.start,
             courseType: schedBlock2.course.type,
             missingUnitsPerClass: schedBlock2.course.units
         }).toString();
+
+        console.log(schedBlock2.timeBlock)
     }
 };
 
