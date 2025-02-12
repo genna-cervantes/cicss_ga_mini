@@ -208,7 +208,7 @@ const getMiniCourseDetails = async (courseCode: string) => {
     return miniCourseDetails;
 };
 
-const getEndTime = ({
+export const getEndTime = ({
     timeStart,
     courseType,
     missingUnitsPerClass

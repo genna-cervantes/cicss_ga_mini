@@ -1,6 +1,6 @@
 import { SCHOOL_DAYS } from './constants';
-import { evaluateFast } from './evaluate';
-import { generateChromosomeV2 } from './generateV2';
+import { evaluateFast, groupSchedByRoom } from './evaluate';
+import { generateChromosomeV2, getEndTime } from './generateV2';
 
 export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     let population: {
@@ -282,14 +282,102 @@ const repairRoomAssignment = (val: {
     // try to solve the violations IN THE SAME ROOM FIRST
     // if mag fail try sa next room
 
-    console.log('this is running');
+    let sortedRoomViolations: any = {};
+    let sortedRoomSchedule = groupSchedByRoom(val.chromosome);
 
     let violations = getSpecificViolation({
         val,
         violationName: 'room_assignment'
     });
 
-    console.log(violations);
+    // sort the violations by room
+    violations.forEach((v: any) => {
+        if (sortedRoomViolations[v.room] == null) {
+            sortedRoomViolations[v.room] = {
+                M: [],
+                T: [],
+                W: [],
+                TH: [],
+                F: [],
+                S: []
+            };
+        }
+        sortedRoomViolations[v.room][v.day].push(v);
+    });
+
+    let roomKeys = Object.keys(sortedRoomSchedule);
+    for (let i = 0; i < roomKeys.length; i++) {
+        let roomKey = roomKeys[i];
+        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+            if (sortedRoomViolations[roomKey] == undefined) {
+                continue;
+            }
+
+            if (
+                (sortedRoomViolations[roomKey][SCHOOL_DAYS[j]]?.length ?? 0) < 1
+            ) {
+                // pwede kasi wala violation ung room
+                continue;
+            }
+
+            // sort ascending by start time tapos adjust adjust nlng based sa overlap
+            let daySched = sortedRoomSchedule[roomKey][SCHOOL_DAYS[j]];
+
+            let ascendingSched = daySched.sort(
+                (schedBlock1: any, schedBlock2: any) => {
+                    return (
+                        parseInt(schedBlock1.timeBlock.start, 10) -
+                        parseInt(schedBlock2.timeBlock.start, 10)
+                    );
+                }
+            );
+
+            for (let k = 0; k < ascendingSched.length - 1; k++) {
+                let schedBlock1 = ascendingSched[k];
+                let schedBlock2 = ascendingSched[k + 1];
+
+                resolveConflict({ schedBlock1, schedBlock2 });
+
+                // check if sobra sa 2100 ung dulo
+
+                console.log(ascendingSched)
+                return;
+            }
+        }
+    }
+};
+
+const resolveConflict = ({
+    schedBlock1,
+    schedBlock2
+}: {
+    schedBlock1: any;
+    schedBlock2: any;
+}) => {
+    // check if may conflict
+    console.log(schedBlock1);
+    console.log(schedBlock2);
+
+    if (
+        parseInt(schedBlock2.timeBlock.start) >= parseInt(schedBlock1.timeBlock.start) &&
+        parseInt(schedBlock2.timeBlock.start) <= parseInt(schedBlock1.timeBlock.end)
+    ) {
+        console.log(schedBlock2.timeBlock)
+
+        let timeDifference =
+            parseInt(schedBlock1.timeBlock.end) -
+            parseInt(schedBlock2.timeBlock.start);
+
+        // adjust next schedBlock
+        schedBlock2.timeBlock.start = (parseInt(schedBlock2.timeBlock.start) + timeDifference).toString();
+        console.log(schedBlock2.timeBlock)
+
+        schedBlock2.timeBlock.end = getEndTime({
+            timeStart: schedBlock2.timeBlock.start,
+            courseType: schedBlock2.course.type,
+            missingUnitsPerClass: schedBlock2.course.units
+        }).toString();
+    }
 };
 
 const getSpecificViolation = ({

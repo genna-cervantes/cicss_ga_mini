@@ -163,10 +163,8 @@ const evaluateRoomAssignment = (chromosome: any) => {
                             schedBlock1.course.subject_code,
                             schedBlock2.course.subject_code
                         ],
-                        time: {
-                            day: SCHOOL_DAYS[j],
-                            time: schedBlock2.timeBlock.start
-                        },
+                        time: schedBlock2.timeBlock.start,
+                        day: SCHOOL_DAYS[j],
                         sections: [schedBlock1.section, schedBlock2.section]
                     });
                 }
@@ -1017,7 +1015,7 @@ const groupSchedByTAS = (chromosome: any) => {
     return schedByTAS;
 };
 
-const groupSchedByRoom = (chromosome: any) => {
+export const groupSchedByRoom = (chromosome: any) => {
     // group schedule by room
     let schedByRoom;
 
