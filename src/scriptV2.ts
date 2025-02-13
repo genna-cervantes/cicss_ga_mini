@@ -119,7 +119,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
             case 'course_assignment':
                 break;
             case 'room_assignment':
-                repairRoomAssignment(val); // new populationo every repair
+                val.chromosome = repairRoomAssignment(val); // new populationo every repair
                 break;
             case 'room_type_assignment':
                 break;
@@ -150,10 +150,13 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
         }
         break;
     }
+
+    let { score: score3, violationTracker: violationTracker3 } = await evaluateFast({chromosome: population[0].chromosome, semester})
+
     return {
         chromosome: population[0].chromosome,
-        score: population[0].score,
-        violation: population[0].violations
+        score: score3,
+        violation: violationTracker3
     };
 
     let newtop50 = findTop50(population);
@@ -367,6 +370,8 @@ const repairRoomAssignment = (val: {
 
     // convert back to normal chromosome
     let repairedChromosome = roomToClassSchedule({roomSchedule: sortedRoomSchedule, chromosome: val.chromosome});
+
+    return repairedChromosome
 };
 
 const roomToClassSchedule = ({roomSchedule, chromosome}: {roomSchedule: any, chromosome: any}) => {
@@ -376,8 +381,6 @@ const roomToClassSchedule = ({roomSchedule, chromosome}: {roomSchedule: any, chr
     // extract from the schedblock ung section
     // extract from the section ung keys
     // check if may ganon tapos pag wala create
-
-    console.log('CONVERTING')
 
     let roomKeys = Object.keys(roomSchedule);
     for (let i = 0; i < roomKeys.length; i++){
@@ -403,17 +406,12 @@ const roomToClassSchedule = ({roomSchedule, chromosome}: {roomSchedule: any, chr
                         [departmentAndYearKey]: []
                     }
                     schedByClass.push(departmentBlock)
+                    departmentIndex = schedByClass.length - 1;
                 }else{
                     // get index of that specific key
                     departmentIndex = getIndexFromKey({arr: schedByClass, key: departmentAndYearKey})
                 }
-
-                departmentIndex = schedByClass.length - 1;
                 
-                // console.log(departmentIndex)
-                // console.log(departmentAndYearKey)
-                // console.log('1', schedByClass[departmentIndex][departmentAndYearKey])
-
                 let sectionIndex = -1;
                 if (!keyAlreadyInClassSchedule({classSchedule: schedByClass, type: 'section', key: sectionKey})){
                     let sectionBlock = {
@@ -427,30 +425,21 @@ const roomToClassSchedule = ({roomSchedule, chromosome}: {roomSchedule: any, chr
                         }
                     }
                     schedByClass[departmentIndex][departmentAndYearKey].push(sectionBlock)
+                    sectionIndex = schedByClass[departmentIndex][departmentAndYearKey].length - 1
                 }else{
                     // get index of that specific key
                     sectionIndex = getIndexFromKey({arr: schedByClass[departmentIndex][departmentAndYearKey], key: sectionKey})
                 }
-                
-                // console.log(departmentIndex)
-                // console.log(departmentAndYearKey)
-                // console.log('2', schedByClass[departmentIndex][departmentAndYearKey])
-                sectionIndex = schedByClass[departmentIndex][departmentAndYearKey].length - 1
-                
+            
                 // ppush 
                 const {section: excludeSectionKey, ...schedBlockToPush} = schedBlock
-                // console.log(sectionIndex)
-                // console.log(sectionKey)
-                // console.log('3', schedByClass[departmentIndex][departmentAndYearKey][sectionIndex][sectionKey])
                 schedByClass[departmentIndex][departmentAndYearKey][sectionIndex][sectionKey][SCHOOL_DAYS[j]].push(schedBlockToPush)
 
             }
         }
     }
     
-    console.log(schedByClass)
-    // console.log(schedByClass[0])
-    // console.log(schedByClass[0][departmentAndYearKey])
+    return schedByClass
 };
 
 const getIndexFromKey = ({arr, key}: {arr: any[], key: string}) => {
