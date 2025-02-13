@@ -154,7 +154,7 @@ const evaluateRoomAssignment = (chromosome: any) => {
                 let schedBlock1 = ascendingSched[k];
                 let schedBlock2 = ascendingSched[k + 1];
 
-                if (schedBlock2.timeBlock.start <= schedBlock1.timeBlock.end) {
+                if (schedBlock2.timeBlock.start < schedBlock1.timeBlock.end && schedBlock2.timeBlock.start >= schedBlock1.timeBlock.start) {
                     violationCount++;
                     violations.push({
                         type: 'conflicting room assignment',
