@@ -395,18 +395,73 @@ const roomToClassSchedule = ({roomSchedule, chromosome}: {roomSchedule: any, chr
                 let sectionLetter = section.slice(-1)
 
                 let departmentAndYearKey = department + '_' + year  + (year == 1 ? 'st' : year == 2 ? 'nd' : year == 3 ? 'rd' : 'th')
-                console.log(departmentAndYearKey)
+                let sectionKey = department + '_' + year + sectionLetter
 
-                if (keyAlreadyInClassSchedule({classSchedule: chromosome, type: 'department', key: departmentAndYearKey})){
-                    console.log('nice')
+                let departmentIndex = - 1;
+                if (!keyAlreadyInClassSchedule({classSchedule: schedByClass, type: 'department', key: departmentAndYearKey})){
+                    let departmentBlock = {
+                        [departmentAndYearKey]: []
+                    }
+                    schedByClass.push(departmentBlock)
+                }else{
+                    // get index of that specific key
+                    departmentIndex = getIndexFromKey({arr: schedByClass, key: departmentAndYearKey})
+                }
+
+                departmentIndex = schedByClass.length - 1;
+                
+                // console.log(departmentIndex)
+                // console.log(departmentAndYearKey)
+                // console.log('1', schedByClass[departmentIndex][departmentAndYearKey])
+
+                let sectionIndex = -1;
+                if (!keyAlreadyInClassSchedule({classSchedule: schedByClass, type: 'section', key: sectionKey})){
+                    let sectionBlock = {
+                        [sectionKey]: {
+                            M: [],
+                            T: [],
+                            W: [],
+                            TH: [],
+                            F: [],
+                            S: []
+                        }
+                    }
+                    schedByClass[departmentIndex][departmentAndYearKey].push(sectionBlock)
+                }else{
+                    // get index of that specific key
+                    sectionIndex = getIndexFromKey({arr: schedByClass[departmentIndex][departmentAndYearKey], key: sectionKey})
                 }
                 
-                return;
+                // console.log(departmentIndex)
+                // console.log(departmentAndYearKey)
+                // console.log('2', schedByClass[departmentIndex][departmentAndYearKey])
+                sectionIndex = schedByClass[departmentIndex][departmentAndYearKey].length - 1
+                
+                // ppush 
+                const {section: excludeSectionKey, ...schedBlockToPush} = schedBlock
+                // console.log(sectionIndex)
+                // console.log(sectionKey)
+                // console.log('3', schedByClass[departmentIndex][departmentAndYearKey][sectionIndex][sectionKey])
+                schedByClass[departmentIndex][departmentAndYearKey][sectionIndex][sectionKey][SCHOOL_DAYS[j]].push(schedBlockToPush)
+
             }
         }
     }
-
+    
+    console.log(schedByClass)
+    // console.log(schedByClass[0])
+    // console.log(schedByClass[0][departmentAndYearKey])
 };
+
+const getIndexFromKey = ({arr, key}: {arr: any[], key: string}) => {
+    for (let i = 0; i < arr.length; i++){
+        if (Object.keys(arr[i])[0] === key){
+            return i;
+        }
+    }
+
+    return -1;
+}
 
 const keyAlreadyInClassSchedule = ({classSchedule, type, key}: {classSchedule: any, type: string, key: string}) => {
 
