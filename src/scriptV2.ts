@@ -148,16 +148,14 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
             case 'room_proximity':
                 break;
         }
-        break;
     }
+    // let { score: score3, violationTracker: violationTracker3 } = await evaluateFast({chromosome: population[0].chromosome, semester})
 
-    let { score: score3, violationTracker: violationTracker3 } = await evaluateFast({chromosome: population[0].chromosome, semester})
-
-    return {
-        chromosome: population[0].chromosome,
-        score: score3,
-        violation: violationTracker3
-    };
+    // return {
+    //     chromosome: population[0].chromosome,
+    //     score: score3,
+    //     violation: violationTracker3
+    // };
 
     let newtop50 = findTop50(population);
     // population = top50;
@@ -180,10 +178,12 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
 
     // return true;
 
+    let { score: newScore, violationTracker: newViolationTracker } = await evaluateFast({chromosome: newtop50[0].chromosome, semester})
+
     return {
         chromosome: newtop50[0].chromosome,
-        score: newtop50[0].score,
-        violation: newtop50[0].violations
+        score: newScore,
+        violation: newViolationTracker
     };
 };
 
