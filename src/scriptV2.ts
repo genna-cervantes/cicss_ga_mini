@@ -111,9 +111,9 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     let mostProminentProblem = checkMostProminentProblem(population);
 
     // run repair functions for each one in population
-    for (let i = 0; i < population.length; i++){
-        let val = population[i]
-        
+    for (let i = 0; i < population.length; i++) {
+        let val = population[i];
+
         // repair functions before finding top 50 again
         switch (mostProminentProblem) {
             case 'course_assignment':
@@ -148,8 +148,13 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
             case 'room_proximity':
                 break;
         }
-        return;
+        break;
     }
+    return {
+        chromosome: population[0].chromosome,
+        score: population[0].score,
+        violation: population[0].violations
+    };
 
     let newtop50 = findTop50(population);
     // population = top50;
@@ -170,7 +175,13 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     //     ogtop50ids
     // };
 
-    return true;
+    // return true;
+
+    return {
+        chromosome: newtop50[0].chromosome,
+        score: newtop50[0].score,
+        violation: newtop50[0].violations
+    };
 };
 
 const checkMostProminentProblem = (
@@ -311,8 +322,7 @@ const repairRoomAssignment = (val: {
 
     let roomKeys = Object.keys(sortedRoomSchedule);
 
-    loop1: 
-    for (let i = 0; i < roomKeys.length; i++) {
+    loop1: for (let i = 0; i < roomKeys.length; i++) {
         let roomKey = roomKeys[i];
         for (let j = 0; j < SCHOOL_DAYS.length; j++) {
             if (sortedRoomViolations[roomKey] == undefined) {
@@ -338,8 +348,8 @@ const repairRoomAssignment = (val: {
                 }
             );
 
-            console.log(ascendingSched)
-
+            console.log(roomKey);
+            console.log(SCHOOL_DAYS[j]);
             for (let k = 0; k < ascendingSched.length - 1; k++) {
                 let schedBlock1 = ascendingSched[k];
                 let schedBlock2 = ascendingSched[k + 1];
@@ -347,13 +357,82 @@ const repairRoomAssignment = (val: {
                 resolveConflict({ schedBlock1, schedBlock2 });
             }
             // check if sobra sa 2100 ung dulo
+            // console.log(ascendingSched)
 
-            console.log('resulting sched')
-            console.log(ascendingSched)
-            break loop1;
+            // console.log('resulting sched')
+            // console.log(ascendingSched)
+            // break loop1;
         }
     }
+
+    // convert back to normal chromosome
+    let repairedChromosome = roomToClassSchedule({roomSchedule: sortedRoomSchedule, chromosome: val.chromosome});
 };
+
+const roomToClassSchedule = ({roomSchedule, chromosome}: {roomSchedule: any, chromosome: any}) => {
+    let schedByClass: any = [];
+
+    // loop thru the schedule
+    // extract from the schedblock ung section
+    // extract from the section ung keys
+    // check if may ganon tapos pag wala create
+
+    console.log('CONVERTING')
+
+    let roomKeys = Object.keys(roomSchedule);
+    for (let i = 0; i < roomKeys.length; i++){
+        let specRoomSchedule = roomSchedule[roomKeys[i]];
+
+        for (let j = 0; j < SCHOOL_DAYS.length; j++){
+            let daySched = specRoomSchedule[SCHOOL_DAYS[j]]
+
+            for (let k = 0; k < daySched.length; k++){
+                let schedBlock = daySched[k]
+                let section = schedBlock.section;
+
+                let department = section.split('_')[0]
+                let year = section.split('_')[1][0]
+                let sectionLetter = section.slice(-1)
+
+                let departmentAndYearKey = department + '_' + year  + (year == 1 ? 'st' : year == 2 ? 'nd' : year == 3 ? 'rd' : 'th')
+                console.log(departmentAndYearKey)
+
+                if (keyAlreadyInClassSchedule({classSchedule: chromosome, type: 'department', key: departmentAndYearKey})){
+                    console.log('nice')
+                }
+                
+                return;
+            }
+        }
+    }
+
+};
+
+const keyAlreadyInClassSchedule = ({classSchedule, type, key}: {classSchedule: any, type: string, key: string}) => {
+
+    let deptAndYearKeys = [];
+    let sectionKeys = [];
+
+    for (let i = 0; i < classSchedule.length; i++){
+        deptAndYearKeys.push(Object.keys(classSchedule[i])[0])
+    }
+
+    for (let i = 0; i < classSchedule.length; i++){
+        let deptAndYearKey = Object.keys(classSchedule[i])[0]
+        let deptAndYearSchedule = classSchedule[i][deptAndYearKey]
+
+        for (let j = 0; j < deptAndYearSchedule.length; j++){
+            sectionKeys.push(Object.keys(deptAndYearSchedule[j])[0])
+        }
+
+    }
+
+    if (type === 'section'){
+        return sectionKeys.includes(key)
+    }
+
+    return deptAndYearKeys.includes(key)
+}
 
 const resolveConflict = ({
     schedBlock1,
@@ -365,25 +444,18 @@ const resolveConflict = ({
     // check if may conflict
     if (
         // parseInt(schedBlock2.timeBlock.start) >= parseInt(schedBlock1.timeBlock.start) &&
-        parseInt(schedBlock2.timeBlock.start) <= parseInt(schedBlock1.timeBlock.end)
+        parseInt(schedBlock2.timeBlock.start) <=
+        parseInt(schedBlock1.timeBlock.end)
     ) {
-        console.log('RESOLVING CONFLICT')
-        console.log(schedBlock2.timeBlock)
+        console.log('RESOLVING CONFLICT');
 
-        // let timeDifference =
-        //     parseInt(schedBlock1.timeBlock.end) -
-        //     parseInt(schedBlock2.timeBlock.start);
+        schedBlock2.timeBlock.start = schedBlock1.timeBlock.end;
 
-        // adjust next schedBlock
-        schedBlock2.timeBlock.start = schedBlock1.timeBlock.end
-        
         schedBlock2.timeBlock.end = getEndTime({
             timeStart: schedBlock2.timeBlock.start,
             courseType: schedBlock2.course.type,
             missingUnitsPerClass: schedBlock2.course.units
         }).toString();
-
-        console.log(schedBlock2.timeBlock)
     }
 };
 
