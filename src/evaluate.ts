@@ -293,7 +293,7 @@ const evaluateTASAssignment = (chromosome: any) => {
                             schedBlock2.course.subject_code
                         ],
                         day: SCHOOL_DAYS[j],
-                        time: {
+                        timeBlock: {
                             start: schedBlock2.timeBlock.start
                         },
                         sections: [schedBlock1.section, schedBlock2.section]
@@ -958,7 +958,7 @@ const evaluateRoomProximity = (chromosome: any) => {
 };
 
 // helper functions
-const groupSchedByTAS = (chromosome: any) => {
+export const groupSchedByTAS = (chromosome: any) => {
     let schedByTAS;
 
     // loop per room per day

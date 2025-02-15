@@ -1,6 +1,31 @@
+import { Client } from 'pg';
 import { SCHOOL_DAYS } from './constants';
-import { evaluateFast, groupSchedByRoom } from './evaluate';
+import { evaluateFast, groupSchedByRoom, groupSchedByTAS } from './evaluate';
 import { generateChromosomeV2, getEndTime } from './generateV2';
+
+const DB_HOST = 'localhost';
+const DB_PORT = 5432;
+const DB_USER = 'postgres';
+const DB_PASSWORD = 'password';
+const DB_NAME = 'postgres';
+
+export const client = new Client({
+    host: DB_HOST,
+    port: DB_PORT, // Use a default port if not specified
+    user: DB_USER,
+    password: DB_PASSWORD,
+    database: DB_NAME
+});
+
+// Connect to PostgreSQL
+client
+    .connect()
+    .then(() => {
+        console.log('Connected to PostgreSQL database');
+    })
+    .catch((err) => {
+        console.error('Connection error', err.stack);
+    });
 
 const findTop10 = (
     array: {
@@ -130,7 +155,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
                 case 'tas_assignment':
                     // imbes na imove ung time
                     // hanap ng ibang prof n pwede don sa subj na un
-                    val.chromosome = repairTASAssignment(val)
+                    val.chromosome = await repairTASAssignment(val)
 
                     // if wala saka lng change ng time
                     break loop1;
@@ -207,7 +232,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     };
 };
 
-const repairTASAssignment = (val: {
+const repairTASAssignment = async (val: {
     id: number;
     chromosome: any;
     score: number;
@@ -223,9 +248,8 @@ const repairTASAssignment = (val: {
         val,
         violationName: 'tas_assignment'
     });
-    let sortedTASViolations;
-
-    console.log(violations)
+    let sortedTASViolations: any = {};
+    let sortedTASSchedule = groupSchedByTAS(val.chromosome)
 
     violations.forEach((v: any) => {
         if (sortedTASViolations[v.TAS.tas_id] == null) {
@@ -240,9 +264,41 @@ const repairTASAssignment = (val: {
         }
         sortedTASViolations[v.TAS.tas_id][v.day].push(v);
     });
+    
+    let sortedTASKeys: any = Object.keys(sortedTASSchedule)
+
+    for (let i = 0; i < sortedTASKeys.length; i++){
+        let specTASSched = sortedTASSchedule[sortedTASKeys[i]];
+
+        for (let j = 0; j < SCHOOL_DAYS.length; j++){
+            let daySched = specTASSched[SCHOOL_DAYS[j]]
+
+            for (let k = 0; k < daySched.length; k++){
+                let schedBlock = daySched[k]
+                
+                if (sortedTASViolations[sortedTASKeys[i]] == undefined){
+                    continue;
+                }
+                
+                for (let m = 0; m < sortedTASViolations[sortedTASKeys[i]][SCHOOL_DAYS[j]].length; m++){
+                    let violationBlock = sortedTASViolations[sortedTASKeys[i]][SCHOOL_DAYS[j]][m];
 
 
-    // sort ung violation array by day
+                    if (schedBlock.timeBlock.start === violationBlock.timeBlock.start &&
+                        violationBlock.courses.includes(schedBlock.course.subject_code) &&
+                        violationBlock.sections.includes(schedBlock.section)
+                    ){
+                        console.log('finding new prof')
+                        let course = schedBlock.course.subject_code;
+                        let timeBlock = schedBlock.timeBlock;
+
+                        let newProf = await getAvailableProf({course, timeBlock, sortedTASSchedule, schoolDay: SCHOOL_DAYS[j], tasId: sortedTASKeys[i]})
+                    }
+                }
+            }
+        }
+    }
+    
 
     // loop thru chromosome
     // check sa violation array kung same ng start time course and prof
@@ -250,6 +306,74 @@ const repairTASAssignment = (val: {
 
     // helper function check if available ung prof na un sa time na un
 };
+
+const getAvailableProf = async ({course, timeBlock, sortedTASSchedule, schoolDay, tasId}: {course: string, timeBlock: {start: string, end: string}, sortedTASSchedule: any, schoolDay: string, tasId: string}) => {
+
+    // combine ung restrictions and schedule kasi minsan hard constraint tlga ung restriction
+
+    const query = 'SELECT tas_id, restrictions FROM teaching_academic_staff WHERE $1 = ANY(courses)'
+    const res = await client.query(query, [course])
+    
+    let tasSchedules: any = {};
+    
+    for (let i = 0; i < res.rows.length; i++){
+        tasSchedules[res.rows[i].tas_id] = {
+            schedule: sortedTASSchedule[res.rows[i].tas_id],
+            restrictions: res.rows[i].restrictions
+        }
+    }
+    // check pwede sa schedule
+
+    let tasKeys = Object.keys(tasSchedules)
+    var index = tasKeys.indexOf(tasId);
+    if (index > -1) {
+        tasKeys.splice(index, 1);
+    }
+
+    console.log('available profs')
+    console.log(tasKeys)
+
+    for (let i = 0; i < tasKeys.length; i++){
+        console.log('trying')
+        console.log(tasKeys[i])
+
+        
+        console.log(tasSchedules[tasKeys[i]])
+        let tasSched = tasSchedules[tasKeys[i]]
+        let daySched = tasSched.schedule[schoolDay];
+
+        let ascendingSched = daySched.sort(
+            (schedBlock1: any, schedBlock2: any) => {
+                return (
+                    parseInt(schedBlock1.timeBlock.start, 10) -
+                    parseInt(schedBlock2.timeBlock.start, 10)
+                );
+            }
+        );
+
+        // check if wla nmn siya sched matic sa kanya na
+
+        for (let j = 0; j < ascendingSched.length - 1; j++){
+            let schedBlock = ascendingSched[j]
+            let nextSchedBlock = ascendingSched[j + 1]
+
+            console.log(timeBlock)
+            console.log(schedBlock)
+            console.log(nextSchedBlock)
+
+            // pwede like free tlga sa mornign so fix ung logic dito sa baba
+
+            if (timeBlock.start > schedBlock.timeBlock.end && timeBlock.end < nextSchedBlock.timeBlock.start){
+                console.log('may new prof')
+                return;
+            }
+        }
+
+    }
+
+    console.log('no new prof')
+
+}
 
 const checkMostProminentProblem = (
     population: {
