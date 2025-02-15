@@ -2,6 +2,25 @@ import { SCHOOL_DAYS } from './constants';
 import { evaluateFast, groupSchedByRoom } from './evaluate';
 import { generateChromosomeV2, getEndTime } from './generateV2';
 
+const findTop50 = (
+    array: {
+        chromosome: any;
+        id: number;
+        score: number;
+        violations: [
+            {
+                violationName: string;
+                violationCount: number;
+                violations: any;
+            }
+        ];
+    }[]
+) => {
+    return array
+        .sort((a, b) => b.score - a.score) // Sort by score in descending order
+        .slice(0, 50); // Get the top 50
+};
+
 export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     let population: {
         id: number;
@@ -29,130 +48,130 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
         // console.log(i, score, violationTracker)
     }
 
-    const findTop50 = (
-        array: {
-            chromosome: any;
-            id: number;
-            score: number;
-            violations: [
-                {
-                    violationName: string;
-                    violationCount: number;
-                    violations: any;
-                }
-            ];
-        }[]
-    ) => {
-        return array
-            .sort((a, b) => b.score - a.score) // Sort by score in descending order
-            .slice(0, 50); // Get the top 50
-    };
+    // find top 50
+    population = findTop50(population);
 
-    console.log(population.length);
-    let ogtop50 = findTop50(population);
-    let ogtop50ids = [];
+    let maxGenerations = 10;
+    let generations = 0;
+    while (generations < maxGenerations) {
+        console.log(population[0].id);
+        console.log(population[0].score);
 
-    for (let i = 0; i < ogtop50.length; i++) {
-        ogtop50ids.push(ogtop50[i].id);
-    }
+        generations++;
 
-    population = ogtop50.slice(0);
+        // cross over
+        let halfOfTop = population.length / 2;
+        for (let i = 0; i < halfOfTop; i++) {
+            // half ng top 50
+            console.log('peforming crossover');
 
-    // cross over
-    let halfOfTop = population.length / 2;
-    for (let i = 0; i < halfOfTop; i++) {
-        // half ng top 50
-        console.log('peforming crossover');
+            // try with i + 1 if better ung result
+            let parent1 = population[i].chromosome;
+            let parent2 = population[halfOfTop + i].chromosome;
 
-        // try with i + 1 if better ung result
-        let parent1 = population[i].chromosome;
-        let parent2 = population[halfOfTop + i].chromosome;
+            // generate this crossover point until is
+            // should depend on how many sections per year - randomize from 1 to num of sections - 1
 
-        // generate this crossover point until is
-        // should depend on how many sections per year - randomize from 1 to num of sections - 1
+            let crossoverPoint = {
+                cs_1st: 2,
+                cs_2nd: 1,
+                cs_3rd: 2,
+                cs_4th: 2
+            };
 
-        let crossoverPoint = {
-            cs_1st: 2,
-            cs_2nd: 1,
-            cs_3rd: 2,
-            cs_4th: 2
-        };
+            let { newChromosome1, newChromosome2 } = crossover({
+                parent1,
+                parent2,
+                crossoverPoint
+            });
 
-        let { newChromosome1, newChromosome2 } = crossover({
-            parent1,
-            parent2,
-            crossoverPoint
-        });
+            const { score: score1, violationTracker: violationType1 } =
+                await evaluateFast({ chromosome: newChromosome1, semester });
+            population.push({
+                chromosome: newChromosome1,
+                score: score1,
+                violations: violationType1,
+                id: 100 + i
+            });
 
-        const { score: score1, violationTracker: violationType1 } =
-            await evaluateFast({ chromosome: newChromosome1, semester });
-        population.push({
-            chromosome: newChromosome1,
-            score: score1,
-            violations: violationType1,
-            id: 100 + i
-        });
+            const { score: score2, violationTracker: violationType2 } =
+                await evaluateFast({ chromosome: newChromosome2, semester });
+            population.push({
+                chromosome: newChromosome2,
+                score: score2,
+                violations: violationType2,
+                id: 100 + i
+            });
 
-        const { score: score2, violationTracker: violationType2 } =
-            await evaluateFast({ chromosome: newChromosome2, semester });
-        population.push({
-            chromosome: newChromosome2,
-            score: score2,
-            violations: violationType2,
-            id: 100 + i
-        });
-
-        console.log(
-            `done with crossover with parent${i} and parent${population.length / 2 + i}`
-        );
-    }
-
-    // whats the most prominent problem
-    let mostProminentProblem = checkMostProminentProblem(population);
-
-    // run repair functions for each one in population
-    for (let i = 0; i < population.length; i++) {
-        let val = population[i];
-
-        // repair functions before finding top 50 again
-        switch (mostProminentProblem) {
-            case 'course_assignment':
-                break;
-            case 'room_assignment':
-                val.chromosome = repairRoomAssignment(val); // new populationo every repair
-                break;
-            case 'room_type_assignment':
-                break;
-            case 'tas_assignment':
-                // imbes na imove ung time
-                // hanap ng ibang prof n pwede don sa subj na un
-
-                // if wala saka lng change ng time
-                break;
-            case 'tas_type_assignment':
-                break;
-            case 'tas_load':
-                break;
-            case 'max_class_day_length_assignment':
-                break;
-            case 'consecutive_class_hours':
-                break;
-            case 'gened_course_assignment':
-                break;
-            case 'courses_assigned_in_a_day':
-                break;
-            case 'allowed_specific_days':
-                break;
-            case 'allowed_number_of_days':
-                break;
-            case 'rest_days':
-                break;
-            case 'tas_requests':
-                break;
-            case 'room_proximity':
-                break;
+            // console.log(
+            //     `done with crossover with parent${i} and parent${population.length / 2 + i}`
+            // );
         }
+
+        // whats the most prominent problem
+        let mostProminentProblem = checkMostProminentProblem(population);
+
+        // run repair functions for each one in population
+        for (let i = 0; i < population.length; i++) {
+            let val = population[i];
+
+            // repair functions before finding top 50 again
+            switch (mostProminentProblem) {
+                case 'course_assignment':
+                    break;
+                case 'room_assignment':
+                    val.chromosome = repairRoomAssignment(val); // new populationo every repair
+                    break;
+                case 'room_type_assignment':
+                    break;
+                case 'tas_assignment':
+                    // imbes na imove ung time
+                    // hanap ng ibang prof n pwede don sa subj na un
+
+                    // if wala saka lng change ng time
+                    break;
+                case 'tas_type_assignment':
+                    break;
+                case 'tas_load':
+                    break;
+                case 'max_class_day_length_assignment':
+                    break;
+                case 'consecutive_class_hours':
+                    break;
+                case 'gened_course_assignment':
+                    break;
+                case 'courses_assigned_in_a_day':
+                    break;
+                case 'allowed_specific_days':
+                    break;
+                case 'allowed_number_of_days':
+                    break;
+                case 'rest_days':
+                    break;
+                case 'tas_requests':
+                    break;
+                case 'room_proximity':
+                    break;
+            }
+        }
+
+        // evaluate again after performing repair
+        for (let i = 0; i < population.length; i++) {
+            let val = population[i];
+            let { score: newScore, violationTracker: newViolationTracker } =
+                await evaluateFast({ chromosome: val.chromosome, semester });
+            val = {
+                ...val,
+                score: newScore,
+                violations: newViolationTracker
+            };
+            population[i] = val;
+        }
+
+        console.log(population[0].id);
+        console.log(population[0].score);
     }
+
     // let { score: score3, violationTracker: violationTracker3 } = await evaluateFast({chromosome: population[0].chromosome, semester})
 
     // return {
@@ -162,6 +181,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     // };
 
     let newtop50 = findTop50(population);
+
     // population = top50;
 
     // return {
@@ -169,19 +189,8 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     //     score: top50[0].score,
     //     violations: top50[0].violations
     // };
-    let newtop50ids = [];
 
-    for (let i = 0; i < newtop50.length; i++) {
-        newtop50ids.push(newtop50[i].id);
-    }
-
-    // return {
-    //     newtop50ids,
-    //     ogtop50ids
-    // };
-
-    // return true;
-
+    // evaluate again
     let { score: newScore, violationTracker: newViolationTracker } =
         await evaluateFast({ chromosome: newtop50[0].chromosome, semester });
 
@@ -252,7 +261,6 @@ const checkMostProminentProblem = (
                     ] += v.violationCount;
                 }
             );
-
         }
     );
 
@@ -390,7 +398,19 @@ const repairRoomAssignment = (val: {
         S: {}
     };
 
-    ({roomsWithSlots, roomsOverBooked, roomsWithSlotsScheds, roomsOverBookedScheds} = getOverBookedAndWithSlotsRooms({roomKeys, sortedRoomSchedule, roomsOverBooked, roomsOverBookedScheds, roomsWithSlots, roomsWithSlotsScheds}))
+    ({
+        roomsWithSlots,
+        roomsOverBooked,
+        roomsWithSlotsScheds,
+        roomsOverBookedScheds
+    } = getOverBookedAndWithSlotsRooms({
+        roomKeys,
+        sortedRoomSchedule,
+        roomsOverBooked,
+        roomsOverBookedScheds,
+        roomsWithSlots,
+        roomsWithSlotsScheds
+    }));
 
     // console.log('rooms overbooked start');
     // console.log(roomsOverBooked);
@@ -400,26 +420,28 @@ const repairRoomAssignment = (val: {
     let tries = 0;
     while (
         (roomsOverBooked['M'].length > 0 ||
-        roomsOverBooked['T'].length > 0 ||
-        roomsOverBooked['W'].length > 0 ||
-        roomsOverBooked['TH'].length > 0 ||
-        roomsOverBooked['F'].length > 0 ||
-        roomsOverBooked['S'].length > 0) &&
+            roomsOverBooked['T'].length > 0 ||
+            roomsOverBooked['W'].length > 0 ||
+            roomsOverBooked['TH'].length > 0 ||
+            roomsOverBooked['F'].length > 0 ||
+            roomsOverBooked['S'].length > 0) &&
         tries < 10
     ) {
-        console.log('trying')
+        // console.log('trying')
         // console.log(tries)
         for (let i = 0; i < SCHOOL_DAYS.length; i++) {
             let specDayRoomsWithoutSlotsKeys: any = Object.keys(
                 roomsOverBookedScheds[SCHOOL_DAYS[i]]
             );
-            
-            if (!specDayRoomsWithoutSlotsKeys || specDayRoomsWithoutSlotsKeys.length < 1){
+
+            if (
+                !specDayRoomsWithoutSlotsKeys ||
+                specDayRoomsWithoutSlotsKeys.length < 1
+            ) {
                 continue;
             }
 
             for (let j = 0; j < specDayRoomsWithoutSlotsKeys.length; j++) {
-
                 // console.log(roomsOverBookedScheds)
                 // console.log(specDayRoomsWithoutSlotsKeys)
                 // console.log(specDayRoomsWithoutSlotsKeys[j])
@@ -432,12 +454,11 @@ const repairRoomAssignment = (val: {
                 // console.log('late classes')
                 // console.log(lateClasses)
 
-                if (!lateClasses){
+                if (!lateClasses) {
                     continue;
                 }
 
-                loop3:
-                for (let k = 0; k < lateClasses.length; k++) {
+                loop3: for (let k = 0; k < lateClasses.length; k++) {
                     let specSched = lateClasses[k];
                     let hoursNeeded =
                         parseInt(specSched.timeBlock.end) -
@@ -528,10 +549,21 @@ const repairRoomAssignment = (val: {
             }
         }
 
-        
         tries++;
         // run ung first for looop
-        ({roomsWithSlots, roomsOverBooked, roomsWithSlotsScheds, roomsOverBookedScheds} = getOverBookedAndWithSlotsRooms({roomKeys, sortedRoomSchedule, roomsOverBooked, roomsOverBookedScheds, roomsWithSlots, roomsWithSlotsScheds}))
+        ({
+            roomsWithSlots,
+            roomsOverBooked,
+            roomsWithSlotsScheds,
+            roomsOverBookedScheds
+        } = getOverBookedAndWithSlotsRooms({
+            roomKeys,
+            sortedRoomSchedule,
+            roomsOverBooked,
+            roomsOverBookedScheds,
+            roomsWithSlots,
+            roomsWithSlotsScheds
+        }));
 
         // console.log('rooms overbooked after loop');
         // console.log(roomsOverBooked);
@@ -644,7 +676,7 @@ const getOverBookedAndWithSlotsRooms = ({
         roomsOverBookedScheds,
         roomsWithSlots,
         roomsWithSlotsScheds
-    }
+    };
 };
 
 const roomToClassSchedule = ({
@@ -934,6 +966,22 @@ const crossover = ({
                         letterToIndex(specSectionSwitched.slice(-1)) - 1;
 
                     // add the new timeblock
+                    if (
+                        !newChromosome1[i]?.[yearAndDepartmentKey]?.[
+                            sectionIndex
+                        ]?.[specSectionKey]?.[newDay]
+                    ) {
+                        newChromosome1[i][yearAndDepartmentKey][sectionIndex][
+                            specSectionKey
+                        ] = {
+                            M: [],
+                            T: [],
+                            W: [],
+                            TH: [],
+                            F: [],
+                            S: []
+                        };
+                    }
                     newChromosome1[i][yearAndDepartmentKey][sectionIndex][
                         specSectionKey
                     ][newDay].push({
@@ -1019,6 +1067,27 @@ const findClassInSchedule = ({
                     let schedBlock = daySched[l];
                     let sectionIndex =
                         letterToIndex(specSectionKey.slice(-1)) - 1;
+                        
+                    console.log(parent2Copy[i][yearAndDepartmentKey])
+
+                    // sort the schedule by section letter
+                    let sortedKeys: any = [];
+                    for (let m = 0; m < parent2Copy[i][yearAndDepartmentKey].length; m++){
+                        sortedKeys.push(Object.keys(parent2Copy[i][yearAndDepartmentKey][m])[0])
+                    }
+                    sortedKeys = sortedKeys.sort()
+                       
+                    let sortedScheds = [];
+                    for (let m = 0; m < sortedKeys.length; m++){
+                        for (let n = 0; n < parent2Copy[i][yearAndDepartmentKey].length; n++){
+                            if (Object.keys(parent2Copy[i][yearAndDepartmentKey][n])[0] === sortedKeys[m]){
+                                sortedScheds.push(parent2Copy[i][yearAndDepartmentKey][n])
+                            }
+                        }
+                    }
+
+                    parent2Copy[i][yearAndDepartmentKey] = sortedScheds;
+                    console.log(parent2Copy[i][yearAndDepartmentKey])
 
                     if (schedBlock.course.subject_code === courseCode) {
                         // let schedBlockInNewChromosome2 =
@@ -1027,6 +1096,23 @@ const findClassInSchedule = ({
                         //     ][SCHOOL_DAYS[k]][l];
 
                         // add ung new timeblock from chromosome1 to chromosome2
+                        if (
+                            !newChromosome2[i]?.[yearAndDepartmentKey]?.[
+                                sectionIndex
+                            ]?.[specSectionKey]?.[newDay]
+                        ) {
+                            // Handle the case where newDay is undefined
+                            newChromosome2[i][yearAndDepartmentKey][
+                                sectionIndex
+                            ][specSectionKey] = {
+                                M: [],
+                                T: [],
+                                W: [],
+                                TH: [],
+                                F: [],
+                                S: []
+                            };
+                        }
                         newChromosome2[i][yearAndDepartmentKey][sectionIndex][
                             specSectionKey
                         ][newDay].push({
@@ -1039,6 +1125,9 @@ const findClassInSchedule = ({
                             specSectionKey
                         ][SCHOOL_DAYS[k]].splice(l, 1);
 
+                        console.log(parent2Copy[i][yearAndDepartmentKey]);
+                        console.log(sectionIndex);
+                        console.log(specSectionKey);
                         // remove sa parent2 copy para madali maghanap ng remaining courses na ndi pa nasswitch
                         parent2Copy[i][yearAndDepartmentKey][sectionIndex][
                             specSectionKey
