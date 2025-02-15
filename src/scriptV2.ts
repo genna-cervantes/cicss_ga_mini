@@ -2,7 +2,7 @@ import { SCHOOL_DAYS } from './constants';
 import { evaluateFast, groupSchedByRoom } from './evaluate';
 import { generateChromosomeV2, getEndTime } from './generateV2';
 
-const findTop50 = (
+const findTop10 = (
     array: {
         chromosome: any;
         id: number;
@@ -18,7 +18,7 @@ const findTop50 = (
 ) => {
     return array
         .sort((a, b) => b.score - a.score) // Sort by score in descending order
-        .slice(0, 50); // Get the top 50
+        .slice(0, 10); // Get the top 10
 };
 
 export const runGAV2 = async ({ semester }: { semester: 2 }) => {
@@ -49,7 +49,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     }
 
     // find top 50
-    population = findTop50(population);
+    // population = findTop50(population);
 
     let maxGenerations = 10;
     let generations = 0;
@@ -58,6 +58,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
         console.log(population[0].score);
 
         generations++;
+        console.log(population.length)
 
         // cross over
         let halfOfTop = population.length / 2;
@@ -108,6 +109,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
             // );
         }
 
+        console.log('problem solving')
         // whats the most prominent problem
         let mostProminentProblem = checkMostProminentProblem(population);
 
@@ -168,6 +170,8 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
             population[i] = val;
         }
 
+        population = findTop10(population);
+
         console.log(population[0].id);
         console.log(population[0].score);
     }
@@ -180,7 +184,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     //     violation: violationTracker3
     // };
 
-    let newtop50 = findTop50(population);
+    let newtop50 = findTop10(population);
 
     // population = top50;
 
@@ -1067,8 +1071,6 @@ const findClassInSchedule = ({
                     let schedBlock = daySched[l];
                     let sectionIndex =
                         letterToIndex(specSectionKey.slice(-1)) - 1;
-                        
-                    console.log(parent2Copy[i][yearAndDepartmentKey])
 
                     // sort the schedule by section letter
                     let sortedKeys: any = [];
@@ -1087,7 +1089,6 @@ const findClassInSchedule = ({
                     }
 
                     parent2Copy[i][yearAndDepartmentKey] = sortedScheds;
-                    console.log(parent2Copy[i][yearAndDepartmentKey])
 
                     if (schedBlock.course.subject_code === courseCode) {
                         // let schedBlockInNewChromosome2 =
@@ -1125,9 +1126,9 @@ const findClassInSchedule = ({
                             specSectionKey
                         ][SCHOOL_DAYS[k]].splice(l, 1);
 
-                        console.log(parent2Copy[i][yearAndDepartmentKey]);
-                        console.log(sectionIndex);
-                        console.log(specSectionKey);
+                        // console.log(parent2Copy[i][yearAndDepartmentKey]);
+                        // console.log(sectionIndex);
+                        // console.log(specSectionKey);
                         // remove sa parent2 copy para madali maghanap ng remaining courses na ndi pa nasswitch
                         parent2Copy[i][yearAndDepartmentKey][sectionIndex][
                             specSectionKey
