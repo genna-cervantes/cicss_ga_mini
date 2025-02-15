@@ -53,12 +53,13 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
 
     let maxGenerations = 10;
     let generations = 0;
+    loop1:
     while (generations < maxGenerations) {
         console.log(population[0].id);
         console.log(population[0].score);
 
         generations++;
-        console.log(population.length)
+        console.log(population.length);
 
         // cross over
         let halfOfTop = population.length / 2;
@@ -109,7 +110,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
             // );
         }
 
-        console.log('problem solving')
+        console.log('problem solving');
         // whats the most prominent problem
         let mostProminentProblem = checkMostProminentProblem(population);
 
@@ -129,9 +130,10 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
                 case 'tas_assignment':
                     // imbes na imove ung time
                     // hanap ng ibang prof n pwede don sa subj na un
+                    val.chromosome = repairTASAssignment(val)
 
                     // if wala saka lng change ng time
-                    break;
+                    break loop1;
                 case 'tas_type_assignment':
                     break;
                 case 'tas_load':
@@ -203,6 +205,50 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
         score: newScore,
         violation: newViolationTracker
     };
+};
+
+const repairTASAssignment = (val: {
+    id: number;
+    chromosome: any;
+    score: number;
+    violations: [
+        {
+            violationName: string;
+            violationCount: number;
+            violations: any;
+        }
+    ];
+}) => {
+    let violations = getSpecificViolation({
+        val,
+        violationName: 'tas_assignment'
+    });
+    let sortedTASViolations;
+
+    console.log(violations)
+
+    violations.forEach((v: any) => {
+        if (sortedTASViolations[v.TAS.tas_id] == null) {
+            sortedTASViolations[v.TAS.tas_id] = {
+                M: [],
+                T: [],
+                W: [],
+                TH: [],
+                F: [],
+                S: []
+            };
+        }
+        sortedTASViolations[v.TAS.tas_id][v.day].push(v);
+    });
+
+
+    // sort ung violation array by day
+
+    // loop thru chromosome
+    // check sa violation array kung same ng start time course and prof
+    // dito na hanap ng ibang prof for that coures na available sa time slot na un
+
+    // helper function check if available ung prof na un sa time na un
 };
 
 const checkMostProminentProblem = (
@@ -1074,16 +1120,34 @@ const findClassInSchedule = ({
 
                     // sort the schedule by section letter
                     let sortedKeys: any = [];
-                    for (let m = 0; m < parent2Copy[i][yearAndDepartmentKey].length; m++){
-                        sortedKeys.push(Object.keys(parent2Copy[i][yearAndDepartmentKey][m])[0])
+                    for (
+                        let m = 0;
+                        m < parent2Copy[i][yearAndDepartmentKey].length;
+                        m++
+                    ) {
+                        sortedKeys.push(
+                            Object.keys(
+                                parent2Copy[i][yearAndDepartmentKey][m]
+                            )[0]
+                        );
                     }
-                    sortedKeys = sortedKeys.sort()
-                       
+                    sortedKeys = sortedKeys.sort();
+
                     let sortedScheds = [];
-                    for (let m = 0; m < sortedKeys.length; m++){
-                        for (let n = 0; n < parent2Copy[i][yearAndDepartmentKey].length; n++){
-                            if (Object.keys(parent2Copy[i][yearAndDepartmentKey][n])[0] === sortedKeys[m]){
-                                sortedScheds.push(parent2Copy[i][yearAndDepartmentKey][n])
+                    for (let m = 0; m < sortedKeys.length; m++) {
+                        for (
+                            let n = 0;
+                            n < parent2Copy[i][yearAndDepartmentKey].length;
+                            n++
+                        ) {
+                            if (
+                                Object.keys(
+                                    parent2Copy[i][yearAndDepartmentKey][n]
+                                )[0] === sortedKeys[m]
+                            ) {
+                                sortedScheds.push(
+                                    parent2Copy[i][yearAndDepartmentKey][n]
+                                );
                             }
                         }
                     }

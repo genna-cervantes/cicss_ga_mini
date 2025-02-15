@@ -292,9 +292,9 @@ const evaluateTASAssignment = (chromosome: any) => {
                             schedBlock1.course.subject_code,
                             schedBlock2.course.subject_code
                         ],
+                        day: SCHOOL_DAYS[j],
                         time: {
-                            day: SCHOOL_DAYS[j],
-                            time: schedBlock2.timeBlock.start
+                            start: schedBlock2.timeBlock.start
                         },
                         sections: [schedBlock1.section, schedBlock2.section]
                     });
