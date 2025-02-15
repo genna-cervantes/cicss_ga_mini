@@ -253,7 +253,6 @@ const checkMostProminentProblem = (
                 }
             );
 
-            //     violationCount[v.violationName as keyof typeof violationCount] += v.violationCount;
         }
     );
 
@@ -272,9 +271,6 @@ const checkMostProminentProblem = (
         }
     });
 
-    // console.log(violationCount);
-    // console.log(maxViolationKey);
-
     return maxViolationKey;
 };
 
@@ -290,16 +286,6 @@ const repairRoomAssignment = (val: {
         }
     ];
 }) => {
-    // start here tomo
-
-    // loop thru the schedule
-    // check if violation sa sched block na un - thru the array
-    // resolve by changing THAT ONE to a possible kapalit -> another loop to check with all other scheds (shet) -> room order para di masyado maloop
-    // do until wala na OR until matapos lahat nung scheds
-
-    // sort ko by room ung violations -
-    // sort ko by room ung sched mismo
-
     // loop thru the room schedule
     // check kung may violations ba sa room na un
     // try to solve the violations IN THE SAME ROOM FIRST
@@ -356,24 +342,228 @@ const repairRoomAssignment = (val: {
                 }
             );
 
-            console.log(roomKey);
-            console.log(SCHOOL_DAYS[j]);
+            // console.log(roomKey);
+            // console.log(SCHOOL_DAYS[j]);
             for (let k = 0; k < ascendingSched.length - 1; k++) {
                 let schedBlock1 = ascendingSched[k];
                 let schedBlock2 = ascendingSched[k + 1];
 
                 resolveConflict({ schedBlock1, schedBlock2 });
             }
-            // check if sobra sa 2100 ung dulo
-            // console.log(ascendingSched)
-
-            // console.log('resulting sched')
-            // console.log(ascendingSched)
-            // break loop1;
         }
     }
 
     // ung kapag sobra sa class -> pero kasama na un sa max class day length na repair
+    let roomsOverBooked: any = {
+        M: [],
+        T: [],
+        W: [],
+        TH: [],
+        F: [],
+        S: []
+    };
+
+    let roomsWithSlots: any = {
+        M: [],
+        T: [],
+        W: [],
+        TH: [],
+        F: [],
+        S: []
+    };
+
+    let roomsWithSlotsScheds: any = {
+        M: {},
+        T: {},
+        W: {},
+        TH: {},
+        F: {},
+        S: {}
+    };
+
+    let roomsOverBookedScheds: any = {
+        M: {},
+        T: {},
+        W: {},
+        TH: {},
+        F: {},
+        S: {}
+    };
+
+    ({roomsWithSlots, roomsOverBooked, roomsWithSlotsScheds, roomsOverBookedScheds} = getOverBookedAndWithSlotsRooms({roomKeys, sortedRoomSchedule, roomsOverBooked, roomsOverBookedScheds, roomsWithSlots, roomsWithSlotsScheds}))
+
+    // console.log('rooms overbooked start');
+    // console.log(roomsOverBooked);
+    // console.log(sortedRoomSchedule[roomsOverBooked['M'][0]]['M'])
+
+    // tapos ung while is ung sa second loop so after icheck non irun ulet tong other for loop
+    let tries = 0;
+    while (
+        (roomsOverBooked['M'].length > 0 ||
+        roomsOverBooked['T'].length > 0 ||
+        roomsOverBooked['W'].length > 0 ||
+        roomsOverBooked['TH'].length > 0 ||
+        roomsOverBooked['F'].length > 0 ||
+        roomsOverBooked['S'].length > 0) &&
+        tries < 10
+    ) {
+        console.log('trying')
+        // console.log(tries)
+        for (let i = 0; i < SCHOOL_DAYS.length; i++) {
+            let specDayRoomsWithoutSlotsKeys: any = Object.keys(
+                roomsOverBookedScheds[SCHOOL_DAYS[i]]
+            );
+            
+            if (!specDayRoomsWithoutSlotsKeys || specDayRoomsWithoutSlotsKeys.length < 1){
+                continue;
+            }
+
+            for (let j = 0; j < specDayRoomsWithoutSlotsKeys.length; j++) {
+
+                // console.log(roomsOverBookedScheds)
+                // console.log(specDayRoomsWithoutSlotsKeys)
+                // console.log(specDayRoomsWithoutSlotsKeys[j])
+
+                let lateClasses =
+                    roomsOverBookedScheds[SCHOOL_DAYS[i]][
+                        specDayRoomsWithoutSlotsKeys[j]
+                    ];
+
+                // console.log('late classes')
+                // console.log(lateClasses)
+
+                if (!lateClasses){
+                    continue;
+                }
+
+                loop3:
+                for (let k = 0; k < lateClasses.length; k++) {
+                    let specSched = lateClasses[k];
+                    let hoursNeeded =
+                        parseInt(specSched.timeBlock.end) -
+                        parseInt(specSched.timeBlock.start);
+
+                    for (
+                        let l = 0;
+                        l < roomsWithSlots[SCHOOL_DAYS[i]].length;
+                        l++
+                    ) {
+                        // console.log('getting rooms with slots')
+                        let specRoomKeyWithSlot =
+                            roomsWithSlots[SCHOOL_DAYS[i]][l];
+                        let daySchedWithSlot =
+                            roomsWithSlotsScheds[SCHOOL_DAYS[i]][
+                                specRoomKeyWithSlot
+                            ];
+                        let lastSchedBlock =
+                            daySchedWithSlot[daySchedWithSlot.length - 1];
+
+                        if (
+                            2100 - parseInt(lastSchedBlock.timeBlock.end) >
+                            hoursNeeded
+                        ) {
+                            // console.log('switching')
+                            // console.log(
+                            //     sortedRoomSchedule[specSched.room.room_id][
+                            //         SCHOOL_DAYS[i]
+                            //     ]
+                            // );
+
+                            // add to new day/room/whatever
+                            let schedBlockToPush = {
+                                ...specSched,
+                                room: {
+                                    ...daySchedWithSlot[0].room // new room
+                                },
+                                timeBlock: {
+                                    start: lastSchedBlock.timeBlock.end,
+                                    end: (
+                                        parseInt(lastSchedBlock.timeBlock.end) +
+                                        hoursNeeded
+                                    ).toString()
+                                }
+                            };
+                            // console.log(sortedRoomSchedule[lastSchedBlock.room.room_id][SCHOOL_DAYS[i]])
+
+                            sortedRoomSchedule[lastSchedBlock.room.room_id][
+                                SCHOOL_DAYS[i]
+                            ].push(schedBlockToPush);
+
+                            // console.log(sortedRoomSchedule[lastSchedBlock.room.room_id][SCHOOL_DAYS[i]])
+
+                            // remove from prev room
+                            loop4: for (
+                                let m = 0;
+                                m <
+                                sortedRoomSchedule[specSched.room.room_id][
+                                    SCHOOL_DAYS[i]
+                                ].length;
+                                m++
+                            ) {
+                                let specDaySched =
+                                    sortedRoomSchedule[specSched.room.room_id][
+                                        SCHOOL_DAYS[i]
+                                    ];
+
+                                if (
+                                    specDaySched[m].timeBlock.start ===
+                                        specSched.timeBlock.start &&
+                                    specDaySched[m].timeBlock.end ===
+                                        specSched.timeBlock.end
+                                ) {
+                                    sortedRoomSchedule[specSched.room.room_id][
+                                        SCHOOL_DAYS[i]
+                                    ].splice(m, 1);
+                                    break loop4;
+                                }
+                            }
+
+                            // console.log(sortedRoomSchedule[specSched.room.room_id][SCHOOL_DAYS[i]])
+                            // return;
+
+                            continue loop3;
+                        }
+                    }
+                }
+            }
+        }
+
+        
+        tries++;
+        // run ung first for looop
+        ({roomsWithSlots, roomsOverBooked, roomsWithSlotsScheds, roomsOverBookedScheds} = getOverBookedAndWithSlotsRooms({roomKeys, sortedRoomSchedule, roomsOverBooked, roomsOverBookedScheds, roomsWithSlots, roomsWithSlotsScheds}))
+
+        // console.log('rooms overbooked after loop');
+        // console.log(roomsOverBooked);
+        // console.log(sortedRoomSchedule[roomsOverBooked['M'][0]]['M'])
+    }
+
+    // check diot
+    // console.log('rooms overbooked');
+    // console.log(roomsOverBooked);
+    // console.log(sortedRoomSchedule[roomsOverBooked['M'][0]]['M'])
+    // console.log(roomsWithSlots);
+
+    // convert back to normal chromosome
+    let repairedChromosome = roomToClassSchedule({
+        roomSchedule: sortedRoomSchedule,
+        chromosome: val.chromosome
+    });
+
+    return repairedChromosome;
+};
+
+const getOverBookedAndWithSlotsRooms = ({
+    roomKeys,
+    sortedRoomSchedule
+}: {
+    roomKeys: any;
+    sortedRoomSchedule: any;
+    roomsWithSlots: any;
+    roomsWithSlotsScheds: any;
+    roomsOverBooked: any;
+    roomsOverBookedScheds: any;
+}) => {
     let roomsOverBooked: any = {
         M: [],
         T: [],
@@ -430,179 +620,31 @@ const repairRoomAssignment = (val: {
             let lastSchedBlock = ascendingSched[ascendingSched.length - 1];
             if (parseInt(lastSchedBlock.timeBlock.end) < 2100) {
                 roomsWithSlots[SCHOOL_DAYS[j]].push(roomKeys[i]);
-                roomsWithSlotsScheds[SCHOOL_DAYS[j]][roomKeys[i]] = ascendingSched;
+                roomsWithSlotsScheds[SCHOOL_DAYS[j]][roomKeys[i]] =
+                    ascendingSched;
                 continue;
             }
 
             roomsOverBooked[SCHOOL_DAYS[j]].push(roomKeys[i]);
-            for (let k = 0; k < ascendingSched.length; k++){
+            for (let k = 0; k < ascendingSched.length; k++) {
                 if (parseInt(ascendingSched[k].timeBlock.end) > 2100) {
-                    if (!roomsOverBookedScheds[SCHOOL_DAYS[j]][roomKeys[i]]){
+                    if (!roomsOverBookedScheds[SCHOOL_DAYS[j]][roomKeys[i]]) {
                         roomsOverBookedScheds[SCHOOL_DAYS[j]][roomKeys[i]] = [];
                     }
-                    roomsOverBookedScheds[SCHOOL_DAYS[j]][roomKeys[i]].push(ascendingSched[k]);    
+                    roomsOverBookedScheds[SCHOOL_DAYS[j]][roomKeys[i]].push(
+                        ascendingSched[k]
+                    );
                 }
             }
-
-            // let lastSchedBlock = ascendingSched[ascendingSched.length - 1];
-            // if (parseInt(lastSchedBlock.timeBlock.end) > 2100) {
-            //     roomsOverBooked[SCHOOL_DAYS[j]].push(roomKeys[i]);
-            //     roomsOverBookedScheds[SCHOOL_DAYS[j]][roomKeys[i]] = [...roomsOverBookedScheds[SCHOOL_DAYS[j]][roomKeys[i]], ];
-            // } else {
-            //     roomsWithSlots[SCHOOL_DAYS[j]].push(roomKeys[i]);
-            //     roomsSchedsWithSlots[SCHOOL_DAYS[j]][roomKeys[i]] = ascendingSched;
-            // }
         }
     }
 
-    // console.log('overbooked')
-    // console.log(roomsOverBooked)
-    // console.log(roomsOverBookedScheds)
-
-    // for (let i = 0; i < SCHOOL_DAYS.length; i++){
-    //     let specRoomKeys = Object.keys(roomsOverBookedScheds[SCHOOL_DAYS[i]])
-    //     for (let j = 0; j < specRoomKeys.length; j++){
-
-    //         let specRoomKey = specRoomKeys[j]
-    //         let specSched = roomsOverBookedScheds[SCHOOL_DAYS[i]][specRoomKey]
-    //         for (let k = 0; k < specSched.length; k++){
-    //             console.log(specSched[k])
-    //         }
-    //     }
-    // }
-    
-    // console.log('with slots')
-    // console.log(roomsWithSlots)
-    // console.log(roomsWithSlotsScheds)
-
-    // hanapin ko sino di overbooked sa day na un
-    // tapos tranfer ung class don
-
-    // go thru the scheds without slots - get the hours na need
-    // go thru the scheds with slots
-    // check if pwede ba sa isa don tapos ilipat don
-
-    for (let i = 0; i < SCHOOL_DAYS.length; i++){
-        let specDayRoomsWithoutSlotsKeys = Object.keys(roomsOverBookedScheds[SCHOOL_DAYS[i]])
-
-        for (let j = 0; j < specDayRoomsWithoutSlotsKeys.length; i++){
-            let lateClasses = roomsOverBookedScheds[SCHOOL_DAYS[i]][specDayRoomsWithoutSlotsKeys[i]]
-
-            console.log('late classes')
-            console.log(specDayRoomsWithoutSlotsKeys[i])
-            console.log(lateClasses)
-
-            // if (!lateClasses){
-            //     continue;
-            // }
-
-            for (let k = 0; k < lateClasses.length; k++){
-                let specSched = lateClasses[k]
-                let hoursNeeded = parseInt(specSched.timeBlock.end) - parseInt(specSched.timeBlock.start)
-
-                for (let l = 0; l < roomsWithSlots[SCHOOL_DAYS[i]].length; l++){
-                    let specRoomKeyWithSlot = roomsWithSlots[SCHOOL_DAYS[i]][l]
-                    let daySchedWithSlot = roomsWithSlotsScheds[SCHOOL_DAYS[i]][specRoomKeyWithSlot];
-                    let lastSchedBlock = daySchedWithSlot[daySchedWithSlot.length - 1]
-    
-                    if (2100 - parseInt(lastSchedBlock.timeBlock.end) > hoursNeeded){
-                        console.log(sortedRoomSchedule[specSched.room.room_id][SCHOOL_DAYS[i]])
-                        
-                        // add to new day/room/whatever
-                        let schedBlockToPush = {
-                            ...specSched,
-                            room: {
-                                ...daySchedWithSlot[0].room // new room
-                            },
-                            timeBlock: {
-                                start: lastSchedBlock.timeBlock.end,
-                                end: (parseInt(lastSchedBlock.timeBlock.end) + hoursNeeded).toString()
-                            }
-                        }
-                        sortedRoomSchedule[lastSchedBlock.room.room_id][SCHOOL_DAYS[i]].push(schedBlockToPush)
-
-                        // remove from prev room
-                        loop4: 
-                        for (let m = 0; m < sortedRoomSchedule[specSched.room.room_id][SCHOOL_DAYS[i]].length; m++){
-                            let specDaySched = sortedRoomSchedule[specSched.room.room_id][SCHOOL_DAYS[i]];
-                            
-                            if (specDaySched[m].timeBlock.start === specSched.timeBlock.start && specDaySched[m].timeBlock.end === specSched.timeBlock.end){
-                                sortedRoomSchedule[specSched.room.room_id][SCHOOL_DAYS[i]].splice(m, 1)
-                                break loop4
-                            }
-                        }
-                                                
-                        console.log(sortedRoomSchedule[specSched.room.room_id][SCHOOL_DAYS[i]])
-                        console.log(sortedRoomSchedule[lastSchedBlock.room.room_id][SCHOOL_DAYS[i]])
-                        return;
-    
-                    }
-                }
-            }
-
-            // tanggalin na sa rooms overbooked
-        }
+    return {
+        roomsOverBooked,
+        roomsOverBookedScheds,
+        roomsWithSlots,
+        roomsWithSlotsScheds
     }
-
-    // for (let i = 0; i < SCHOOL_DAYS.length; i++){
-    //     let roomsOverBookedSpecDay = roomsOverBooked[SCHOOL_DAYS[i]]
-
-    //     for (let j = 0; j < roomsOverBookedSpecDay.length; j++){
-    //         let specRoomKey = roomsOverBookedSpecDay[j]
-    //         let daySched = sortedRoomSchedule[specRoomKey][SCHOOL_DAYS[i]]
-    //         let ascendingSched = daySched.sort(
-    //             (schedBlock1: any, schedBlock2: any) => {
-    //                 return (
-    //                     parseInt(schedBlock1.timeBlock.start, 10) -
-    //                     parseInt(schedBlock2.timeBlock.start, 10)
-    //                 );
-    //             }
-    //         );
-    //         let lastSchedBlock = ascendingSched[ascendingSched.length - 1]
-    //         let hoursNeeded = parseInt(lastSchedBlock.timeBlock.end) - parseInt(lastSchedBlock.timeBlock.start)
-            
-    //         for (let k = 0; k < roomsWithSlots[SCHOOL_DAYS[i]].length; k++){
-
-    //             let specRoomKeyWithSlot = roomsWithSlots[SCHOOL_DAYS[i]][k]
-    //             let daySchedWithSlot = roomsSchedsWithSlots[SCHOOL_DAYS[i]][specRoomKeyWithSlot];
-
-    //             console.log(roomsSchedsWithSlots[SCHOOL_DAYS[i]])
-    //             console.log(specRoomKeyWithSlot)
-
-    //             console.log(daySchedWithSlot)
-
-    //             if (2100 - parseInt(daySchedWithSlot.timeBlock.end) > hoursNeeded){
-    //                 // add to new day/room/whatever
-    //                 let schedBlockToPush = {
-    //                     ...lastSchedBlock,
-    //                     room: {
-    //                         ...daySchedWithSlot[0].room // new room
-    //                     },
-    //                     timeBlock: {
-
-    //                     }
-    //                 }
-
-    //                 // remove from prev room
-
-    //             }
-    //         }
-            
-
-    //     }
-    // }
-    
-    console.log('rooms overbooked');
-    console.log(roomsOverBooked);
-    console.log(roomsWithSlots);
-
-    // convert back to normal chromosome
-    let repairedChromosome = roomToClassSchedule({
-        roomSchedule: sortedRoomSchedule,
-        chromosome: val.chromosome
-    });
-
-    return repairedChromosome;
 };
 
 const roomToClassSchedule = ({
@@ -770,7 +812,7 @@ const resolveConflict = ({
         parseInt(schedBlock2.timeBlock.start) <=
         parseInt(schedBlock1.timeBlock.end)
     ) {
-        console.log('RESOLVING CONFLICT');
+        // console.log('RESOLVING CONFLICT');
 
         schedBlock2.timeBlock.start = schedBlock1.timeBlock.end;
 
