@@ -124,6 +124,10 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
             case 'room_type_assignment':
                 break;
             case 'tas_assignment':
+                // imbes na imove ung time
+                // hanap ng ibang prof n pwede don sa subj na un
+
+                // if wala saka lng change ng time
                 break;
             case 'tas_type_assignment':
                 break;
@@ -178,7 +182,8 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
 
     // return true;
 
-    let { score: newScore, violationTracker: newViolationTracker } = await evaluateFast({chromosome: newtop50[0].chromosome, semester})
+    let { score: newScore, violationTracker: newViolationTracker } =
+        await evaluateFast({ chromosome: newtop50[0].chromosome, semester });
 
     return {
         chromosome: newtop50[0].chromosome,
@@ -368,13 +373,245 @@ const repairRoomAssignment = (val: {
         }
     }
 
-    // convert back to normal chromosome
-    let repairedChromosome = roomToClassSchedule({roomSchedule: sortedRoomSchedule, chromosome: val.chromosome});
+    // ung kapag sobra sa class -> pero kasama na un sa max class day length na repair
+    let roomsOverBooked: any = {
+        M: [],
+        T: [],
+        W: [],
+        TH: [],
+        F: [],
+        S: []
+    };
 
-    return repairedChromosome
+    let roomsWithSlots: any = {
+        M: [],
+        T: [],
+        W: [],
+        TH: [],
+        F: [],
+        S: []
+    };
+
+    let roomsWithSlotsScheds: any = {
+        M: {},
+        T: {},
+        W: {},
+        TH: {},
+        F: {},
+        S: {}
+    };
+
+    let roomsOverBookedScheds: any = {
+        M: {},
+        T: {},
+        W: {},
+        TH: {},
+        F: {},
+        S: {}
+    };
+
+    for (let i = 0; i < roomKeys.length; i++) {
+        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+            let daySched = sortedRoomSchedule[roomKeys[i]][SCHOOL_DAYS[j]];
+
+            let ascendingSched = daySched.sort(
+                (schedBlock1: any, schedBlock2: any) => {
+                    return (
+                        parseInt(schedBlock1.timeBlock.start, 10) -
+                        parseInt(schedBlock2.timeBlock.start, 10)
+                    );
+                }
+            );
+
+            if (ascendingSched.length < 1) {
+                continue;
+            }
+
+            let lastSchedBlock = ascendingSched[ascendingSched.length - 1];
+            if (parseInt(lastSchedBlock.timeBlock.end) < 2100) {
+                roomsWithSlots[SCHOOL_DAYS[j]].push(roomKeys[i]);
+                roomsWithSlotsScheds[SCHOOL_DAYS[j]][roomKeys[i]] = ascendingSched;
+                continue;
+            }
+
+            roomsOverBooked[SCHOOL_DAYS[j]].push(roomKeys[i]);
+            for (let k = 0; k < ascendingSched.length; k++){
+                if (parseInt(ascendingSched[k].timeBlock.end) > 2100) {
+                    if (!roomsOverBookedScheds[SCHOOL_DAYS[j]][roomKeys[i]]){
+                        roomsOverBookedScheds[SCHOOL_DAYS[j]][roomKeys[i]] = [];
+                    }
+                    roomsOverBookedScheds[SCHOOL_DAYS[j]][roomKeys[i]].push(ascendingSched[k]);    
+                }
+            }
+
+            // let lastSchedBlock = ascendingSched[ascendingSched.length - 1];
+            // if (parseInt(lastSchedBlock.timeBlock.end) > 2100) {
+            //     roomsOverBooked[SCHOOL_DAYS[j]].push(roomKeys[i]);
+            //     roomsOverBookedScheds[SCHOOL_DAYS[j]][roomKeys[i]] = [...roomsOverBookedScheds[SCHOOL_DAYS[j]][roomKeys[i]], ];
+            // } else {
+            //     roomsWithSlots[SCHOOL_DAYS[j]].push(roomKeys[i]);
+            //     roomsSchedsWithSlots[SCHOOL_DAYS[j]][roomKeys[i]] = ascendingSched;
+            // }
+        }
+    }
+
+    // console.log('overbooked')
+    // console.log(roomsOverBooked)
+    // console.log(roomsOverBookedScheds)
+
+    // for (let i = 0; i < SCHOOL_DAYS.length; i++){
+    //     let specRoomKeys = Object.keys(roomsOverBookedScheds[SCHOOL_DAYS[i]])
+    //     for (let j = 0; j < specRoomKeys.length; j++){
+
+    //         let specRoomKey = specRoomKeys[j]
+    //         let specSched = roomsOverBookedScheds[SCHOOL_DAYS[i]][specRoomKey]
+    //         for (let k = 0; k < specSched.length; k++){
+    //             console.log(specSched[k])
+    //         }
+    //     }
+    // }
+    
+    // console.log('with slots')
+    // console.log(roomsWithSlots)
+    // console.log(roomsWithSlotsScheds)
+
+    // hanapin ko sino di overbooked sa day na un
+    // tapos tranfer ung class don
+
+    // go thru the scheds without slots - get the hours na need
+    // go thru the scheds with slots
+    // check if pwede ba sa isa don tapos ilipat don
+
+    for (let i = 0; i < SCHOOL_DAYS.length; i++){
+        let specDayRoomsWithoutSlotsKeys = Object.keys(roomsOverBookedScheds[SCHOOL_DAYS[i]])
+
+        for (let j = 0; j < specDayRoomsWithoutSlotsKeys.length; i++){
+            let lateClasses = roomsOverBookedScheds[SCHOOL_DAYS[i]][specDayRoomsWithoutSlotsKeys[i]]
+
+            console.log('late classes')
+            console.log(specDayRoomsWithoutSlotsKeys[i])
+            console.log(lateClasses)
+
+            // if (!lateClasses){
+            //     continue;
+            // }
+
+            for (let k = 0; k < lateClasses.length; k++){
+                let specSched = lateClasses[k]
+                let hoursNeeded = parseInt(specSched.timeBlock.end) - parseInt(specSched.timeBlock.start)
+
+                for (let l = 0; l < roomsWithSlots[SCHOOL_DAYS[i]].length; l++){
+                    let specRoomKeyWithSlot = roomsWithSlots[SCHOOL_DAYS[i]][l]
+                    let daySchedWithSlot = roomsWithSlotsScheds[SCHOOL_DAYS[i]][specRoomKeyWithSlot];
+                    let lastSchedBlock = daySchedWithSlot[daySchedWithSlot.length - 1]
+    
+                    if (2100 - parseInt(lastSchedBlock.timeBlock.end) > hoursNeeded){
+                        console.log(sortedRoomSchedule[specSched.room.room_id][SCHOOL_DAYS[i]])
+                        
+                        // add to new day/room/whatever
+                        let schedBlockToPush = {
+                            ...specSched,
+                            room: {
+                                ...daySchedWithSlot[0].room // new room
+                            },
+                            timeBlock: {
+                                start: lastSchedBlock.timeBlock.end,
+                                end: (parseInt(lastSchedBlock.timeBlock.end) + hoursNeeded).toString()
+                            }
+                        }
+                        sortedRoomSchedule[lastSchedBlock.room.room_id][SCHOOL_DAYS[i]].push(schedBlockToPush)
+
+                        // remove from prev room
+                        loop4: 
+                        for (let m = 0; m < sortedRoomSchedule[specSched.room.room_id][SCHOOL_DAYS[i]].length; m++){
+                            let specDaySched = sortedRoomSchedule[specSched.room.room_id][SCHOOL_DAYS[i]];
+                            
+                            if (specDaySched[m].timeBlock.start === specSched.timeBlock.start && specDaySched[m].timeBlock.end === specSched.timeBlock.end){
+                                sortedRoomSchedule[specSched.room.room_id][SCHOOL_DAYS[i]].splice(m, 1)
+                                break loop4
+                            }
+                        }
+                                                
+                        console.log(sortedRoomSchedule[specSched.room.room_id][SCHOOL_DAYS[i]])
+                        console.log(sortedRoomSchedule[lastSchedBlock.room.room_id][SCHOOL_DAYS[i]])
+                        return;
+    
+                    }
+                }
+            }
+
+            // tanggalin na sa rooms overbooked
+        }
+    }
+
+    // for (let i = 0; i < SCHOOL_DAYS.length; i++){
+    //     let roomsOverBookedSpecDay = roomsOverBooked[SCHOOL_DAYS[i]]
+
+    //     for (let j = 0; j < roomsOverBookedSpecDay.length; j++){
+    //         let specRoomKey = roomsOverBookedSpecDay[j]
+    //         let daySched = sortedRoomSchedule[specRoomKey][SCHOOL_DAYS[i]]
+    //         let ascendingSched = daySched.sort(
+    //             (schedBlock1: any, schedBlock2: any) => {
+    //                 return (
+    //                     parseInt(schedBlock1.timeBlock.start, 10) -
+    //                     parseInt(schedBlock2.timeBlock.start, 10)
+    //                 );
+    //             }
+    //         );
+    //         let lastSchedBlock = ascendingSched[ascendingSched.length - 1]
+    //         let hoursNeeded = parseInt(lastSchedBlock.timeBlock.end) - parseInt(lastSchedBlock.timeBlock.start)
+            
+    //         for (let k = 0; k < roomsWithSlots[SCHOOL_DAYS[i]].length; k++){
+
+    //             let specRoomKeyWithSlot = roomsWithSlots[SCHOOL_DAYS[i]][k]
+    //             let daySchedWithSlot = roomsSchedsWithSlots[SCHOOL_DAYS[i]][specRoomKeyWithSlot];
+
+    //             console.log(roomsSchedsWithSlots[SCHOOL_DAYS[i]])
+    //             console.log(specRoomKeyWithSlot)
+
+    //             console.log(daySchedWithSlot)
+
+    //             if (2100 - parseInt(daySchedWithSlot.timeBlock.end) > hoursNeeded){
+    //                 // add to new day/room/whatever
+    //                 let schedBlockToPush = {
+    //                     ...lastSchedBlock,
+    //                     room: {
+    //                         ...daySchedWithSlot[0].room // new room
+    //                     },
+    //                     timeBlock: {
+
+    //                     }
+    //                 }
+
+    //                 // remove from prev room
+
+    //             }
+    //         }
+            
+
+    //     }
+    // }
+    
+    console.log('rooms overbooked');
+    console.log(roomsOverBooked);
+    console.log(roomsWithSlots);
+
+    // convert back to normal chromosome
+    let repairedChromosome = roomToClassSchedule({
+        roomSchedule: sortedRoomSchedule,
+        chromosome: val.chromosome
+    });
+
+    return repairedChromosome;
 };
 
-const roomToClassSchedule = ({roomSchedule, chromosome}: {roomSchedule: any, chromosome: any}) => {
+const roomToClassSchedule = ({
+    roomSchedule,
+    chromosome
+}: {
+    roomSchedule: any;
+    chromosome: any;
+}) => {
     let schedByClass: any = [];
 
     // loop thru the schedule
@@ -383,37 +620,62 @@ const roomToClassSchedule = ({roomSchedule, chromosome}: {roomSchedule: any, chr
     // check if may ganon tapos pag wala create
 
     let roomKeys = Object.keys(roomSchedule);
-    for (let i = 0; i < roomKeys.length; i++){
+    for (let i = 0; i < roomKeys.length; i++) {
         let specRoomSchedule = roomSchedule[roomKeys[i]];
 
-        for (let j = 0; j < SCHOOL_DAYS.length; j++){
-            let daySched = specRoomSchedule[SCHOOL_DAYS[j]]
+        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+            let daySched = specRoomSchedule[SCHOOL_DAYS[j]];
 
-            for (let k = 0; k < daySched.length; k++){
-                let schedBlock = daySched[k]
+            for (let k = 0; k < daySched.length; k++) {
+                let schedBlock = daySched[k];
                 let section = schedBlock.section;
 
-                let department = section.split('_')[0]
-                let year = section.split('_')[1][0]
-                let sectionLetter = section.slice(-1)
+                let department = section.split('_')[0];
+                let year = section.split('_')[1][0];
+                let sectionLetter = section.slice(-1);
 
-                let departmentAndYearKey = department + '_' + year  + (year == 1 ? 'st' : year == 2 ? 'nd' : year == 3 ? 'rd' : 'th')
-                let sectionKey = department + '_' + year + sectionLetter
+                let departmentAndYearKey =
+                    department +
+                    '_' +
+                    year +
+                    (year == 1
+                        ? 'st'
+                        : year == 2
+                          ? 'nd'
+                          : year == 3
+                            ? 'rd'
+                            : 'th');
+                let sectionKey = department + '_' + year + sectionLetter;
 
-                let departmentIndex = - 1;
-                if (!keyAlreadyInClassSchedule({classSchedule: schedByClass, type: 'department', key: departmentAndYearKey})){
+                let departmentIndex = -1;
+                if (
+                    !keyAlreadyInClassSchedule({
+                        classSchedule: schedByClass,
+                        type: 'department',
+                        key: departmentAndYearKey
+                    })
+                ) {
                     let departmentBlock = {
                         [departmentAndYearKey]: []
-                    }
-                    schedByClass.push(departmentBlock)
+                    };
+                    schedByClass.push(departmentBlock);
                     departmentIndex = schedByClass.length - 1;
-                }else{
+                } else {
                     // get index of that specific key
-                    departmentIndex = getIndexFromKey({arr: schedByClass, key: departmentAndYearKey})
+                    departmentIndex = getIndexFromKey({
+                        arr: schedByClass,
+                        key: departmentAndYearKey
+                    });
                 }
-                
+
                 let sectionIndex = -1;
-                if (!keyAlreadyInClassSchedule({classSchedule: schedByClass, type: 'section', key: sectionKey})){
+                if (
+                    !keyAlreadyInClassSchedule({
+                        classSchedule: schedByClass,
+                        type: 'section',
+                        key: sectionKey
+                    })
+                ) {
                     let sectionBlock = {
                         [sectionKey]: {
                             M: [],
@@ -423,60 +685,77 @@ const roomToClassSchedule = ({roomSchedule, chromosome}: {roomSchedule: any, chr
                             F: [],
                             S: []
                         }
-                    }
-                    schedByClass[departmentIndex][departmentAndYearKey].push(sectionBlock)
-                    sectionIndex = schedByClass[departmentIndex][departmentAndYearKey].length - 1
-                }else{
+                    };
+                    schedByClass[departmentIndex][departmentAndYearKey].push(
+                        sectionBlock
+                    );
+                    sectionIndex =
+                        schedByClass[departmentIndex][departmentAndYearKey]
+                            .length - 1;
+                } else {
                     // get index of that specific key
-                    sectionIndex = getIndexFromKey({arr: schedByClass[departmentIndex][departmentAndYearKey], key: sectionKey})
+                    sectionIndex = getIndexFromKey({
+                        arr: schedByClass[departmentIndex][
+                            departmentAndYearKey
+                        ],
+                        key: sectionKey
+                    });
                 }
-            
-                // ppush 
-                const {section: excludeSectionKey, ...schedBlockToPush} = schedBlock
-                schedByClass[departmentIndex][departmentAndYearKey][sectionIndex][sectionKey][SCHOOL_DAYS[j]].push(schedBlockToPush)
 
+                // ppush
+                const { section: excludeSectionKey, ...schedBlockToPush } =
+                    schedBlock;
+                schedByClass[departmentIndex][departmentAndYearKey][
+                    sectionIndex
+                ][sectionKey][SCHOOL_DAYS[j]].push(schedBlockToPush);
             }
         }
     }
-    
-    return schedByClass
+
+    return schedByClass;
 };
 
-const getIndexFromKey = ({arr, key}: {arr: any[], key: string}) => {
-    for (let i = 0; i < arr.length; i++){
-        if (Object.keys(arr[i])[0] === key){
+const getIndexFromKey = ({ arr, key }: { arr: any[]; key: string }) => {
+    for (let i = 0; i < arr.length; i++) {
+        if (Object.keys(arr[i])[0] === key) {
             return i;
         }
     }
 
     return -1;
-}
+};
 
-const keyAlreadyInClassSchedule = ({classSchedule, type, key}: {classSchedule: any, type: string, key: string}) => {
-
+const keyAlreadyInClassSchedule = ({
+    classSchedule,
+    type,
+    key
+}: {
+    classSchedule: any;
+    type: string;
+    key: string;
+}) => {
     let deptAndYearKeys = [];
     let sectionKeys = [];
 
-    for (let i = 0; i < classSchedule.length; i++){
-        deptAndYearKeys.push(Object.keys(classSchedule[i])[0])
+    for (let i = 0; i < classSchedule.length; i++) {
+        deptAndYearKeys.push(Object.keys(classSchedule[i])[0]);
     }
 
-    for (let i = 0; i < classSchedule.length; i++){
-        let deptAndYearKey = Object.keys(classSchedule[i])[0]
-        let deptAndYearSchedule = classSchedule[i][deptAndYearKey]
+    for (let i = 0; i < classSchedule.length; i++) {
+        let deptAndYearKey = Object.keys(classSchedule[i])[0];
+        let deptAndYearSchedule = classSchedule[i][deptAndYearKey];
 
-        for (let j = 0; j < deptAndYearSchedule.length; j++){
-            sectionKeys.push(Object.keys(deptAndYearSchedule[j])[0])
+        for (let j = 0; j < deptAndYearSchedule.length; j++) {
+            sectionKeys.push(Object.keys(deptAndYearSchedule[j])[0]);
         }
-
     }
 
-    if (type === 'section'){
-        return sectionKeys.includes(key)
+    if (type === 'section') {
+        return sectionKeys.includes(key);
     }
 
-    return deptAndYearKeys.includes(key)
-}
+    return deptAndYearKeys.includes(key);
+};
 
 const resolveConflict = ({
     schedBlock1,
