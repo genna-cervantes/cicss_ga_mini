@@ -439,6 +439,22 @@ const repairTASAssignment = async (val: {
                         console.log('new prof');
                         console.log(newProf);
 
+                        if (newProfKey != null) {
+                            console.log('before');
+                            console.log(
+                                copyOfSortedTasSchedule[newProf.tas_id][
+                                    SCHOOL_DAYS[j]
+                                ]
+                            );
+
+                            console.log(
+                                copyOfSortedTasSchedule[schedBlock.prof.tas_id][
+                                    SCHOOL_DAYS[j]
+                                ]
+                            );
+                        }
+
+
                         // add to new prof sched
                         copyOfSortedTasSchedule[newProf.tas_id][
                             SCHOOL_DAYS[j]
@@ -450,7 +466,27 @@ const repairTASAssignment = async (val: {
                         // remove from current tas sched
                         copyOfSortedTasSchedule[schedBlock.prof.tas_id][
                             SCHOOL_DAYS[j]
-                        ].slice(k, 1);
+                        ].splice(k, 1);
+
+                        if (newProfKey != null) {
+                            console.log('after');
+                            console.log(
+                                copyOfSortedTasSchedule[newProf.tas_id][
+                                    SCHOOL_DAYS[j]
+                                ]
+                            );
+
+                            console.log(
+                                copyOfSortedTasSchedule[schedBlock.prof.tas_id][
+                                    SCHOOL_DAYS[j]
+                                ]
+                            );
+
+                            console.log(copyOfSortedTasSchedule[schedBlock.prof.tas_id][
+                                SCHOOL_DAYS[j]
+                            ][k])
+
+                        }
 
                         continue loop3;
                     }
@@ -480,38 +516,34 @@ const repairTASAssignment = async (val: {
     });
 
     // make sure schedule is unique
+    for (let i = 0; i < repairedChromosome.length; i++) {
+        let perYear = repairedChromosome[i];
+        let yearAndDepartmentKey = Object.keys(perYear)[0];
+        let yearAndDepartmentSchedule = perYear[yearAndDepartmentKey];
 
-    for (
-        let i = 0;
-        i < repairedChromosome[0][Object.keys(repairedChromosome[0])[0]].length;
-        i++
-    ) {
-        let key = Object.keys(
-            repairedChromosome[0][Object.keys(repairedChromosome[0])[0]][i]
-        )[0];
+        for (let j = 0; j < yearAndDepartmentSchedule.length; j++) {
+            let specSection = yearAndDepartmentSchedule[j];
+            let specSectionKey = Object.keys(specSection)[0];
+            let specSectionSchedule = specSection[specSectionKey];
 
-        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
-            let arr =
-                repairedChromosome[0][Object.keys(repairedChromosome[0])[0]][
-                    i
-                ][0][i][key][SCHOOL_DAYS[j]];
-            const seen = new Set();
-            for (let i = arr.length - 1; i >= 0; i--) {
-                const str = JSON.stringify(arr[i]); // Use obj.id if available
-                if (seen.has(str)) {
-                    arr.splice(i, 1);
-                } else {
-                    seen.add(str);
+            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                let dailySched = specSectionSchedule[SCHOOL_DAYS[k]];
+                let arr = dailySched;
+                const seen = new Set();
+                for (let i = arr.length - 1; i >= 0; i--) {
+                    const str = JSON.stringify(arr[i]); // Use obj.id if available
+                    if (seen.has(str)) {
+                        arr.splice(i, 1);
+                    } else {
+                        seen.add(str);
+                    }
                 }
+                dailySched = arr;
             }
-
-            repairedChromosome[0][Object.keys(repairedChromosome[0])[0]][
-                i
-            ][0][i][key][SCHOOL_DAYS[j]] = arr;
         }
     }
 
-    return repairedChromosome;
+    // return repairedChromosome;
 
     return { repairedChromosome, previousChromosome };
 };
