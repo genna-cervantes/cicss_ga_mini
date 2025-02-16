@@ -151,7 +151,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
 
             // nagugulo ung room assignment
             // nadadagdagan ung tas assignment ???
-            let { repairedChromosome, repairedChromosome2 } =
+            let { repairedChromosome, previousChromosome } =
                 await repairTASAssignment(val);
 
             // // return {
@@ -166,7 +166,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
 
             let { score: newScore2, violationTracker: newViolationTracker2 } =
                 await evaluateFast({
-                    chromosome: repairedChromosome2,
+                    chromosome: previousChromosome,
                     semester
                 });
 
@@ -174,7 +174,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
                 chromosome1: repairedChromosome,
                 score1: newScore1,
                 violation1: newViolationTracker1,
-                chromosome2: repairedChromosome2,
+                chromosome2: previousChromosome,
                 score2: newScore2,
                 violation2: newViolationTracker2
             };
@@ -190,7 +190,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
                     val.chromosome = repairRoomAssignment(val); // new populationo every repair
 
                     // val.chromosome = await repairTASAssignment(val);
-                    let { repairedChromosome, repairedChromosome2 } =
+                    let { repairedChromosome, previousChromosome } =
                         await repairTASAssignment(val);
 
                     // // return {
@@ -209,7 +209,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
                         score: newScore2,
                         violationTracker: newViolationTracker2
                     } = await evaluateFast({
-                        chromosome: repairedChromosome2,
+                        chromosome: previousChromosome,
                         semester
                     });
 
@@ -217,7 +217,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
                         chromosome1: repairedChromosome,
                         score1: newScore1,
                         violation1: newViolationTracker1,
-                        chromosome2: repairedChromosome2,
+                        chromosome2: previousChromosome,
                         score2: newScore2,
                         violation2: newViolationTracker2
                     };
@@ -339,6 +339,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     };
 };
 
+// naddoble ung assignment ng courses
 const repairTASAssignment = async (val: {
     id: number;
     chromosome: any;
@@ -468,17 +469,51 @@ const repairTASAssignment = async (val: {
 
     // balik sa normal sched from prof sched
 
+    let previousChromosome = TASToClassSchedule({
+        TASSchedule: sortedTASSchedule,
+        chromosome: val.chromosome
+    });
+
     let repairedChromosome = TASToClassSchedule({
         TASSchedule: copyOfSortedTasSchedule,
         chromosome: val.chromosome
     });
 
-    let repairedChromosome2 = TASToClassSchedule({
-        TASSchedule: sortedTASSchedule,
-        chromosome: val.chromosome
-    });
+    // make sure schedule is unique
 
-    return { repairedChromosome, repairedChromosome2 };
+    for (
+        let i = 0;
+        i < repairedChromosome[0][Object.keys(repairedChromosome[0])[0]].length;
+        i++
+    ) {
+        let key = Object.keys(
+            repairedChromosome[0][Object.keys(repairedChromosome[0])[0]][i]
+        )[0];
+
+        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+            let arr =
+                repairedChromosome[0][Object.keys(repairedChromosome[0])[0]][
+                    i
+                ][0][i][key][SCHOOL_DAYS[j]];
+            const seen = new Set();
+            for (let i = arr.length - 1; i >= 0; i--) {
+                const str = JSON.stringify(arr[i]); // Use obj.id if available
+                if (seen.has(str)) {
+                    arr.splice(i, 1);
+                } else {
+                    seen.add(str);
+                }
+            }
+
+            repairedChromosome[0][Object.keys(repairedChromosome[0])[0]][
+                i
+            ][0][i][key][SCHOOL_DAYS[j]] = arr;
+        }
+    }
+
+    return repairedChromosome;
+
+    return { repairedChromosome, previousChromosome };
 };
 
 const TASToClassSchedule = ({
