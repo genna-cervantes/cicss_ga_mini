@@ -6,6 +6,7 @@ import {
     SCHOOL_DAYS,
     SOFT_CONSTRAINT_WEIGHT
 } from './constants';
+import { randomUUID } from 'crypto';
 
 const DB_HOST = 'localhost';
 const DB_PORT = 5432;
@@ -134,6 +135,11 @@ const evaluateRoomAssignment = (chromosome: any) => {
     let roomKeys = Object.keys(schedByRoom);
 
     for (let i = 0; i < roomKeys.length; i++) {
+
+        if (roomKeys[i] === 'PE ROOM'){
+            continue;
+        }
+
         let specRoomSched = schedByRoom[roomKeys[i]];
 
         for (let j = 0; j < SCHOOL_DAYS.length; j++) {
@@ -175,6 +181,7 @@ const evaluateRoomAssignment = (chromosome: any) => {
     return {violations, violationCount};
 };
 
+// may conflict sa course na ndi nmn tinuturo aaaaaa
 const evaluateRoomTypeAssignment = (chromosome: any) => {
     let violationCount = 0;
     let violations = [];
@@ -255,6 +262,7 @@ const evaluateRoomTypeAssignment = (chromosome: any) => {
 };
 
 const evaluateTASAssignment = (chromosome: any) => {
+    // nag ddoble
     let violationCount = 0;
     let violations = [];
 
@@ -278,12 +286,25 @@ const evaluateTASAssignment = (chromosome: any) => {
                 }
             );
 
+            loop3:
             for (let k = 0; k < ascendingSched.length - 1; k++) {
                 // check if may conflicting
                 let schedBlock1 = ascendingSched[k];
                 let schedBlock2 = ascendingSched[k + 1];
 
-                if (schedBlock2.timeBlock.start <= schedBlock1.timeBlock.end) {
+                if (schedBlock2.timeBlock.start < schedBlock1.timeBlock.end) {
+                    
+                    // if may ganito na na napush before
+                    for (let m = 0; m < violations.length; m++){
+                        if (violations[m].TAS === schedBlock1.prof 
+                            && violations[m].day === SCHOOL_DAYS[j] 
+                            && areArraysEqual(violations[m].courses, [schedBlock1.course.subject_code,
+                                schedBlock2.course.subject_code])
+                            && areArraysEqual(violations[m].sections, [schedBlock1.section, schedBlock2.section])) {
+                                continue loop3;
+                            }
+                    }
+
                     violationCount++;
                     violations.push({
                         type: 'conflicting TAS assignment',
@@ -305,6 +326,12 @@ const evaluateTASAssignment = (chromosome: any) => {
 
     return {violations, violationCount};
 };
+
+const areArraysEqual = (arr1: any[], arr2: any[]): boolean => {
+    if (arr1.length !== arr2.length) return false;
+
+    return JSON.stringify([...arr1].sort()) === JSON.stringify([...arr2].sort());
+}
 
 const evaluateTASSpecializationAssignment = async (chromosome: any) => {
     let violationCount = 0;
@@ -1040,9 +1067,9 @@ export const groupSchedByRoom = (chromosome: any) => {
                     (accumulator: any, schedBlock: any) => {
                         let room = schedBlock.room.room_id;
 
-                        if (room === 'PE ROOM') {
-                            return accumulator;
-                        }
+                        // if (room === 'PE ROOM') {
+                        //     return accumulator;
+                        // }
 
                         if (!accumulator[room]) {
                             accumulator[room] = {
@@ -1161,6 +1188,7 @@ export const evaluateFast = async ({
     // allowedDaysPerYearAndDepartment
     let allowedDaysPerYearAndDepartment: any = await getAllowedDaysPerYearAndDepartment()
 
+    // console.log(chromosome)
     for (let i = 0; i < chromosome.length; i++) {
         let perYear = chromosome[i];
 

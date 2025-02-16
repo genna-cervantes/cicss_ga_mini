@@ -2,6 +2,7 @@ import { Client } from 'pg';
 import { SCHOOL_DAYS } from './constants';
 import { evaluateFast, groupSchedByRoom, groupSchedByTAS } from './evaluate';
 import { generateChromosomeV2, getEndTime } from './generateV2';
+import { chromosome } from './data';
 
 const DB_HOST = 'localhost';
 const DB_PORT = 5432;
@@ -76,7 +77,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     // find top 50
     // population = findTop50(population);
 
-    let maxGenerations = 10;
+    let maxGenerations = 2;
     let generations = 0;
     loop1: while (generations < maxGenerations) {
         console.log(population[0].id);
@@ -148,16 +149,99 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
                     break;
                 case 'room_assignment':
                     val.chromosome = repairRoomAssignment(val); // new populationo every repair
+
+                    let {
+                        score: score1,
+                        violationTracker: violationTracker1
+                    } = await evaluateFast({
+                        chromosome: val.chromosome,
+                        semester
+                    });
+
+                    return{
+                        chromosome: val.chromosome,
+                        score: score1,
+                        violations: violationTracker1
+                    }
+
+                    // val.chromosome = await repairTASAssignment(val);
+                    let { repairedChromosome, repairedChromosome2 } =
+                        await repairTASAssignment(val);
+
+                    // // return {
+                    // //     repairedChromosome,
+                    // //     repairedChromosome2
+                    // // };
+                    let {
+                        score: newScore1,
+                        violationTracker: newViolationTracker1
+                    } = await evaluateFast({
+                        chromosome: repairedChromosome,
+                        semester
+                    });
+
+                    let {
+                        score: newScore2,
+                        violationTracker: newViolationTracker2
+                    } = await evaluateFast({
+                        chromosome: repairedChromosome2,
+                        semester
+                    });
+                    
+                    return {
+                        chromosome1: repairedChromosome,
+                        score1: newScore1,
+                        violation1: newViolationTracker1,
+                        chromosome2: repairedChromosome2,
+                        score2: newScore2,
+                        violation2: newViolationTracker2
+                    };
+
                     break;
                 case 'room_type_assignment':
                     break;
                 case 'tas_assignment':
                     // imbes na imove ung time
-                    // hanap ng ibang prof n pwede don sa subj na un
-                    val.chromosome = await repairTASAssignment(val);
 
-                    // if wala saka lng change ng time
-                    break loop1;
+                    // hanap ng ibang prof n pwede don sa subj na un
+                    console.log('repairing tas');
+                    // val.chromosome = await repairTASAssignment(val);
+                    // let { repairedChromosome, repairedChromosome2 } =
+                    //     await repairTASAssignment(val);
+
+                    // // return {
+                    // //     repairedChromosome,
+                    // //     repairedChromosome2
+                    // // };
+                    // let {
+                    //     score: newScore1,
+                    //     violationTracker: newViolationTracker1
+                    // } = await evaluateFast({
+                    //     chromosome: repairedChromosome,
+                    //     semester
+                    // });
+
+                    // let {
+                    //     score: newScore2,
+                    //     violationTracker: newViolationTracker2
+                    // } = await evaluateFast({
+                    //     chromosome: repairedChromosome2,
+                    //     semester
+                    // });
+                    
+                    // return {
+                    //     chromosome1: repairedChromosome,
+                    //     score1: newScore1,
+                    //     violation1: newViolationTracker1,
+                    //     chromosome2: repairedChromosome2,
+                    //     score2: newScore2,
+                    //     violation2: newViolationTracker2
+                    // };
+
+                // console.log('done repairing tas')
+
+                // // if wala saka lng change ng time
+                // break loop1;
                 case 'tas_type_assignment':
                     break;
                 case 'tas_load':
@@ -210,8 +294,6 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     //     violation: violationTracker3
     // };
 
-    let newtop50 = findTop10(population);
-
     // population = top50;
 
     // return {
@@ -219,6 +301,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
     //     score: top50[0].score,
     //     violations: top50[0].violations
     // };
+    let newtop50 = findTop10(population);
 
     // evaluate again
     let { score: newScore, violationTracker: newViolationTracker } =
@@ -249,6 +332,7 @@ const repairTASAssignment = async (val: {
     });
     let sortedTASViolations: any = {};
     let sortedTASSchedule = groupSchedByTAS(val.chromosome);
+    let copyOfSortedTasSchedule = structuredClone(sortedTASSchedule);
 
     violations.forEach((v: any) => {
         if (sortedTASViolations[v.TAS.tas_id] == null) {
@@ -272,7 +356,7 @@ const repairTASAssignment = async (val: {
         for (let j = 0; j < SCHOOL_DAYS.length; j++) {
             let daySched = specTASSched[SCHOOL_DAYS[j]];
 
-            for (let k = 0; k < daySched.length; k++) {
+            loop3: for (let k = 0; k < daySched.length; k++) {
                 let schedBlock = daySched[k];
 
                 if (sortedTASViolations[sortedTASKeys[i]] == undefined) {
@@ -280,7 +364,12 @@ const repairTASAssignment = async (val: {
                 }
 
                 for (
-                    let m = 0; m < sortedTASViolations[sortedTASKeys[i]][SCHOOL_DAYS[j]].length; m++) {
+                    let m = 0;
+                    m <
+                    sortedTASViolations[sortedTASKeys[i]][SCHOOL_DAYS[j]]
+                        .length;
+                    m++
+                ) {
                     let violationBlock =
                         sortedTASViolations[sortedTASKeys[i]][SCHOOL_DAYS[j]][
                             m
@@ -295,6 +384,8 @@ const repairTASAssignment = async (val: {
                         violationBlock.sections.includes(schedBlock.section)
                     ) {
                         console.log('finding new prof');
+                        console.log('prev prof');
+                        console.log(schedBlock.prof);
                         let course = schedBlock.course.subject_code;
                         let timeBlock = schedBlock.timeBlock;
 
@@ -302,47 +393,182 @@ const repairTASAssignment = async (val: {
                         let newProfKey = await getAvailableProf({
                             course,
                             timeBlock,
-                            sortedTASSchedule,
+                            sortedTASSchedule: copyOfSortedTasSchedule,
                             schoolDay: SCHOOL_DAYS[j],
                             tasId: sortedTASKeys[i]
                         });
 
-                        if (newProfKey != null){
-                            newProf = await getTASDetailsFromId(newProfKey)
-                        }else{
-                            newProf = schedBlock.prof
+                        // console.log('got new prof')
+
+                        if (newProfKey != null) {
+                            newProf = await getTASDetailsFromId(newProfKey);
+                        } else {
+                            newProf = schedBlock.prof;
                         }
 
+                        console.log('new prof');
+                        console.log(newProf);
+
                         // add to new prof sched
-                        sortedTASSchedule[newProf.tas_id][SCHOOL_DAYS[j]].push({
+                        copyOfSortedTasSchedule[newProf.tas_id][
+                            SCHOOL_DAYS[j]
+                        ].push({
                             ...schedBlock,
                             prof: newProf
-                        })
+                        });
 
                         // remove from current tas sched
-                        daySched.slice(k, 1)
+                        copyOfSortedTasSchedule[schedBlock.prof.tas_id][
+                            SCHOOL_DAYS[j]
+                        ].slice(k, 1);
 
+                        continue loop3;
                     }
                 }
             }
         }
     }
 
+    // sortedTASSchedule = copyOfSortedTasSchedule;
+
     // loop thru chromosome
     // check sa violation array kung same ng start time course and prof
     // dito na hanap ng ibang prof for that coures na available sa time slot na un
 
     // helper function check if available ung prof na un sa time na un
+
+    // balik sa normal sched from prof sched
+
+    let repairedChromosome = TASToClassSchedule({
+        TASSchedule: copyOfSortedTasSchedule,
+        chromosome: val.chromosome
+    });
+
+    let repairedChromosome2 = TASToClassSchedule({
+        TASSchedule: sortedTASSchedule,
+        chromosome: val.chromosome
+    });
+
+    return { repairedChromosome, repairedChromosome2 };
+};
+
+const TASToClassSchedule = ({
+    TASSchedule,
+    chromosome
+}: {
+    TASSchedule: any;
+    chromosome: any;
+}) => {
+    let schedByClass: any = [];
+
+    // loop thru the schedule
+    // extract from the schedblock ung section
+    // extract from the section ung keys
+    // check if may ganon tapos pag wala create
+
+    let TASKeys = Object.keys(TASSchedule);
+    for (let i = 0; i < TASKeys.length; i++) {
+        let specTASSchedule = TASSchedule[TASKeys[i]];
+
+        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+            let daySched = specTASSchedule[SCHOOL_DAYS[j]];
+
+            for (let k = 0; k < daySched.length; k++) {
+                let schedBlock = daySched[k];
+                let section = schedBlock.section;
+
+                let department = section.split('_')[0];
+                let year = section.split('_')[1][0];
+                let sectionLetter = section.slice(-1);
+
+                let departmentAndYearKey =
+                    department +
+                    '_' +
+                    year +
+                    (year == 1
+                        ? 'st'
+                        : year == 2
+                          ? 'nd'
+                          : year == 3
+                            ? 'rd'
+                            : 'th');
+                let sectionKey = department + '_' + year + sectionLetter;
+
+                let departmentIndex = -1;
+                if (
+                    !keyAlreadyInClassSchedule({
+                        classSchedule: schedByClass,
+                        type: 'department',
+                        key: departmentAndYearKey
+                    })
+                ) {
+                    let departmentBlock = {
+                        [departmentAndYearKey]: []
+                    };
+                    schedByClass.push(departmentBlock);
+                    departmentIndex = schedByClass.length - 1;
+                } else {
+                    // get index of that specific key
+                    departmentIndex = getIndexFromKey({
+                        arr: schedByClass,
+                        key: departmentAndYearKey
+                    });
+                }
+
+                let sectionIndex = -1;
+                if (
+                    !keyAlreadyInClassSchedule({
+                        classSchedule: schedByClass,
+                        type: 'section',
+                        key: sectionKey
+                    })
+                ) {
+                    let sectionBlock = {
+                        [sectionKey]: {
+                            M: [],
+                            T: [],
+                            W: [],
+                            TH: [],
+                            F: [],
+                            S: []
+                        }
+                    };
+                    schedByClass[departmentIndex][departmentAndYearKey].push(
+                        sectionBlock
+                    );
+                    sectionIndex =
+                        schedByClass[departmentIndex][departmentAndYearKey]
+                            .length - 1;
+                } else {
+                    // get index of that specific key
+                    sectionIndex = getIndexFromKey({
+                        arr: schedByClass[departmentIndex][
+                            departmentAndYearKey
+                        ],
+                        key: sectionKey
+                    });
+                }
+
+                // ppush
+                const { section: excludeSectionKey, ...schedBlockToPush } =
+                    schedBlock;
+                schedByClass[departmentIndex][departmentAndYearKey][
+                    sectionIndex
+                ][sectionKey][SCHOOL_DAYS[j]].push(schedBlockToPush);
+            }
+        }
+    }
+
+    return schedByClass;
 };
 
 const getTASDetailsFromId = async (tasId: string) => {
-
-    const query = 'SELECT * FROM teaching_academic_staff WHERE tas_id = $1'
-    const res = await client.query(query, [tasId])
-    const prof = res.rows[0]
+    const query = 'SELECT * FROM teaching_academic_staff WHERE tas_id = $1';
+    const res = await client.query(query, [tasId]);
+    const prof = res.rows[0];
 
     return prof;
-}
+};
 
 const getAvailableProf = async ({
     course,
@@ -367,7 +593,14 @@ const getAvailableProf = async ({
 
     for (let i = 0; i < res.rows.length; i++) {
         tasSchedules[res.rows[i].tas_id] = {
-            schedule: sortedTASSchedule[res.rows[i].tas_id],
+            schedule: sortedTASSchedule[res.rows[i].tas_id] ?? {
+                M: [],
+                T: [],
+                W: [],
+                TH: [],
+                F: [],
+                S: []
+            },
             restrictions: res.rows[i].restrictions
         };
     }
@@ -379,15 +612,17 @@ const getAvailableProf = async ({
         tasKeys.splice(index, 1);
     }
 
-    console.log('available profs');
-    console.log(tasKeys);
+    // console.log('available profs');
+    // console.log(tasKeys);
 
     for (let i = 0; i < tasKeys.length; i++) {
-        console.log('trying');
-        console.log(tasKeys[i]);
+        // console.log('trying');
+        // console.log(tasKeys[i]);
+        // console.log(tasSchedules[tasKeys[i]]);
 
-        console.log(tasSchedules[tasKeys[i]]);
         let tasSched = tasSchedules[tasKeys[i]];
+        // console.log(sortedTASSchedule)
+        // console.log(tasKeys[i])
         let daySched = tasSched.schedule[schoolDay];
         let restrictionDaySched = tasSched.restrictions[schoolDay];
 
@@ -487,7 +722,7 @@ const getAvailableProf = async ({
                     }
                 }
 
-                return null
+                return null;
             }
 
             // in betweeen
@@ -704,10 +939,17 @@ const repairRoomAssignment = (val: {
 
     loop1: for (let i = 0; i < roomKeys.length; i++) {
         let roomKey = roomKeys[i];
+
+        if (roomKey === 'PE ROOM'){
+            continue;
+        }
+
         for (let j = 0; j < SCHOOL_DAYS.length; j++) {
             if (sortedRoomViolations[roomKey] == undefined) {
                 continue;
             }
+
+            // skip 
 
             if (
                 (sortedRoomViolations[roomKey][SCHOOL_DAYS[j]]?.length ?? 0) < 1
@@ -1011,6 +1253,10 @@ const getOverBookedAndWithSlotsRooms = ({
     };
 
     for (let i = 0; i < roomKeys.length; i++) {
+        if (roomKeys[i] === 'PE ROOM'){
+            continue;
+        }
+
         for (let j = 0; j < SCHOOL_DAYS.length; j++) {
             let daySched = sortedRoomSchedule[roomKeys[i]][SCHOOL_DAYS[j]];
 
