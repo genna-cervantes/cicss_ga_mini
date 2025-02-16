@@ -143,26 +143,51 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
         for (let i = 0; i < population.length; i++) {
             let val = population[i];
 
+            // here if gusto mag test
+
+            val.chromosome = repairRoomAssignment(val); // new populationo every repair
+
+            // val.chromosome = await repairTASAssignment(val);
+
+            // nagugulo ung room assignment
+            // nadadagdagan ung tas assignment ???
+            let { repairedChromosome, repairedChromosome2 } =
+                await repairTASAssignment(val);
+
+            // // return {
+            // //     repairedChromosome,
+            // //     repairedChromosome2
+            // // };
+            let { score: newScore1, violationTracker: newViolationTracker1 } =
+                await evaluateFast({
+                    chromosome: repairedChromosome,
+                    semester
+                });
+
+            let { score: newScore2, violationTracker: newViolationTracker2 } =
+                await evaluateFast({
+                    chromosome: repairedChromosome2,
+                    semester
+                });
+
+            return {
+                chromosome1: repairedChromosome,
+                score1: newScore1,
+                violation1: newViolationTracker1,
+                chromosome2: repairedChromosome2,
+                score2: newScore2,
+                violation2: newViolationTracker2
+            };
+
+            // end test
+
             // repair functions before finding top 50 again
             switch (mostProminentProblem) {
                 case 'course_assignment':
                     break;
                 case 'room_assignment':
+                    console.log('repairing room');
                     val.chromosome = repairRoomAssignment(val); // new populationo every repair
-
-                    let {
-                        score: score1,
-                        violationTracker: violationTracker1
-                    } = await evaluateFast({
-                        chromosome: val.chromosome,
-                        semester
-                    });
-
-                    return{
-                        chromosome: val.chromosome,
-                        score: score1,
-                        violations: violationTracker1
-                    }
 
                     // val.chromosome = await repairTASAssignment(val);
                     let { repairedChromosome, repairedChromosome2 } =
@@ -187,7 +212,7 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
                         chromosome: repairedChromosome2,
                         semester
                     });
-                    
+
                     return {
                         chromosome1: repairedChromosome,
                         score1: newScore1,
@@ -205,38 +230,38 @@ export const runGAV2 = async ({ semester }: { semester: 2 }) => {
 
                     // hanap ng ibang prof n pwede don sa subj na un
                     console.log('repairing tas');
-                    // val.chromosome = await repairTASAssignment(val);
-                    // let { repairedChromosome, repairedChromosome2 } =
-                    //     await repairTASAssignment(val);
+                // val.chromosome = await repairTASAssignment(val);
+                // let { repairedChromosome, repairedChromosome2 } =
+                //     await repairTASAssignment(val);
 
-                    // // return {
-                    // //     repairedChromosome,
-                    // //     repairedChromosome2
-                    // // };
-                    // let {
-                    //     score: newScore1,
-                    //     violationTracker: newViolationTracker1
-                    // } = await evaluateFast({
-                    //     chromosome: repairedChromosome,
-                    //     semester
-                    // });
+                // // return {
+                // //     repairedChromosome,
+                // //     repairedChromosome2
+                // // };
+                // let {
+                //     score: newScore1,
+                //     violationTracker: newViolationTracker1
+                // } = await evaluateFast({
+                //     chromosome: repairedChromosome,
+                //     semester
+                // });
 
-                    // let {
-                    //     score: newScore2,
-                    //     violationTracker: newViolationTracker2
-                    // } = await evaluateFast({
-                    //     chromosome: repairedChromosome2,
-                    //     semester
-                    // });
-                    
-                    // return {
-                    //     chromosome1: repairedChromosome,
-                    //     score1: newScore1,
-                    //     violation1: newViolationTracker1,
-                    //     chromosome2: repairedChromosome2,
-                    //     score2: newScore2,
-                    //     violation2: newViolationTracker2
-                    // };
+                // let {
+                //     score: newScore2,
+                //     violationTracker: newViolationTracker2
+                // } = await evaluateFast({
+                //     chromosome: repairedChromosome2,
+                //     semester
+                // });
+
+                // return {
+                //     chromosome1: repairedChromosome,
+                //     score1: newScore1,
+                //     violation1: newViolationTracker1,
+                //     chromosome2: repairedChromosome2,
+                //     score2: newScore2,
+                //     violation2: newViolationTracker2
+                // };
 
                 // console.log('done repairing tas')
 
@@ -351,6 +376,10 @@ const repairTASAssignment = async (val: {
     let sortedTASKeys: any = Object.keys(sortedTASSchedule);
 
     for (let i = 0; i < sortedTASKeys.length; i++) {
+        if (sortedTASKeys[i] === 'GENDED PROF') {
+            continue;
+        }
+
         let specTASSched = sortedTASSchedule[sortedTASKeys[i]];
 
         for (let j = 0; j < SCHOOL_DAYS.length; j++) {
@@ -940,7 +969,7 @@ const repairRoomAssignment = (val: {
     loop1: for (let i = 0; i < roomKeys.length; i++) {
         let roomKey = roomKeys[i];
 
-        if (roomKey === 'PE ROOM'){
+        if (roomKey === 'PE ROOM') {
             continue;
         }
 
@@ -949,7 +978,7 @@ const repairRoomAssignment = (val: {
                 continue;
             }
 
-            // skip 
+            // skip
 
             if (
                 (sortedRoomViolations[roomKey][SCHOOL_DAYS[j]]?.length ?? 0) < 1
@@ -1253,7 +1282,7 @@ const getOverBookedAndWithSlotsRooms = ({
     };
 
     for (let i = 0; i < roomKeys.length; i++) {
-        if (roomKeys[i] === 'PE ROOM'){
+        if (roomKeys[i] === 'PE ROOM') {
             continue;
         }
 

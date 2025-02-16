@@ -341,6 +341,11 @@ const evaluateTASSpecializationAssignment = async (chromosome: any) => {
     let profKeys = Object.keys(schedByProf);
 
     for (let i = 0; i < profKeys.length; i++) {
+
+        if (profKeys[i] === 'GENDED PROF'){
+            continue;
+        }
+
         const query =
             'SELECT courses FROM teaching_academic_staff WHERE tas_id = $1';
         const res = await client.query(query, [profKeys[i]]);
@@ -382,6 +387,11 @@ const evaluateTASUnitsAssignment = async (chromosome: any) => {
     let profKeys = Object.keys(schedByProf);
 
     for (let i = 0; i < profKeys.length; i++) {
+
+        if (profKeys[i] === 'GENDED PROF'){
+            continue;
+        }
+
         const query =
             'SELECT units FROM teaching_academic_staff WHERE tas_id = $1';
         const res = await client.query(query, [profKeys[i]]);
@@ -1008,9 +1018,9 @@ export const groupSchedByTAS = (chromosome: any) => {
                         
                         let TAS = schedBlock.prof.tas_id;
 
-                        if (TAS === 'GENDED PROF') {
-                            return accumulator;
-                        }
+                        // if (TAS === 'GENDED PROF') {
+                        //     return accumulator;
+                        // }
 
                         if (!accumulator[TAS]) {
                             accumulator[TAS] = {
