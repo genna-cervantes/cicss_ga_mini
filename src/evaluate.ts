@@ -268,10 +268,14 @@ const evaluateTASAssignment = (chromosome: any) => {
 
     let schedByTAS = groupSchedByTAS(chromosome);
 
-    let roomKeys = Object.keys(schedByTAS);
+    let TASKeys = Object.keys(schedByTAS);
 
-    for (let i = 0; i < roomKeys.length; i++) {
-        let specTASSched = schedByTAS[roomKeys[i]];
+    for (let i = 0; i < TASKeys.length; i++) {
+        if (TASKeys[i] === 'GENDED PROF'){
+            continue;
+        }
+
+        let specTASSched = schedByTAS[TASKeys[i]];
 
         for (let j = 0; j < SCHOOL_DAYS.length; j++) {
             let specTASSchedPerDay = specTASSched[SCHOOL_DAYS[j]];
