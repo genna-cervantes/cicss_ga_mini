@@ -1566,6 +1566,9 @@ const resolveConflict = ({
     ) {
         // console.log('RESOLVING CONFLICT');
 
+        // check muna if mag cconflict ba sa schedule nung class na magagalaw
+        // check ung sched block 2 section
+        // draft ung possible na new time for it which is itong nasa baba
         schedBlock2.timeBlock.start = schedBlock1.timeBlock.end;
 
         schedBlock2.timeBlock.end = getEndTime({
@@ -1573,6 +1576,15 @@ const resolveConflict = ({
             courseType: schedBlock2.course.type,
             missingUnitsPerClass: schedBlock2.course.units
         }).toString();
+
+        // check if mag vviolate ba yan sa current sched nila
+        // loop thru the current sched of that section 
+        // don sa day lng na un and remove the schedblock 2
+        // add ung new schedblock2
+        // check if may violation
+        // if meron adjust ung rest ng classes nila tapos set don sa og sched
+        // which is currently ung sorted by room
+        // so check nlng ung mga room kung saan tapos adjust accordingly
     }
 };
 
