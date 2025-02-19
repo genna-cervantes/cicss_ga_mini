@@ -5,7 +5,6 @@
 import { spec } from 'node:test/reporters';
 import { Client } from 'pg';
 import { SCHOOL_DAYS } from './constants';
-import { getEndTime } from './generateV2';
 
 // assign rooms while checking conflict
 //   - add sa room sched tapos don mag check ng conflict
@@ -172,7 +171,27 @@ const generateV3 = async ({
 
                         consecutiveHours = 0;
                         let randomBreakTime = Math.floor(Math.random() * 210) + 30 // in minutes minimum 30mins max 4 hrs
-                        let militaryTime = convertMinutesToMilitaryTime(randomBreakTime)
+                        let breakTime;
+                        if (randomBreakTime >= 30 && randomBreakTime <= 59){
+                            breakTime = 30
+                        }else if (randomBreakTime >= 60 && randomBreakTime <= 89){
+                            breakTime = 60
+                        }else if (randomBreakTime >= 90 && randomBreakTime <=119){
+                            breakTime = 90
+                        }else if (randomBreakTime >= 120 && randomBreakTime <=149){
+                            breakTime = 120
+                        }else if (randomBreakTime >= 150 && randomBreakTime <=179){
+                            breakTime = 150
+                        }else if (randomBreakTime >= 180 && randomBreakTime <= 209){
+                            breakTime = 180
+                        }else if (randomBreakTime >= 210 && randomBreakTime <= 239){
+                            breakTime = 210
+                        }else{
+                            breakTime = 240
+                        }
+                        
+                        console.log('random break time in minutes: ', breakTime)
+                        let militaryTime = convertMinutesToMilitaryTime(breakTime)
                         currentTime += militaryTime
                         
                         console.log('break time in military time: ', militaryTime)
@@ -188,12 +207,20 @@ const generateV3 = async ({
                     console.log('getting random course: ', randomCourse)
                     let courseDetails = await getCourseDetails(randomCourse);
 
+                    // check baka complete na sa course na un
+                    if (requiredCourses[courseDetails.subjectCode] <= 0){
+                        continue loop3;
+                    }
+
                     console.log('getting end time')
                     let endTime = getEndTime({
-                        timeStart: currentTime,
-                        courseType: courseDetails.type,
+                        startTime: currentTime,
+                        type: courseDetails.type,
                         unitsPerClass: courseDetails.unitsPerClass
                     })
+                    console.log('course units per class: ', courseDetails.unitsPerClass)
+                    console.log('course type: ', courseDetails.type)
+                    console.log('end time: ', endTime)
                     console.log('stop end time')
 
                     let classHours = 0;
@@ -233,6 +260,9 @@ const generateV3 = async ({
                             continue loop3;
                         }
                     }
+
+                    // add function na if ung iaadd is more than 3 hours aabot continue
+                    
 
                     // pwede ung course so go assign 
                     console.log('course passed all requirement')
@@ -293,6 +323,38 @@ const generateV3 = async ({
     // note lng na ung crossover is per section para walang conflict na mangyayari
 };
 
+//START HERE
+// check get end time kasi 4 hours ung isa
+// check ung pag convert to minutes kasi nagiging 6 hours
+// add break kapag pe
+// check if assigned n lahat // too many tries
+// 
+
+const getEndTime = ({startTime, unitsPerClass, type}: {startTime: number, unitsPerClass: number, type: string}) => {
+    let unitsInMinutes = 1;
+
+    if (type === 'lec'){
+        unitsInMinutes = unitsPerClass * 60;
+    }else if (type === 'lab'){
+        unitsInMinutes = unitsPerClass * 60 * 3;
+    }
+
+    let unitsInMilitaryTime = convertMinutesToMilitaryTime(unitsInMinutes);
+    let endTime = startTime + unitsInMilitaryTime;
+
+    let endTimeHours = Math.floor(endTime / 100) * 100;
+    let endTimeMinutes = endTime % 100
+
+    if (endTimeMinutes >= 60){
+        let hoursToAdd = Math.floor(endTimeMinutes / 60) * 100
+        let minutesLeft = endTimeMinutes % 60;
+
+        return endTimeHours + hoursToAdd + minutesLeft
+    }
+
+    return endTimeHours + endTimeMinutes;
+}
+
 const getStartAndEndTime = ({startRestriction, endRestriction}: {startRestriction: number, endRestriction: number}) => {
     let standardAvailableTime = {
         start: 700,
@@ -311,14 +373,15 @@ const getStartAndEndTime = ({startRestriction, endRestriction}: {startRestrictio
 }
 
 const convertMilitaryTimeToMinutes = (totalMilitaryHours: number) => {
-    let hours = Math.floor(totalMilitaryHours / 1000) * 60;
-    let minutes = totalMilitaryHours % 1000;
+    console.log(totalMilitaryHours)
+    let hours = Math.floor(totalMilitaryHours / 100) * 60;
+    let minutes = totalMilitaryHours % 100;
     return hours + minutes
 }
 
 // 260
 const convertMinutesToMilitaryTime = (totalMinutes: number) => {
-    let hours = Math.floor(totalMinutes / 60) * 1000;
+    let hours = Math.floor(totalMinutes / 60) * 100;
     let minutes = (totalMinutes % 60);
 
     return hours + minutes
