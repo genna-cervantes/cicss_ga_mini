@@ -22,7 +22,8 @@ import { Client } from "pg";
 // sectionSpecializations = {
 //     csa: 'core',
 //     csb: 'gamdev',
-//     csc: 'datasci'
+//     csc: 'datasci',
+//     csd: 'none' // dapat sa front end may tick box lng to check na wala pang specializations at this level para lahat matic none
 // }
 
 const DB_HOST = 'localhost';
@@ -49,6 +50,21 @@ client
         console.error('Connection error', err.stack);
     });
 
+    export const runGAV3 = async () => {
+    // generate 1st year
+
+    await generateV3({
+        department: 'CS',
+        year: 1,
+        sectionSpecializations: {
+            CSA: 'none',
+            CSB: 'none',
+            CSC: 'none',
+            CSD: 'none'
+        }
+    })
+}
+
 const generateV3 = async ({
     department,
     year,
@@ -64,11 +80,12 @@ const generateV3 = async ({
     // group sectionSpecializations by specialization not section
     let sectionKeys = Object.keys(sectionSpecializations);
     for (let i = 0; i < sectionKeys.length; i++){
-        if (!specializationsAndSections[sectionKeys[i]]){
-            specializationsAndSections[sectionKeys[i]] = []
+        let specialization = sectionSpecializations[sectionKeys[i]];
+        if (!specializationsAndSections[specialization]){
+            specializationsAndSections[specialization] = []
         }
 
-        specializationsAndSections[sectionKeys[i]].push(sectionKeys[i])
+        specializationsAndSections[specialization].push(sectionKeys[i])
     }
 
     // get curriculum per year per department per specialization
@@ -78,7 +95,7 @@ const generateV3 = async ({
         for (let i = 0; i < specializations.length; i++){
             const query = 'SELECT courses FROM curriculum WHERE department = $1 AND year = $2 AND specialization = $3'
             const res = await client.query(query, [department, year, specializations[i]])
-            const curriculum = res.rows[0].curriculum
+            const curriculum = res.rows[0].courses
             
             specializationsAndCurriculum[specializations[i]] = curriculum;
         }
@@ -87,7 +104,12 @@ const generateV3 = async ({
         const res = await client.query(query, [department, year])
         const curriculum = res.rows[0].curriculum
 
-        specializationsAndCurriculum['all'] = curriculum;
+        specializationsAndCurriculum['none'] = curriculum;
     }
 
+    // loop thru specializations and sections and go thru each specialization assigning the courses needed for that spec curriculum
+    // if 3 hours na add 1 hr break, if sobra na sa day na un next day na - random nlng siguro ung break pero basta after 3 hours break na
+    // note lng na ung crossover is per section para walang conflict na mangyayari
 };
+
+

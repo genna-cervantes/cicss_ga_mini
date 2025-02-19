@@ -5,6 +5,7 @@ import { evaluate, evaluateFast } from './evaluate';
 import { chromosome } from './data';
 import { generateChromosomeV2 } from './generateV2';
 import { runGAV2 } from './scriptV2';
+import { runGAV3 } from './scriptV3';
 
 const app = express();
 const port = 3001;
@@ -80,6 +81,11 @@ app.get('/test-ga-v2', async (req, res) => {
     // console.log(score)
     res.json(ret);
 });
+
+app.get('/test-ga-v3', async (req, res) => {
+    await runGAV3()
+    res.json(true)
+})
 
 app.get('/sametop', (req, res) => {
     let arr1 = [
