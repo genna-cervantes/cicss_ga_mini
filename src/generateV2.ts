@@ -227,20 +227,20 @@ export const getEndTime = ({
 
     let timeEndHours = Math.floor(timeEnd / 60);
     let timeEndMinutes = timeEnd % 60;
-
+    
     let startHours = Math.floor(timeStart / 100); // Extract hours (e.g., 14 from 1430)
     let startMinutes = timeStart % 100; // Extract minutes (e.g., 30 from 1430)
 
     // Add time
     let newMinutes = startMinutes + timeEndMinutes;
     let newHours = startHours + timeEndHours;
-
+    
     // If minutes exceed 60, adjust hours and minutes
     if (newMinutes >= 60) {
         newHours += Math.floor(newMinutes / 60);
         newMinutes %= 60;
     }
-
+    
     return newHours * 100 + newMinutes; // Convert back to military time format
 };
 

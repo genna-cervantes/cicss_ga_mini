@@ -122,6 +122,7 @@ const generateV3 = async ({
         specializationsAndCurriculum['none'] = curriculum;
     }
 
+    loop1:
     for (let i = 0; i < specializations.length; i++) {
         let specCurriculum = specializationsAndCurriculum[specializations[i]];
         let sections = specializationsAndSections[specializations[i]];
@@ -134,9 +135,7 @@ const generateV3 = async ({
             let maxDays = await getMaxDays({ year, department });
             let availableTime = await getAvailableTime({ year, department });
 
-            let requiredCourses = await getRequiredCourses({
-                curriculum: specCurriculum
-            });
+            let requiredCourses = await getRequiredCourses(specCurriculum);
 
             console.log(section);
             console.log(availableDays);
@@ -151,46 +150,93 @@ const generateV3 = async ({
                 let schoolDay = SCHOOL_DAYS[k]
                 let daySched: any = {[schoolDay]: []};
                 
-                let start = availableTime[SCHOOL_DAYS[k]].start;
-                let end = availableTime[SCHOOL_DAYS[k]].end;
-                let maxEndTime = parseInt(end);
+                let startTime = getStartAndEndTime({startRestriction: availableTime[SCHOOL_DAYS[k]][0].start, endRestriction: availableTime[SCHOOL_DAYS[k]][0].end}).start; // should change
+                let maxEndTime = getStartAndEndTime({startRestriction: availableTime[SCHOOL_DAYS[k]][0].start, endRestriction: availableTime[SCHOOL_DAYS[k]][0].end}).end; // should change
 
-                for (let currentTime = parseInt(start); currentTime < maxEndTime; ) {
+                console.log('school day', schoolDay)
+                console.log('day sched', daySched)
+                console.log('start', startTime)
+                console.log('max end time', maxEndTime)
+
+                loop3:
+                for (let currentTime = startTime; currentTime < maxEndTime; ) {
+                    
+                    console.log('(re)starting loop')
+                    console.log('current time: ', currentTime)
+                    console.log('max end time: ', maxEndTime)
+                    console.log('consecutive hours: ', consecutiveHours)
+                    
                     // add break if 3 consecutive hours na
-
                     if (consecutiveHours >= 3){
+                        console.log('consecutive hours hit adding break time')
+
                         consecutiveHours = 0;
                         let randomBreakTime = Math.floor(Math.random() * 210) + 30 // in minutes minimum 30mins max 4 hrs
                         let militaryTime = convertMinutesToMilitaryTime(randomBreakTime)
                         currentTime += militaryTime
+                        
+                        console.log('break time in military time: ', militaryTime)
+                        console.log('new current time: ', currentTime)
                     }
 
+                    
                     let randomCourse =
-                        specCurriculum[
-                            Math.floor(Math.random() * specCurriculum.length)
-                        ];
+                    specCurriculum[
+                        Math.floor(Math.random() * specCurriculum.length)
+                    ];
+                    
+                    console.log('getting random course: ', randomCourse)
                     let courseDetails = await getCourseDetails(randomCourse);
 
+                    console.log('getting end time')
                     let endTime = getEndTime({
                         timeStart: currentTime,
                         courseType: courseDetails.type,
                         unitsPerClass: courseDetails.unitsPerClass
                     })
+                    console.log('stop end time')
+
+                    let classHours = 0;
+                    if (courseDetails.type === 'lec'){
+                        classHours = courseDetails.unitsPerClass * 60
+                    }else if (courseDetails.type === 'lab'){
+                        classHours = courseDetails.unitsPerClass * 60 * 3
+                    }
 
                     // check if pwede pa sa end time
-                    if (currentTime + endTime > maxEndTime){
-                        continue loop2;
+                    // convertMinutesToMilitaryTime(convertMilitaryTimeToMinutes(classHours))
+                    if (currentTime + (endTime - currentTime) > maxEndTime){
+                        console.log('class too long')
+                        console.log('current time: ', currentTime)
+                        console.log('end time: ', endTime)
+                        console.log('max end time: ', maxEndTime)
+
+                        // continue loop2;
+                        console.log('done assigning courses for one day')
+
+                        console.log(section)
+                        console.log(schoolDay)
+                        console.log(daySched)
+                        break loop1;
                     }
 
                     // check if pwede ba ung course na toh at this time if not tuloy lng
                     let restrictions = courseDetails.restrictions[SCHOOL_DAYS[k]];
                     for (let n = 0; n < restrictions.length; n++){
+                        console.log('checking with restrictions')
                         if (currentTime >= restrictions[n].start && currentTime < restrictions[n].end){
-                            continue;
+                            console.log('restriction violated')
+                            console.log('current time: ', currentTime)
+                            console.log('restriction start time: ', restrictions[n].start)
+                            console.log('restriction end time: ', restrictions[n].end)
+
+                            continue loop3;
                         }
                     }
 
                     // pwede ung course so go assign 
+                    console.log('course passed all requirement')
+
                     let schedBlock: any = {};
 
                     schedBlock = {
@@ -201,22 +247,32 @@ const generateV3 = async ({
                         }
                     };
 
-                    daySched[schoolDay].push(schedBlock)
+                    console.log('generated sched block: ', schedBlock)
 
+                    daySched[schoolDay].push(schedBlock)
+                    console.log('new day sched: ', daySched[schoolDay])
+                    
                     // add the units per class to the current time
                     // add the units per class to the consecutive hours
                     let totalCourseHoursAssigned = endTime - currentTime;
                     currentTime += totalCourseHoursAssigned;
-                    consecutiveHours += convertMilitaryTimeToMinutes(totalCourseHoursAssigned)
+                    console.log('consecutive hours to add: ', convertMilitaryTimeToMinutes(totalCourseHoursAssigned) / 60)
+                    consecutiveHours += (convertMilitaryTimeToMinutes(totalCourseHoursAssigned) / 60)
+
+                    // minus the units 
+                    requiredCourses[courseDetails.subjectCode] -= courseDetails.unitsPerClass 
+
+                    console.log('new current time: ', currentTime)
+                    console.log('new consecutive hours: ', consecutiveHours)
                 }
 
-                console.log('assigned courses')
+                console.log('done assigning courses for one day')
 
                 console.log(section)
                 console.log(schoolDay)
                 console.log(daySched)
 
-                return;
+                break loop1;
             }
 
             // loop thru the school days
@@ -237,15 +293,32 @@ const generateV3 = async ({
     // note lng na ung crossover is per section para walang conflict na mangyayari
 };
 
+const getStartAndEndTime = ({startRestriction, endRestriction}: {startRestriction: number, endRestriction: number}) => {
+    let standardAvailableTime = {
+        start: 700,
+        end: 2100
+    }
+
+    if (startRestriction == standardAvailableTime.start){
+        standardAvailableTime.start = endRestriction
+    }
+
+    if (startRestriction < standardAvailableTime.end){
+        standardAvailableTime.end = startRestriction
+    }
+
+    return standardAvailableTime;
+}
+
 const convertMilitaryTimeToMinutes = (totalMilitaryHours: number) => {
-    let hours = (totalMilitaryHours / 1000) * 60;
+    let hours = Math.floor(totalMilitaryHours / 1000) * 60;
     let minutes = totalMilitaryHours % 1000;
     return hours + minutes
 }
 
 // 260
 const convertMinutesToMilitaryTime = (totalMinutes: number) => {
-    let hours = (totalMinutes / 60) * 1000;
+    let hours = Math.floor(totalMinutes / 60) * 1000;
     let minutes = (totalMinutes % 60);
 
     return hours + minutes
@@ -256,7 +329,7 @@ const getCourseDetails = async (subjectCode: string) => {
     const res = await client.query(query, [subjectCode]);
     const courseDetails = {
         subjectCode: res.rows[0].subject_code,
-        unitsPerClass: res.rows[0].unitsPerClass,
+        unitsPerClass: res.rows[0].units_per_class,
         type: res.rows[0].type,
         category: res.rows[0].category,
         restrictions: res.rows[0].restrictions,
@@ -315,7 +388,7 @@ const getRequiredCourses = async (curriculum: any) => {
     let requiredCourses: any = {};
     for (let i = 0; i < curriculum.length; i++) {
         let course = curriculum[i];
-
+        
         if (!requiredCourses[course]) {
             requiredCourses[course] = 0;
         }
