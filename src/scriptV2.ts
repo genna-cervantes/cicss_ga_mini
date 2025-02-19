@@ -1574,7 +1574,7 @@ const resolveConflict = ({
         schedBlock2.timeBlock.end = getEndTime({
             timeStart: schedBlock2.timeBlock.start,
             courseType: schedBlock2.course.type,
-            missingUnitsPerClass: schedBlock2.course.units
+            unitsPerClass: schedBlock2.course.units
         }).toString();
 
         // check if mag vviolate ba yan sa current sched nila

@@ -211,18 +211,18 @@ const getMiniCourseDetails = async (courseCode: string) => {
 export const getEndTime = ({
     timeStart,
     courseType,
-    missingUnitsPerClass
+    unitsPerClass
 }: {
     timeStart: number;
     courseType: string;
-    missingUnitsPerClass: any;
+    unitsPerClass: any;
 }) => {
     let timeEnd;
 
     if (courseType === 'lec') {
-        timeEnd = missingUnitsPerClass * 60;
+        timeEnd = unitsPerClass * 60;
     } else {
-        timeEnd = missingUnitsPerClass * 180; // 3 hrs
+        timeEnd = unitsPerClass * 180; // 3 hrs
     }
 
     let timeEndHours = Math.floor(timeEnd / 60);
@@ -294,7 +294,7 @@ const getTimeDetails = ({
     let defaultEndTime = getEndTime({
         timeStart: 700,
         courseType,
-        missingUnitsPerClass: unitsPerClass
+        unitsPerClass: unitsPerClass
     });
     let timeBlock = {
         start: '0700',
@@ -309,7 +309,7 @@ const getTimeDetails = ({
         let timeEnd = getEndTime({
             timeStart,
             courseType,
-            missingUnitsPerClass: unitsPerClass
+            unitsPerClass: unitsPerClass
         });
 
         if (daySched.length < 1) {
@@ -345,7 +345,7 @@ const getTimeDetails = ({
                 timeEnd = getEndTime({
                     timeStart,
                     courseType,
-                    missingUnitsPerClass: unitsPerClass
+                    unitsPerClass: unitsPerClass
                 });
                 continue;
             }
