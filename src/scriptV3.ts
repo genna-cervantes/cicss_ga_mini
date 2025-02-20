@@ -292,6 +292,15 @@ const generateV3 = async ({
 
                             continue loop3;
                         }
+                        
+                        if (endTimeCopy > restrictions[n].start && (currentTime <= restrictions[n].start || currentTime < restrictions[n].end)){
+                            console.log('restriction violated')
+                            console.log('current time: ', currentTime)
+                            console.log('restriction start time: ', restrictions[n].start)
+                            console.log('restriction end time: ', restrictions[n].end)
+    
+                            continue loop3;
+                        }
                     }
 
                     // pwede ung course so go assign 
@@ -362,7 +371,7 @@ const generateV3 = async ({
             }
 
             // MGA KULANG
-            // nag aasign pa rin ung course kahit pag inassign un lalagpas na sa 3 hours consecutive max
+            // pwede mag 3 hours plus kapag lab courses ? - wag nn toh
             // dapat pati ung end ng class ndi tumama sa restriction
         }
     }
