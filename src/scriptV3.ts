@@ -156,10 +156,16 @@ const generateV3 = async ({
                 console.log('day sched', daySched)
                 console.log('start', startTime)
                 console.log('max end time', maxEndTime)
+                let tries = 0;
 
                 loop3:
                 for (let currentTime = startTime; currentTime < maxEndTime; ) {
-                    
+
+                    if (tries >= 10){
+                        break loop3;
+                    }
+
+                    tries++;
                     console.log('(re)starting loop')
                     console.log('current time: ', currentTime)
                     console.log('max end time: ', maxEndTime)
@@ -209,6 +215,8 @@ const generateV3 = async ({
 
                     // check baka complete na sa course na un
                     if (requiredCourses[courseDetails.subjectCode] <= 0){
+                        let courseIndex = specCurriculum.indexOf(courseDetails.subjectCode)
+                        specCurriculum.splice(courseIndex, 1)
                         continue loop3;
                     }
 
@@ -238,13 +246,13 @@ const generateV3 = async ({
                         console.log('end time: ', endTime)
                         console.log('max end time: ', maxEndTime)
 
-                        // continue loop2;
-                        console.log('done assigning courses for one day')
+                        continue loop3;
+                        // console.log('done assigning courses for one day')
 
-                        console.log(section)
-                        console.log(schoolDay)
-                        console.log(daySched)
-                        break loop1;
+                        // console.log(section)
+                        // console.log(schoolDay)
+                        // console.log(daySched)
+                        // break loop1;
                     }
 
                     // check if pwede ba ung course na toh at this time if not tuloy lng
@@ -262,7 +270,7 @@ const generateV3 = async ({
                     }
 
                     // add function na if ung iaadd is more than 3 hours aabot continue
-                    
+
 
                     // pwede ung course so go assign 
                     console.log('course passed all requirement')
@@ -284,8 +292,11 @@ const generateV3 = async ({
                     
                     // add the units per class to the current time
                     // add the units per class to the consecutive hours
-                    let totalCourseHoursAssigned = endTime - currentTime;
-                    currentTime += totalCourseHoursAssigned;
+                    console.log('end time: ', endTime)
+                    console.log('current time: ', currentTime)
+                    let totalCourseHoursAssigned = subtractMilitaryTime(endTime, currentTime);
+                    console.log('total course hours assigned: ', totalCourseHoursAssigned)
+                    currentTime = addMilitaryTimes(currentTime, totalCourseHoursAssigned)
                     console.log('consecutive hours to add: ', convertMilitaryTimeToMinutes(totalCourseHoursAssigned) / 60)
                     consecutiveHours += (convertMilitaryTimeToMinutes(totalCourseHoursAssigned) / 60)
 
@@ -305,30 +316,61 @@ const generateV3 = async ({
                 break loop1;
             }
 
-            // loop thru the school days
-            // loop thru the day
-            // select a random class
-            // check if pwede sa restrictions
-            // track consecutive
-            // track end
-            // assign sequentially from the constraint start to the constraint end
-            // subtract the units per class in the copy of subjects with total units
-            // check if 3 hours na ba ung consecutive
-            // if yes add random break from 30 min to max possible
-            // if not get a new random course
+            // MGA KULANG
+            // ung sa pe
+            // nag aasign pa rin ung course kahit pag inassign un lalagpas na sa 3 hours consecutive max
         }
     }
-    // loop thru specializations and sections and go thru each specialization assigning the courses needed for that spec curriculum
-    // if 3 hours na add 1 hr break, if sobra na sa day na un next day na - random nlng siguro ung break pero basta after 3 hours break na
+    
     // note lng na ung crossover is per section para walang conflict na mangyayari
 };
 
-//START HERE
-// check get end time kasi 4 hours ung isa
-// check ung pag convert to minutes kasi nagiging 6 hours
-// add break kapag pe
-// check if assigned n lahat // too many tries
-// 
+// 1 - 2
+const subtractMilitaryTime = (militaryTime1: number, militaryTime2: number) => {
+    
+    console.log('subtracting military time')
+    let roundedMilitaryTimeHours1 = Math.ceil(militaryTime1 / 100) * 100
+    let militaryTime1Minutes = militaryTime1 % 100
+
+    console.log('rounded military hours 1: ', roundedMilitaryTimeHours1)
+    console.log('military minutes 1: ', militaryTime1Minutes)
+    
+    // subtract hours muna
+    let roundedMilitaryTimeHours2 = Math.ceil(militaryTime2 / 100) * 100
+    let militaryTime2Minutes = militaryTime2 % 100;
+
+    console.log('rounded military hours 2: ', roundedMilitaryTimeHours1)
+    console.log('military minutes 2: ', militaryTime2Minutes)
+
+    let subtractedHours = roundedMilitaryTimeHours1 - roundedMilitaryTimeHours2
+    let subtractedMinutes = militaryTime1Minutes - militaryTime2Minutes
+
+    console.log('subtracted hours: ', subtractedHours)
+    console.log('subtracted minutes: ', subtractedMinutes)
+
+    console.log('final: ', (subtractedHours + subtractedMinutes))
+
+    if (subtractedMinutes > 0){
+        return (subtractedHours - 1) + subtractedMinutes
+    }
+    return subtractedHours + Math.abs(subtractedMinutes)
+}
+
+const addMilitaryTimes = (militaryTime1: number, militaryTime2: number) => {
+    let combinedTime = militaryTime1 + militaryTime2
+
+    let combinedTimeHours = Math.floor(combinedTime / 100) * 100
+    let combinedTimeMinutes = combinedTime % 100
+
+    if (combinedTimeMinutes >= 60){
+        let hoursToAdd = Math.floor(combinedTimeMinutes / 60) * 100
+        let minutesLeft = combinedTimeMinutes % 60;
+    
+        return combinedTimeHours + hoursToAdd + minutesLeft
+    }
+
+    return combinedTimeHours + combinedTimeMinutes
+}
 
 const getEndTime = ({startTime, unitsPerClass, type}: {startTime: number, unitsPerClass: number, type: string}) => {
     let unitsInMinutes = 1;
@@ -340,19 +382,21 @@ const getEndTime = ({startTime, unitsPerClass, type}: {startTime: number, unitsP
     }
 
     let unitsInMilitaryTime = convertMinutesToMilitaryTime(unitsInMinutes);
-    let endTime = startTime + unitsInMilitaryTime;
 
-    let endTimeHours = Math.floor(endTime / 100) * 100;
-    let endTimeMinutes = endTime % 100
+    return addMilitaryTimes(startTime, unitsInMilitaryTime)
+    // let endTime = startTime + unitsInMilitaryTime;
 
-    if (endTimeMinutes >= 60){
-        let hoursToAdd = Math.floor(endTimeMinutes / 60) * 100
-        let minutesLeft = endTimeMinutes % 60;
+    // let endTimeHours = Math.floor(endTime / 100) * 100;
+    // let endTimeMinutes = endTime % 100
 
-        return endTimeHours + hoursToAdd + minutesLeft
-    }
+    // if (endTimeMinutes >= 60){
+    //     let hoursToAdd = Math.floor(endTimeMinutes / 60) * 100
+    //     let minutesLeft = endTimeMinutes % 60;
 
-    return endTimeHours + endTimeMinutes;
+    //     return endTimeHours + hoursToAdd + minutesLeft
+    // }
+
+    // return endTimeHours + endTimeMinutes;
 }
 
 const getStartAndEndTime = ({startRestriction, endRestriction}: {startRestriction: number, endRestriction: number}) => {
