@@ -231,28 +231,29 @@ const generateV3 = async ({
                     console.log('end time: ', endTime)
                     console.log('stop end time')
 
-                    let classHours = 0;
-                    if (courseDetails.type === 'lec'){
-                        classHours = courseDetails.unitsPerClass * 60
-                    }else if (courseDetails.type === 'lab'){
-                        classHours = courseDetails.unitsPerClass * 60 * 3
+                    // check ung sa pe add 2 hours before and after
+                    let endTimeCopy = endTime;
+                    if (courseDetails.subjectCode.startsWith('PATHFIT')){
+                        // ipplot ung pe dapat 2 hours more so currentTime + 2 hours na -> pag naadd n lahat
+                        // tapos add ulit 2 hrs break after on top of the actual end time
+
+                        // check if add ng 4 hours if start/end ng class or 6 hours pag in between siya
+                        if (currentTime <= 800 || currentTime >= (subtractMilitaryTime(maxEndTime, 100))){
+                            endTimeCopy = addMilitaryTimes(currentTime, 400) // 4 hours
+                        }else{
+                            endTimeCopy = addMilitaryTimes(currentTime, 600) // 6 hours
+                        }
                     }
 
                     // check if pwede pa sa end time
                     // convertMinutesToMilitaryTime(convertMilitaryTimeToMinutes(classHours))
-                    if (currentTime + (endTime - currentTime) > maxEndTime){
+                    if (currentTime + (endTimeCopy - currentTime) > maxEndTime){
                         console.log('class too long')
                         console.log('current time: ', currentTime)
-                        console.log('end time: ', endTime)
+                        console.log('end time: ', endTimeCopy)
                         console.log('max end time: ', maxEndTime)
 
                         continue loop3;
-                        // console.log('done assigning courses for one day')
-
-                        // console.log(section)
-                        // console.log(schoolDay)
-                        // console.log(daySched)
-                        // break loop1;
                     }
 
                     // check if pwede ba ung course na toh at this time if not tuloy lng
@@ -277,12 +278,27 @@ const generateV3 = async ({
 
                     let schedBlock: any = {};
 
+                    let timeBlock = {
+                        start: currentTime.toString(),
+                        end: endTime.toString()
+                    }
+
+                    if (courseDetails.subjectCode.startsWith('PATHFIT')){
+                        // if wala pang assigned before this dont add before pero pag meron na matic add kahit anong oras p yan
+                        // tapos matic din na may 2 hours after this
+
+                        if (daySched[schoolDay].length > 0){
+                            timeBlock.start = addMilitaryTimes(currentTime, 200).toString()
+                            timeBlock.end = addMilitaryTimes(endTime, 200).toString()
+                        }
+
+
+
+                    }
+
                     schedBlock = {
                         course: courseDetails.subjectCode,
-                        timeBlock: {
-                            start: currentTime.toString(),
-                            end: endTime.toString()
-                        }
+                        timeBlock
                     };
 
                     console.log('generated sched block: ', schedBlock)
@@ -294,11 +310,23 @@ const generateV3 = async ({
                     // add the units per class to the consecutive hours
                     console.log('end time: ', endTime)
                     console.log('current time: ', currentTime)
-                    let totalCourseHoursAssigned = subtractMilitaryTime(endTime, currentTime);
-                    console.log('total course hours assigned: ', totalCourseHoursAssigned)
-                    currentTime = addMilitaryTimes(currentTime, totalCourseHoursAssigned)
-                    console.log('consecutive hours to add: ', convertMilitaryTimeToMinutes(totalCourseHoursAssigned) / 60)
-                    consecutiveHours += (convertMilitaryTimeToMinutes(totalCourseHoursAssigned) / 60)
+                    
+                    if (courseDetails.subjectCode.startsWith('PATHFIT')){
+                        console.log('changing current time and consec hours according to pe')
+                        // current time plus 2
+                        if (daySched[schoolDay].length > 0){
+                            currentTime = addMilitaryTimes(currentTime, 600)
+                        }else{
+                            currentTime = addMilitaryTimes(currentTime, 400)
+                            consecutiveHours = 0;
+                        }
+                    }else{
+                        let totalCourseHoursAssigned = subtractMilitaryTime(endTime, currentTime);
+                        console.log('total course hours assigned: ', totalCourseHoursAssigned)
+                        currentTime = addMilitaryTimes(currentTime, totalCourseHoursAssigned)
+                        console.log('consecutive hours to add: ', convertMilitaryTimeToMinutes(totalCourseHoursAssigned) / 60)
+                        consecutiveHours += (convertMilitaryTimeToMinutes(totalCourseHoursAssigned) / 60)                        
+                    }
 
                     // minus the units 
                     requiredCourses[courseDetails.subjectCode] -= courseDetails.unitsPerClass 
@@ -351,7 +379,7 @@ const subtractMilitaryTime = (militaryTime1: number, militaryTime2: number) => {
     console.log('final: ', (subtractedHours + subtractedMinutes))
 
     if (subtractedMinutes > 0){
-        return (subtractedHours - 1) + subtractedMinutes
+        return (subtractedHours - 100) + subtractedMinutes
     }
     return subtractedHours + Math.abs(subtractedMinutes)
 }
