@@ -143,7 +143,7 @@ const generateV3 = async ({
             console.log(requiredCourses);
 
             let consecutiveHours = 0;
-
+            
             loop2:
             for (let k = 0; k < SCHOOL_DAYS.length; k++) {
                 let schoolDay = SCHOOL_DAYS[k]
@@ -151,17 +151,19 @@ const generateV3 = async ({
                 
                 let startTime = getStartAndEndTime({startRestriction: availableTime[SCHOOL_DAYS[k]][0].start, endRestriction: availableTime[SCHOOL_DAYS[k]][0].end}).start; // should change
                 let maxEndTime = getStartAndEndTime({startRestriction: availableTime[SCHOOL_DAYS[k]][0].start, endRestriction: availableTime[SCHOOL_DAYS[k]][0].end}).end; // should change
-
+                
                 console.log('school day', schoolDay)
                 console.log('day sched', daySched)
                 console.log('start', startTime)
                 console.log('max end time', maxEndTime)
+                let consecTries = 0;
                 let tries = 0;
 
                 loop3:
                 for (let currentTime = startTime; currentTime < maxEndTime; ) {
 
                     if (tries >= 10){
+                        console.log('too many tries')
                         break loop3;
                     }
 
@@ -203,7 +205,6 @@ const generateV3 = async ({
                         console.log('break time in military time: ', militaryTime)
                         console.log('new current time: ', currentTime)
                     }
-
                     
                     let randomCourse =
                     specCurriculum[
@@ -215,6 +216,7 @@ const generateV3 = async ({
 
                     // check baka complete na sa course na un
                     if (requiredCourses[courseDetails.subjectCode] <= 0){
+                        console.log('puno na course na toh')
                         let courseIndex = specCurriculum.indexOf(courseDetails.subjectCode)
                         specCurriculum.splice(courseIndex, 1)
                         continue loop3;
@@ -246,7 +248,6 @@ const generateV3 = async ({
                     }
 
                     // check if pwede pa sa end time
-                    // convertMinutesToMilitaryTime(convertMilitaryTimeToMinutes(classHours))
                     if (currentTime + (endTimeCopy - currentTime) > maxEndTime){
                         console.log('class too long')
                         console.log('current time: ', currentTime)
@@ -255,6 +256,29 @@ const generateV3 = async ({
 
                         continue loop3;
                     }
+
+                    // add function na if ung iaadd is more than 3 hours aabot continue
+                    // add na agad ng break time if ndi aabot ??
+                    // try ng ibang ano
+                    // tracker for trying sa loop ng consec toh tapos if more than 10 tries na gawin nlng ung nasa taas
+                    if (consecutiveHours + ((convertMilitaryTimeToMinutes(subtractMilitaryTime(endTimeCopy, currentTime)) / 60)) > 3 && !courseDetails.subjectCode.startsWith('PATHFIT')){
+                        console.log('consecutive hours restriction hit')
+                        console.log('consecutive hours: ', consecutiveHours)
+                        console.log('hours to add: ', (convertMilitaryTimeToMinutes(endTimeCopy - currentTime) / 60))
+
+                        consecTries++;
+                        tries--; // dont count the tries for this
+
+                        if (consecTries >= 10){
+                            consecutiveHours = 3;
+                            consecTries = 0;
+                            continue loop3;
+                        }
+
+                        // try iba
+                        continue loop3;
+                    }
+                    
 
                     // check if pwede ba ung course na toh at this time if not tuloy lng
                     let restrictions = courseDetails.restrictions[SCHOOL_DAYS[k]];
@@ -270,9 +294,6 @@ const generateV3 = async ({
                         }
                     }
 
-                    // add function na if ung iaadd is more than 3 hours aabot continue
-
-
                     // pwede ung course so go assign 
                     console.log('course passed all requirement')
 
@@ -286,14 +307,10 @@ const generateV3 = async ({
                     if (courseDetails.subjectCode.startsWith('PATHFIT')){
                         // if wala pang assigned before this dont add before pero pag meron na matic add kahit anong oras p yan
                         // tapos matic din na may 2 hours after this
-
                         if (daySched[schoolDay].length > 0){
                             timeBlock.start = addMilitaryTimes(currentTime, 200).toString()
                             timeBlock.end = addMilitaryTimes(endTime, 200).toString()
                         }
-
-
-
                     }
 
                     schedBlock = {
@@ -345,8 +362,8 @@ const generateV3 = async ({
             }
 
             // MGA KULANG
-            // ung sa pe
             // nag aasign pa rin ung course kahit pag inassign un lalagpas na sa 3 hours consecutive max
+            // dapat pati ung end ng class ndi tumama sa restriction
         }
     }
     
