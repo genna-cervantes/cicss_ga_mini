@@ -8,7 +8,7 @@ import { runGAV2 } from './scriptV2';
 import { runGAV3 } from './scriptV3';
 
 const app = express();
-const port = 3001;
+const port = 3000;
 
 app.get('/', (req, res) => {
     res.json({ auth: true });
@@ -83,8 +83,8 @@ app.get('/test-ga-v2', async (req, res) => {
 });
 
 app.get('/test-ga-v3', async (req, res) => {
-    await runGAV3()
-    res.json(true)
+    let schedules = await runGAV3()
+    res.json(schedules)
 })
 
 app.get('/sametop', (req, res) => {
