@@ -557,6 +557,7 @@ const generateV3 = async ({
             let requiredCoursesKeys = Object.keys(requiredCourses);
             for (let k = 0; k < requiredCoursesKeys.length; k++) {
                 if (requiredCourses[requiredCoursesKeys[k]] > 0) {
+                    schedules[section] = []
                     j = 0;
                     continue loop4;
                 }
