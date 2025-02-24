@@ -56,6 +56,8 @@ export const runGAV3 = async () => {
     // generate 1st year
 
     // generate hanggat makuha ung 10 schedules per section na puno lahat
+    // get ung section schedules na nag 0 lahat
+    // mix and match nlng ung mga 0
     let schedules = await generateV3({
         department: 'CS',
         year: 1,
@@ -129,16 +131,19 @@ const generateV3 = async ({
 
     let schedules: any = {};
     let sectionChecker = [];
+    let returnObj: any = {};
 
     loop1: for (let i = 0; i < specializations.length; i++) {
         let sections = specializationsAndSections[specializations[i]];
 
-        for (let j = 0; j < sections.length; j++) {
+        loop4: for (let j = 0; j < sections.length; ) {
+            // while (sections.length > 0){
+            //     let j = 0;
+
             let specCurriculum = [
                 ...specializationsAndCurriculum[specializations[i]]
             ];
             let section = sections[j];
-            let sectionSched = { section: {} };
 
             let availableDays = await getAvailableDays({ year, department });
             let maxDays = await getMaxDays({ year, department });
@@ -147,12 +152,12 @@ const generateV3 = async ({
             let requiredCourses = await getRequiredCourses(specCurriculum);
             let daySched: any = [];
 
-            console.log(section);
-            console.log(specializationsAndCurriculum[specializations[i]]);
-            console.log(availableDays);
-            console.log(maxDays);
-            console.log(availableTime);
-            console.log(requiredCourses);
+            // console.log(section);
+            // console.log(specializationsAndCurriculum[specializations[i]]);
+            // console.log(availableDays);
+            // console.log(maxDays);
+            // console.log(availableTime);
+            // console.log(requiredCourses);
 
             let consecutiveHours = 0;
 
@@ -169,12 +174,12 @@ const generateV3 = async ({
                     endRestriction: availableTime[SCHOOL_DAYS[k]][0].end
                 }).end; // should change
 
-                console.log('school day', schoolDay);
-                console.log('current day sched', daySched);
-                console.log('required courses left: ', requiredCourses);
+                // console.log('school day', schoolDay);
+                // console.log('current day sched', daySched);
+                // console.log('required courses left: ', requiredCourses);
 
-                console.log('start', startTime);
-                console.log('max end time', maxEndTime);
+                // console.log('start', startTime);
+                // console.log('max end time', maxEndTime);
                 let consecTries = 0;
                 let tries = 0;
 
@@ -184,7 +189,7 @@ const generateV3 = async ({
 
                 ) {
                     if (tries >= 10) {
-                        console.log('too many tries');
+                        // console.log('too many tries');
                         break loop3;
                     }
 
@@ -543,14 +548,47 @@ const generateV3 = async ({
                     daySched: daySched
                 });
             }
+            
+            // check if 0 lahat nung sa required courses
+            // if yes we push that section sched to the return body
+            // and remove that section from the loop
+            // else we just continue
+            
+            let requiredCoursesKeys = Object.keys(requiredCourses);
+            for (let k = 0; k < requiredCoursesKeys.length; k++) {
+                if (requiredCourses[requiredCoursesKeys[k]] > 0) {
+                    j = 0;
+                    continue loop4;
+                }
+            }
+            console.log('complete');
+            console.log(section, requiredCourses);
+            sections.splice(j, 1);
+
+            console.log('sections left', sections);
+
+            returnObj[section] = schedules[section];
+
+            j = 0;
+            console.log(j);
+            continue loop4;
         }
     }
 
-    console.log('section checker: ', sectionChecker);
+    // console.log('section checker: ', sectionChecker);
 
-    return schedules;
+    return returnObj;
+    // return schedules;
 
     // note lng na ung crossover is per section para walang conflict na mangyayari
+
+    // may obje n mag ttrack ng lahat ng schedules na pumasa (applied lahat ng courses)
+    // {CSA: [], CSB: []} - somethign like that
+
+    // mag mmix and match sa mga schedule don para makagawa ng multiple schedules - or wag n kasi eto na ung cross over eh
+    // okay imbes n ganyan mag ppush nlng don tapos irermove sa loop if may laman na tapos irereturn kapag 1 na laman ng lahat kasi nga eto na ung cross over
+
+    //
 };
 
 // 1 - 2
