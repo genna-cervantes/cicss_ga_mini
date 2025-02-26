@@ -70,7 +70,9 @@ export const runGAV3 = async () => {
         }
     });
 
-    return schedules;
+    assignRooms({classSchedules: schedules})
+
+    return true;
 };
 
 const generateV3 = async ({
@@ -299,13 +301,10 @@ const generateV3 = async ({
                         // console.log(daySched);
 
                         if (!schedules[section]) {
-                            schedules[section] = [];
+                            schedules[section] = {};
                         }
-
-                        schedules[section].push({
-                            schoolDay,
-                            daySched: daySched
-                        });
+        
+                        schedules[section][schoolDay] = daySched
                         break loop2;
                     }
 
@@ -540,13 +539,10 @@ const generateV3 = async ({
                 // console.log(daySched);
 
                 if (!schedules[section]) {
-                    schedules[section] = [];
+                    schedules[section] = {};
                 }
 
-                schedules[section].push({
-                    schoolDay,
-                    daySched: daySched
-                });
+                schedules[section][schoolDay] = daySched
             }
             
             // check if 0 lahat nung sa required courses
@@ -557,7 +553,7 @@ const generateV3 = async ({
             let requiredCoursesKeys = Object.keys(requiredCourses);
             for (let k = 0; k < requiredCoursesKeys.length; k++) {
                 if (requiredCourses[requiredCoursesKeys[k]] > 0) {
-                    schedules[section] = []
+                    schedules[section] = {}
                     j = 0;
                     continue loop4;
                 }
@@ -591,6 +587,27 @@ const generateV3 = async ({
 
     //
 };
+
+const assignRooms = ({classSchedules}: {classSchedules: any}) => {
+    console.log(classSchedules)
+
+    // loop thru sections in generate
+    let classScheduleKeys = Object.keys(classSchedules)
+    for (let i = 0; i < classScheduleKeys.length; i++){
+        let sched = classSchedules[classScheduleKeys[i]]
+
+    }
+    // loop thru schooldays
+    // loop thru day sched
+    // assign room
+    // add to room sched and class sched
+    // before adding check if may conflict
+    // if wala add if meron check ung next if pwede
+    // loop until makakuha ng pwede
+    // if wala pwede set as null tapos move on sa next sched
+
+    // return class sched n may rooms na
+}
 
 // 1 - 2
 const subtractMilitaryTime = (militaryTime1: number, militaryTime2: number) => {
