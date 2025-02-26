@@ -55,10 +55,8 @@ client
 export const runGAV3 = async () => {
     // generate 1st year
 
-    // generate hanggat makuha ung 10 schedules per section na puno lahat
-    // get ung section schedules na nag 0 lahat
-    // mix and match nlng ung mga 0
-    let schedules = await generateV3({
+    let classSchedule: any = {}
+    let schedulesFirst = await generateV3({
         department: 'CS',
         year: 1,
         semester: 2,
@@ -69,13 +67,14 @@ export const runGAV3 = async () => {
             CSD: 'none'
         }
     });
+    classSchedule[1] = schedulesFirst;
 
     let roomSchedule = {};
 
-    await assignRooms({ classSchedules: schedules, roomSchedule, department: 'CS' });
+    await assignRooms({ classSchedules: classSchedule, roomSchedule, department: 'CS' });
 
     return {
-        classSchedules: schedules,
+        classSchedules: classSchedule,
         roomSchedules: roomSchedule
     }
     return true;
@@ -603,58 +602,58 @@ const assignRooms = async ({
     roomSchedule: any;
     department: string;
 }) => {
-    console.log(classSchedules);
-
     // loop thru sections in generate
     let classScheduleKeys = Object.keys(classSchedules);
     for (let i = 0; i < classScheduleKeys.length; i++) {
-        let sched = classSchedules[classScheduleKeys[i]];
+        let yearSched = classSchedules[classScheduleKeys[i]];
 
-        // loop thru schooldays
-        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
-            let daySched = sched[SCHOOL_DAYS[j]];
+        let yearSchedKeys = Object.keys(yearSched);
+        for (let j = 0; j < yearSchedKeys.length; j++){
+            let classSched = yearSched[yearSchedKeys[j]]
 
-            // loop thru day sched
-            for (let k = 0; k < (daySched?.length ?? 0); k++) {
-                let schedBlock = daySched[k];
-
-                let course = schedBlock.course;
-                let timeBlock = schedBlock.timeBlock;
-
-                if (course.subjectCode.startsWith('PATHFIT')){
-                    schedBlock.room = 'PE ROOM';
-                    continue;
+            // loop thru schooldays
+            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                let daySched = classSched[SCHOOL_DAYS[k]];
+    
+                // loop thru day sched
+                for (let m = 0; m < (daySched?.length ?? 0); m++) {
+                    let schedBlock = daySched[m];
+    
+                    let course = schedBlock.course;
+                    let timeBlock = schedBlock.timeBlock;
+    
+                    if (course.subjectCode.startsWith('PATHFIT')){
+                        schedBlock.room = 'PE ROOM';
+                        continue;
+                    }
+    
+                    // assign room
+                    let room = await findRoomForCourse({
+                        course: course.subjectCode,
+                        courseType: course.type,
+                        roomSchedule,
+                        specificRoomAssignment: course.specificRoomAssignment,
+                        department,
+                        timeBlock,
+                        schoolDay: SCHOOL_DAYS[j]
+                    });
+                    
+                    schedBlock.room = room;
+                    if (!roomSchedule?.[room]) {
+                        roomSchedule[room] = {
+                            M: [],
+                            T: [],
+                            W: [],
+                            TH: [],
+                            F: [],
+                            S: [],
+                        };
+                    }
+                    roomSchedule[room][SCHOOL_DAYS[j]].push({ course: course.subjectCode, timeBlock });
                 }
-
-                // assign room
-                let room = await findRoomForCourse({
-                    course: course.subjectCode,
-                    courseType: course.type,
-                    roomSchedule,
-                    specificRoomAssignment: course.specificRoomAssignment,
-                    department,
-                    timeBlock,
-                    schoolDay: SCHOOL_DAYS[j]
-                });
-
-                console.log('room', room)
-                
-                schedBlock.room = room;
-                if (!roomSchedule?.[room]) {
-                    roomSchedule[room] = {
-                        M: [],
-                        T: [],
-                        W: [],
-                        TH: [],
-                        F: [],
-                        S: [],
-                    };
-                }
-                roomSchedule[room][SCHOOL_DAYS[j]].push({ course: course.subjectCode, timeBlock });
-
-                console.log('new sched block', schedBlock)
             }
         }
+
     }
     // before adding check if may conflict
     // if wala add if meron check ung next if pwede
@@ -687,8 +686,8 @@ const findRoomForCourse = async ({
     }
 
     const query =
-        'SELECT room_id FROM rooms WHERE type = $1';
-    const res = await client.query(query, [courseType]);
+        'SELECT room_id FROM rooms WHERE type = $1 AND main_department = $2';
+    const res = await client.query(query, [courseType, department]);
     const availableRooms = res.rows;
 
     // loop thru available rooms
@@ -709,6 +708,57 @@ const findRoomForCourse = async ({
         
         return prospectRoom.room_id
     }
+
+    // wala pa narereturn ibig sabihin wala pa
+    const query2 =
+        'SELECT room_id FROM rooms WHERE type != $1 AND main_department = $2';
+    const res2 = await client.query(query2, [courseType, department]);
+    const availableRooms2 = res2.rows;
+
+     // loop thru available rooms
+     for (let i = 0; i < availableRooms2.length; i++) {
+        let prospectRoom = availableRooms2[i];
+
+        // check if pwede sa room schedule
+        let roomAvailability = checkRoomAvailability({
+            roomSchedule,
+            timeBlock,
+            room: prospectRoom.room_id,
+            schoolDay
+        });
+
+        if (!roomAvailability) {
+            continue;
+        }
+        
+        return prospectRoom.room_id
+    }
+    
+    // wala na talaga kuha na sa ibang department ng kahit ano
+    const query3 =
+        'SELECT room_id FROM rooms WHERE main_department != $1';
+    const res3 = await client.query(query3, [department]);
+    const availableRooms3 = res3.rows;
+
+     // loop thru available rooms
+     for (let i = 0; i < availableRooms3.length; i++) {
+        let prospectRoom = availableRooms3[i];
+
+        // check if pwede sa room schedule
+        let roomAvailability = checkRoomAvailability({
+            roomSchedule,
+            timeBlock,
+            room: prospectRoom.room_id,
+            schoolDay
+        });
+
+        if (!roomAvailability) {
+            continue;
+        }
+        
+        return prospectRoom.room_id
+    }
+    
     return null;
 };
 
