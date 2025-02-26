@@ -69,6 +69,45 @@ export const runGAV3 = async () => {
     });
     classSchedule[1] = schedulesFirst;
 
+    let schedulesSecond = await generateV3({
+        department: 'CS',
+        year: 2,
+        semester: 2,
+        sectionSpecializations: {
+            CSA: 'none',
+            CSB: 'none',
+            CSC: 'none',
+            CSD: 'none'
+        }
+    });
+    classSchedule[2] = schedulesSecond;
+
+    let schedulesThird = await generateV3({
+        department: 'CS',
+        year: 3,
+        semester: 2,
+        sectionSpecializations: {
+            CSA: 'none',
+            CSB: 'none',
+            CSC: 'none',
+            CSD: 'none'
+        }
+    });
+    classSchedule[3] = schedulesThird;
+
+    let schedulesFourth = await generateV3({
+        department: 'CS',
+        year: 4,
+        semester: 2,
+        sectionSpecializations: {
+            CSA: 'none',
+            CSB: 'none',
+            CSC: 'none',
+            CSD: 'none'
+        }
+    });
+    classSchedule[4] = schedulesFourth;
+
     let roomSchedule = {};
 
     await assignRooms({ classSchedules: classSchedule, roomSchedule, department: 'CS' });
@@ -93,6 +132,8 @@ const generateV3 = async ({
 }) => {
     let specializationsAndSections: any = {};
     let specializationsAndCurriculum: any = {};
+
+    console.log('year', year)
 
     // group sectionSpecializations by specialization not section
     let sectionKeys = Object.keys(sectionSpecializations);
@@ -144,12 +185,12 @@ const generateV3 = async ({
         let sections = specializationsAndSections[specializations[i]];
 
         loop4: for (let j = 0; j < sections.length; ) {
-            // while (sections.length > 0){
-            //     let j = 0;
-
+            // console.log('sections', sections)
+            
             let specCurriculum = [
                 ...specializationsAndCurriculum[specializations[i]]
             ];
+            
             let section = sections[j];
 
             let availableDays = await getAvailableDays({ year, department });
@@ -166,19 +207,24 @@ const generateV3 = async ({
             // console.log(availableTime);
             // console.log(requiredCourses);
 
+            // loop thru the available days and max days
+
             let consecutiveHours = 0;
 
             loop2: for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+
+                // console.log('school days', SCHOOL_DAYS)
+
                 let schoolDay = SCHOOL_DAYS[k];
                 daySched = [];
 
                 let startTime = getStartAndEndTime({
-                    startRestriction: availableTime[SCHOOL_DAYS[k]][0].start,
-                    endRestriction: availableTime[SCHOOL_DAYS[k]][0].end
+                    startRestriction: availableTime[SCHOOL_DAYS[k]][0]?.start,
+                    endRestriction: availableTime[SCHOOL_DAYS[k]][0]?.end
                 }).start; // should change
                 let maxEndTime = getStartAndEndTime({
-                    startRestriction: availableTime[SCHOOL_DAYS[k]][0].start,
-                    endRestriction: availableTime[SCHOOL_DAYS[k]][0].end
+                    startRestriction: availableTime[SCHOOL_DAYS[k]][0]?.start,
+                    endRestriction: availableTime[SCHOOL_DAYS[k]][0]?.end
                 }).end; // should change
 
                 // console.log('school day', schoolDay);
@@ -193,7 +239,6 @@ const generateV3 = async ({
                 loop3: for (
                     let currentTime = startTime;
                     currentTime < maxEndTime;
-
                 ) {
                     if (tries >= 10) {
                         // console.log('too many tries');
@@ -288,7 +333,7 @@ const generateV3 = async ({
                         // );
                         let militaryTime =
                             convertMinutesToMilitaryTime(breakTime);
-                        currentTime += militaryTime;
+                        currentTime = addMilitaryTimes(currentTime, militaryTime);
 
                         // console.log(
                         //     'break time in military time: ',
@@ -364,7 +409,7 @@ const generateV3 = async ({
 
                     // check if pwede pa sa end time
                     if (
-                        currentTime + (endTimeCopy - currentTime) >
+                        addMilitaryTimes(currentTime, subtractMilitaryTime(endTimeCopy, currentTime)) >
                         maxEndTime
                     ) {
                         // console.log('class too long');
@@ -454,7 +499,6 @@ const generateV3 = async ({
                     }
 
                     // pwede ung course so go assign
-                    // console.log('course passed all requirement');
 
                     let schedBlock: any = {};
 
@@ -531,8 +575,8 @@ const generateV3 = async ({
 
                     // minus the units
                     requiredCourses[courseDetails.subjectCode] -=
-                        courseDetails.unitsPerClass;
-
+                    courseDetails.unitsPerClass;
+                    
                     // console.log('new current time: ', currentTime);
                     // console.log('new consecutive hours: ', consecutiveHours);
                 }
@@ -542,6 +586,7 @@ const generateV3 = async ({
                 // console.log(section);
                 // console.log(schoolDay);
                 // console.log(daySched);
+                // console.log(requiredCourses)
 
                 if (!schedules[section]) {
                     schedules[section] = {};
@@ -563,16 +608,10 @@ const generateV3 = async ({
                     continue loop4;
                 }
             }
-            console.log('complete');
-            console.log(section, requiredCourses);
             sections.splice(j, 1);
-
-            console.log('sections left', sections);
-
             returnObj[section] = schedules[section];
 
             j = 0;
-            console.log(j);
             continue loop4;
         }
     }
@@ -593,6 +632,7 @@ const generateV3 = async ({
     //
 };
 
+// may conflict pa rin 
 const assignRooms = async ({
     classSchedules,
     roomSchedule,
@@ -788,13 +828,17 @@ const checkRoomAvailability = ({
         let roomTimeBlock = specRoomDaySched[i].timeBlock;
 
         if (
-            (timeBlock.start >= roomTimeBlock.start &&
-                timeBlock.start < roomTimeBlock.end) ||
-            (timeBlock.end > roomTimeBlock.start &&
-                timeBlock.end <= roomTimeBlock.end)
+            (parseInt(timeBlock.start) >= parseInt(roomTimeBlock.start) &&
+                parseInt(timeBlock.start) < parseInt(roomTimeBlock.end)) ||
+            (parseInt(timeBlock.end) > parseInt(roomTimeBlock.start) &&
+                parseInt(timeBlock.end) <= parseInt(roomTimeBlock.end)) ||
+            (parseInt(timeBlock.start) <= parseInt(roomTimeBlock.start) &&
+                parseInt(timeBlock.end) >= parseInt(roomTimeBlock.end)) ||
+            (parseInt(timeBlock.start) >= parseInt(roomTimeBlock.start) &&
+                parseInt(timeBlock.end) <= parseInt(roomTimeBlock.end))
         ) {
             return false;
-        }
+        } //1200 1500 //1230 1400 
     }
 
     return true;
@@ -892,6 +936,10 @@ const getStartAndEndTime = ({
         start: 700,
         end: 2100
     };
+
+    if (!startRestriction && !endRestriction){
+        return standardAvailableTime;
+    }
 
     if (startRestriction == standardAvailableTime.start) {
         standardAvailableTime.start = endRestriction;
