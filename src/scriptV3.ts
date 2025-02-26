@@ -70,8 +70,14 @@ export const runGAV3 = async () => {
         }
     });
 
-    assignRooms({classSchedules: schedules})
+    let roomSchedule = {};
 
+    await assignRooms({ classSchedules: schedules, roomSchedule, department: 'CS' });
+
+    return {
+        classSchedules: schedules,
+        roomSchedules: roomSchedule
+    }
     return true;
 };
 
@@ -303,8 +309,8 @@ const generateV3 = async ({
                         if (!schedules[section]) {
                             schedules[section] = {};
                         }
-        
-                        schedules[section][schoolDay] = daySched
+
+                        schedules[section][schoolDay] = daySched;
                         break loop2;
                     }
 
@@ -474,7 +480,7 @@ const generateV3 = async ({
                     }
 
                     schedBlock = {
-                        course: courseDetails.subjectCode,
+                        course: courseDetails, // courseDetails.subjectCode
                         timeBlock
                     };
 
@@ -542,18 +548,18 @@ const generateV3 = async ({
                     schedules[section] = {};
                 }
 
-                schedules[section][schoolDay] = daySched
+                schedules[section][schoolDay] = daySched;
             }
-            
+
             // check if 0 lahat nung sa required courses
             // if yes we push that section sched to the return body
             // and remove that section from the loop
             // else we just continue
-            
+
             let requiredCoursesKeys = Object.keys(requiredCourses);
             for (let k = 0; k < requiredCoursesKeys.length; k++) {
                 if (requiredCourses[requiredCoursesKeys[k]] > 0) {
-                    schedules[section] = {}
+                    schedules[section] = {};
                     j = 0;
                     continue loop4;
                 }
@@ -588,26 +594,161 @@ const generateV3 = async ({
     //
 };
 
-const assignRooms = ({classSchedules}: {classSchedules: any}) => {
-    console.log(classSchedules)
+const assignRooms = async ({
+    classSchedules,
+    roomSchedule,
+    department
+}: {
+    classSchedules: any;
+    roomSchedule: any;
+    department: string;
+}) => {
+    console.log(classSchedules);
 
     // loop thru sections in generate
-    let classScheduleKeys = Object.keys(classSchedules)
-    for (let i = 0; i < classScheduleKeys.length; i++){
-        let sched = classSchedules[classScheduleKeys[i]]
+    let classScheduleKeys = Object.keys(classSchedules);
+    for (let i = 0; i < classScheduleKeys.length; i++) {
+        let sched = classSchedules[classScheduleKeys[i]];
 
+        // loop thru schooldays
+        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+            let daySched = sched[SCHOOL_DAYS[j]];
+
+            // loop thru day sched
+            for (let k = 0; k < (daySched?.length ?? 0); k++) {
+                let schedBlock = daySched[k];
+
+                let course = schedBlock.course;
+                let timeBlock = schedBlock.timeBlock;
+
+                if (course.subjectCode.startsWith('PATHFIT')){
+                    schedBlock.room = 'PE ROOM';
+                    continue;
+                }
+
+                // assign room
+                let room = await findRoomForCourse({
+                    course: course.subjectCode,
+                    courseType: course.type,
+                    roomSchedule,
+                    specificRoomAssignment: course.specificRoomAssignment,
+                    department,
+                    timeBlock,
+                    schoolDay: SCHOOL_DAYS[j]
+                });
+
+                console.log('room', room)
+                
+                schedBlock.room = room;
+                if (!roomSchedule?.[room]) {
+                    roomSchedule[room] = {
+                        M: [],
+                        T: [],
+                        W: [],
+                        TH: [],
+                        F: [],
+                        S: [],
+                    };
+                }
+                roomSchedule[room][SCHOOL_DAYS[j]].push({ course: course.subjectCode, timeBlock });
+
+                console.log('new sched block', schedBlock)
+            }
+        }
     }
-    // loop thru schooldays
-    // loop thru day sched
-    // assign room
-    // add to room sched and class sched
     // before adding check if may conflict
     // if wala add if meron check ung next if pwede
     // loop until makakuha ng pwede
     // if wala pwede set as null tapos move on sa next sched
-
+    
     // return class sched n may rooms na
-}
+};
+
+// add to room sched and class sched
+const findRoomForCourse = async ({
+    course,
+    courseType,
+    roomSchedule,
+    specificRoomAssignment,
+    department,
+    timeBlock,
+    schoolDay
+}: {
+    course: string;
+    courseType: string;
+    roomSchedule: any;
+    specificRoomAssignment: any;
+    department: string;
+    timeBlock: any;
+    schoolDay: string;
+}) => {
+    if (specificRoomAssignment) {
+        // check kung pwede sa room na un pero dapat oo lolz
+    }
+
+    const query =
+        'SELECT room_id FROM rooms WHERE type = $1';
+    const res = await client.query(query, [courseType]);
+    const availableRooms = res.rows;
+
+    // loop thru available rooms
+    for (let i = 0; i < availableRooms.length; i++) {
+        let prospectRoom = availableRooms[i];
+
+        // check if pwede sa room schedule
+        let roomAvailability = checkRoomAvailability({
+            roomSchedule,
+            timeBlock,
+            room: prospectRoom.room_id,
+            schoolDay
+        });
+
+        if (!roomAvailability) {
+            continue;
+        }
+        
+        return prospectRoom.room_id
+    }
+    return null;
+};
+
+// roomSChedule = {
+//     [roomid] = {
+//         M: daysched
+//     }
+// }
+const checkRoomAvailability = ({
+    roomSchedule,
+    timeBlock,
+    room,
+    schoolDay
+}: {
+    roomSchedule: any;
+    timeBlock: any;
+    room: string;
+    schoolDay: string;
+}) => {
+    let specRoomDaySched = roomSchedule?.[room]?.[schoolDay];
+
+    if (!specRoomDaySched) {
+        return true;
+    }
+
+    for (let i = 0; i < specRoomDaySched.length; i++) {
+        let roomTimeBlock = specRoomDaySched[i].timeBlock;
+
+        if (
+            (timeBlock.start >= roomTimeBlock.start &&
+                timeBlock.start < roomTimeBlock.end) ||
+            (timeBlock.end > roomTimeBlock.start &&
+                timeBlock.end <= roomTimeBlock.end)
+        ) {
+            return false;
+        }
+    }
+
+    return true;
+};
 
 // 1 - 2
 const subtractMilitaryTime = (militaryTime1: number, militaryTime2: number) => {
@@ -737,8 +878,8 @@ const getCourseDetails = async (subjectCode: string) => {
         type: res.rows[0].type,
         category: res.rows[0].category,
         restrictions: res.rows[0].restrictions,
-        totalUnits: res.rows[0].totalUnits,
-        specificRoomAssignment: res.rows[0].specificRoomAssignment
+        totalUnits: res.rows[0].total_units,
+        specificRoomAssignment: res.rows[0].specific_room_assignment
     };
 
     return courseDetails;
