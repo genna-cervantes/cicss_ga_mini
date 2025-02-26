@@ -55,6 +55,7 @@ client
 export const runGAV3 = async () => {
     // generate 1st year
 
+    // GENERATE CS
     let classSchedule: any = {}
     let schedulesFirst = await generateV3({
         department: 'CS',
@@ -87,10 +88,12 @@ export const runGAV3 = async () => {
         year: 3,
         semester: 2,
         sectionSpecializations: {
-            CSA: 'none',
-            CSB: 'none',
-            CSC: 'none',
-            CSD: 'none'
+            CSA: 'Core CS',
+            CSB: 'Game Development',
+            CSC: 'Data Science',
+            CSD: 'Data Science',
+            CSE: 'Data Science',
+            CSF: 'Data Science',
         }
     });
     classSchedule[3] = schedulesThird;
@@ -100,16 +103,17 @@ export const runGAV3 = async () => {
         year: 4,
         semester: 2,
         sectionSpecializations: {
-            CSA: 'none',
-            CSB: 'none',
-            CSC: 'none',
-            CSD: 'none'
+            CSA: 'Core CS',
+            CSB: 'Game Development',
+            CSC: 'Data Science',
         }
     });
     classSchedule[4] = schedulesFourth;
 
-    let roomSchedule = {};
+    // GENERATE IT
 
+
+    let roomSchedule = {};
     await assignRooms({ classSchedules: classSchedule, roomSchedule, department: 'CS' });
 
     return {
@@ -202,29 +206,31 @@ const generateV3 = async ({
 
             // console.log(section);
             // console.log(specializationsAndCurriculum[specializations[i]]);
-            // console.log(availableDays);
-            // console.log(maxDays);
+            console.log('ad', availableDays);
+            console.log('md', maxDays);
             // console.log(availableTime);
             // console.log(requiredCourses);
 
             // loop thru the available days and max days
 
             let consecutiveHours = 0;
+            let assignedDays = 0;
+            loop2: for (let k = 0; k < availableDays.length; ) {
 
-            loop2: for (let k = 0; k < SCHOOL_DAYS.length; k++) {
+                if (assignedDays >= maxDays){
+                    break loop2;
+                }
 
-                // console.log('school days', SCHOOL_DAYS)
-
-                let schoolDay = SCHOOL_DAYS[k];
+                let schoolDay = availableDays[k];
                 daySched = [];
 
                 let startTime = getStartAndEndTime({
-                    startRestriction: availableTime[SCHOOL_DAYS[k]][0]?.start,
-                    endRestriction: availableTime[SCHOOL_DAYS[k]][0]?.end
+                    startRestriction: availableTime[availableDays[k]][0]?.start,
+                    endRestriction: availableTime[availableDays[k]][0]?.end
                 }).start; // should change
                 let maxEndTime = getStartAndEndTime({
-                    startRestriction: availableTime[SCHOOL_DAYS[k]][0]?.start,
-                    endRestriction: availableTime[SCHOOL_DAYS[k]][0]?.end
+                    startRestriction: availableTime[availableDays[k]][0]?.start,
+                    endRestriction: availableTime[availableDays[k]][0]?.end
                 }).end; // should change
 
                 // console.log('school day', schoolDay);
@@ -457,7 +463,7 @@ const generateV3 = async ({
 
                     // check if pwede ba ung course na toh at this time if not tuloy lng
                     let restrictions =
-                        courseDetails.restrictions[SCHOOL_DAYS[k]];
+                        courseDetails.restrictions[availableDays[k]];
                     for (let n = 0; n < restrictions.length; n++) {
                         // console.log('checking with restrictions');
                         if (
@@ -593,6 +599,19 @@ const generateV3 = async ({
                 }
 
                 schedules[section][schoolDay] = daySched;
+                                
+                // for max and available days
+                assignedDays++;
+                if (year === 4){
+                    let prob = Math.random()
+                    if (prob > 0.5){
+                        k+=5;
+                    }else{
+                        k++
+                    }
+                }else{
+                    k++;
+                }
             }
 
             // check if 0 lahat nung sa required courses
