@@ -68,11 +68,18 @@ client
     });
 
 export const runGAV3 = async () => {
-    // generate 1st year
+    
+    let population: {
+        classSchedule: any,
+        roomConflicts: number
+    }[] = []
 
-    for (let i = 0; i < 50; i++){
+    for (let i = 0; i < 10; i++){
+
+        console.log('generating population')
         
         // GENERATE CS
+        console.log('generating chromosome: ', i)
         let classSchedule: any = {
             CS: {},
             IT: {},
@@ -249,21 +256,72 @@ export const runGAV3 = async () => {
         });
         classSchedule['IS'][4] = schedulesFourthIS;
 
+        console.log('assigning rooms')
         let roomSchedule = {};
         // may something di2
         await assignRooms({ classSchedules: classSchedule, roomSchedule });
 
         let roomConflicts = evaluateRoomAssignment(classSchedule)
 
-        return {
-            classSchedules: classSchedule,
-            roomSchedules: roomSchedule,
-            roomConflicts: roomConflicts
-        };
+        console.log('pushing to population')
+        population.push({
+            classSchedule,
+            roomConflicts
+        })
+    }
+
+    // console.log('top 50')
+    population = getTop50(population)
+
+    // cross over the population
+    let half = population.length / 2
+    for (let i = 0; i < half; i++){
+        let chromosomeA = population[i].classSchedule
+        let chromosomeB = population[half + i].classSchedule
+
+        // loop thru the sched
+        // for every year key i generate a random cross over point
+        // tapos i cross over
+        let departmentKeys = Object.keys(chromosomeA)
+        for (let j = 0; j < departmentKeys.length; j++){
+            let departmentSched = chromosomeA[departmentKeys[j]];
+            let departmentSchedB = chromosomeB[departmentKeys[j]];
+
+            let yearKeys = Object.keys(departmentSched)
+            for (let k = 0; k < yearKeys.length; k++){
+                let yearSched = departmentSched[yearKeys[k]];
+                let yearSchedB = departmentSchedB[yearKeys[k]];
+                
+                let classKeys = Object.keys(yearSched);
+                let crossoverPoint = Math.floor(Math.random() * classKeys.length)
+
+                for (let m = 0; m < crossoverPoint; m++){
+                    let classKey = classKeys[m] // CSA CSB CSC | CSD CSE CSF
+
+                    console.log('before')
+                    console.log('yr sched', yearSched)
+                    console.log('yr sched b', yearSchedB)
+                    
+                    let schedSwitch = yearSched[classKey];
+                    yearSched[classKey] = yearSchedB[classKey]
+                    yearSchedB[classKey] = schedSwitch;
+                    
+                    console.log('after')
+                    console.log('yr sched', yearSched)
+                    console.log('yr sched b', yearSchedB)
+                    
+                }
+            }
+        }
     }
 
     return true;
 };
+
+const getTop50 = (population: any) => {
+    let top50 = population.sort((a: any, b: any) => b.roomConflicts - a.roomConflicts).slice(0, 50)
+    return top50;
+}
 
 const evaluateRoomAssignment = (classSchedule: any) => {
     let conflicts = 0;
@@ -397,16 +455,16 @@ const generateV3 = async ({
             if (year == 2 || year == 3) {
                 let jProb = Math.random();
                 if (jProb <= 0.1) {
-                    console.log('start at 0');
+                    
                     start = 0;
                 } else if (jProb <= 0.2) {
-                    console.log('start at 1');
+                    
                     start = 1;
                 } else if (jProb <= 0.7) {
-                    console.log('start at 2');
+                    
                     start = 2;
                 } else {
-                    console.log('start at 3');
+                    
                     start = 3;
                 }
             } else if (year == 4){
@@ -928,7 +986,6 @@ const assignRooms = async ({
                                     S: []
                                 };
                             }
-                            console.log(SCHOOL_DAYS[m])
                             roomSchedule[room][SCHOOL_DAYS[m]].push({
                                 course: course.subjectCode,
                                 timeBlock
