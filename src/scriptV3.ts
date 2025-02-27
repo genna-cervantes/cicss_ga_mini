@@ -70,193 +70,236 @@ client
 export const runGAV3 = async () => {
     // generate 1st year
 
-    // GENERATE CS
-    let classSchedule: any = {
-        CS: {},
-        IT: {},
-        IS: {}
-    };
-    let schedulesFirst = await generateV3({
-        department: 'CS',
-        year: 1,
-        semester: 2,
-        sectionSpecializations: {
-            CSA: 'none',
-            CSB: 'none',
-            CSC: 'none',
-            CSD: 'none'
-        }
-    });
-    classSchedule['CS'][1] = schedulesFirst;
+    for (let i = 0; i < 50; i++){
+        
+        // GENERATE CS
+        let classSchedule: any = {
+            CS: {},
+            IT: {},
+            IS: {}
+        };
+        let schedulesFirst = await generateV3({
+            department: 'CS',
+            year: 1,
+            semester: 2,
+            sectionSpecializations: {
+                CSA: 'none',
+                CSB: 'none',
+                CSC: 'none',
+                CSD: 'none'
+            }
+        });
+        classSchedule['CS'][1] = schedulesFirst;
+    
+        let schedulesSecond = await generateV3({
+            department: 'CS',
+            year: 2,
+            semester: 2,
+            sectionSpecializations: {
+                CSA: 'none',
+                CSB: 'none',
+                CSC: 'none',
+                CSD: 'none'
+            }
+        });
+        classSchedule['CS'][2] = schedulesSecond;
+    
+        let schedulesThird = await generateV3({
+            department: 'CS',
+            year: 3,
+            semester: 2,
+            sectionSpecializations: {
+                CSA: 'Core CS',
+                CSB: 'Game Development',
+                CSC: 'Data Science',
+                CSD: 'Data Science',
+                CSE: 'Data Science',
+                CSF: 'Data Science'
+            }
+        });
+        classSchedule['CS'][3] = schedulesThird;
+    
+        let schedulesFourth = await generateV3({
+            department: 'CS',
+            year: 4,
+            semester: 2,
+            sectionSpecializations: {
+                CSA: 'Core CS',
+                CSB: 'Game Development',
+                CSC: 'Data Science'
+            }
+        });
+        classSchedule['CS'][4] = schedulesFourth;
+    
+        // GENERATE IT
+        let schedulesFirstIT = await generateV3({
+            department: 'IT',
+            year: 1,
+            semester: 2,
+            sectionSpecializations: {
+                ITA: 'none',
+                ITB: 'none',
+                ITC: 'none',
+                ITD: 'none',
+                ITE: 'none',
+                ITF: 'none',
+                ITG: 'none',
+                ITH: 'none'
+            }
+        });
+        classSchedule['IT'][1] = schedulesFirstIT;
+    
+        let schedulesSecondIT = await generateV3({
+            department: 'IT',
+            year: 2,
+            semester: 2,
+            sectionSpecializations: {
+                ITA: 'none',
+                ITB: 'none',
+                ITC: 'none',
+                ITD: 'none',
+                ITE: 'none',
+                ITF: 'none',
+                ITG: 'none'
+            }
+        });
+        classSchedule['IT'][2] = schedulesSecondIT;
+    
+        let schedulesThirdIT = await generateV3({
+            department: 'IT',
+            year: 3,
+            semester: 2,
+            sectionSpecializations: {
+                ITA: 'Network and Security',
+                ITB: 'Network and Security',
+                ITC: 'Network and Security',
+                ITD: 'Web and Mobile Dev',
+                ITE: 'Web and Mobile Dev',
+                ITF: 'Web and Mobile Dev',
+                ITG: 'IT Automation',
+                ITH: 'IT Automation',
+                ITI: 'IT Automation'
+            }
+        });
+        classSchedule['IT'][3] = schedulesThirdIT;
+    
+        let schedulesFourthIT = await generateV3({
+            department: 'IT',
+            year: 4,
+            semester: 2,
+            sectionSpecializations: {
+                ITA: 'Network and Security',
+                ITB: 'Network and Security',
+                ITC: 'Network and Security',
+                ITD: 'Web and Mobile Dev',
+                ITE: 'Web and Mobile Dev',
+                ITF: 'Web and Mobile Dev',
+                ITG: 'IT Automation'
+            }
+        });
+        classSchedule['IT'][4] = schedulesFourthIT;
+    
+        // GENERATE UNG SA IS
+        let schedulesFirstIS = await generateV3({
+            department: 'IS',
+            year: 1,
+            semester: 2,
+            sectionSpecializations: {
+                ISA: 'none',
+                ISB: 'none',
+                ISC: 'none',
+                ISD: 'none'
+            }
+        });
+        classSchedule['IS'][1] = schedulesFirstIS;
+    
+        let schedulesSecondIS = await generateV3({
+            department: 'IS',
+            year: 2,
+            semester: 2,
+            sectionSpecializations: {
+                ISA: 'none',
+                ISB: 'none',
+                ISC: 'none'
+            }
+        });
+        classSchedule['IS'][2] = schedulesSecondIS;
+    
+        let schedulesThirdIS = await generateV3({
+            department: 'IS',
+            year: 3,
+            semester: 2,
+            sectionSpecializations: {
+                ISA: 'Business Analytics',
+                ISB: 'Business Analytics',
+                ISC: 'Service Management'
+            }
+        });
+        classSchedule['IS'][3] = schedulesThirdIS;
+    
+        let schedulesFourthIS = await generateV3({
+            department: 'IS',
+            year: 4,
+            semester: 2,
+            sectionSpecializations: {
+                ISA: 'Business Analytics',
+                ISB: 'Business Analytics',
+                ISC: 'Service Management'
+            }
+        });
+        classSchedule['IS'][4] = schedulesFourthIS;
 
-    let schedulesSecond = await generateV3({
-        department: 'CS',
-        year: 2,
-        semester: 2,
-        sectionSpecializations: {
-            CSA: 'none',
-            CSB: 'none',
-            CSC: 'none',
-            CSD: 'none'
-        }
-    });
-    classSchedule['CS'][2] = schedulesSecond;
+        let roomSchedule = {};
+        // may something di2
+        await assignRooms({ classSchedules: classSchedule, roomSchedule });
 
-    let schedulesThird = await generateV3({
-        department: 'CS',
-        year: 3,
-        semester: 2,
-        sectionSpecializations: {
-            CSA: 'Core CS',
-            CSB: 'Game Development',
-            CSC: 'Data Science',
-            CSD: 'Data Science',
-            CSE: 'Data Science',
-            CSF: 'Data Science'
-        }
-    });
-    classSchedule['CS'][3] = schedulesThird;
+        let roomConflicts = evaluateRoomAssignment(classSchedule)
 
-    let schedulesFourth = await generateV3({
-        department: 'CS',
-        year: 4,
-        semester: 2,
-        sectionSpecializations: {
-            CSA: 'Core CS',
-            CSB: 'Game Development',
-            CSC: 'Data Science'
-        }
-    });
-    classSchedule['CS'][4] = schedulesFourth;
+        return {
+            classSchedules: classSchedule,
+            roomSchedules: roomSchedule,
+            roomConflicts: roomConflicts
+        };
+    }
 
-    // GENERATE IT
-    let schedulesFirstIT = await generateV3({
-        department: 'IT',
-        year: 1,
-        semester: 2,
-        sectionSpecializations: {
-            ITA: 'none',
-            ITB: 'none',
-            ITC: 'none',
-            ITD: 'none',
-            ITE: 'none',
-            ITF: 'none',
-            ITG: 'none',
-            ITH: 'none'
-        }
-    });
-    classSchedule['IT'][1] = schedulesFirstIT;
-
-    let schedulesSecondIT = await generateV3({
-        department: 'IT',
-        year: 2,
-        semester: 2,
-        sectionSpecializations: {
-            ITA: 'none',
-            ITB: 'none',
-            ITC: 'none',
-            ITD: 'none',
-            ITE: 'none',
-            ITF: 'none',
-            ITG: 'none'
-        }
-    });
-    classSchedule['IT'][2] = schedulesSecondIT;
-
-    let schedulesThirdIT = await generateV3({
-        department: 'IT',
-        year: 3,
-        semester: 2,
-        sectionSpecializations: {
-            ITA: 'Network and Security',
-            ITB: 'Network and Security',
-            ITC: 'Network and Security',
-            ITD: 'Web and Mobile Dev',
-            ITE: 'Web and Mobile Dev',
-            ITF: 'Web and Mobile Dev',
-            ITG: 'IT Automation',
-            ITH: 'IT Automation',
-            ITI: 'IT Automation'
-        }
-    });
-    classSchedule['IT'][3] = schedulesThirdIT;
-
-    let schedulesFourthIT = await generateV3({
-        department: 'IT',
-        year: 4,
-        semester: 2,
-        sectionSpecializations: {
-            ITA: 'Network and Security',
-            ITB: 'Network and Security',
-            ITC: 'Network and Security',
-            ITD: 'Web and Mobile Dev',
-            ITE: 'Web and Mobile Dev',
-            ITF: 'Web and Mobile Dev',
-            ITG: 'IT Automation'
-        }
-    });
-    classSchedule['IT'][4] = schedulesFourthIT;
-
-    // GENERATE UNG SA IS
-    let schedulesFirstIS = await generateV3({
-        department: 'IS',
-        year: 1,
-        semester: 2,
-        sectionSpecializations: {
-            ISA: 'none',
-            ISB: 'none',
-            ISC: 'none',
-            ISD: 'none'
-        }
-    });
-    classSchedule['IS'][1] = schedulesFirstIS;
-
-    let schedulesSecondIS = await generateV3({
-        department: 'IS',
-        year: 2,
-        semester: 2,
-        sectionSpecializations: {
-            ISA: 'none',
-            ISB: 'none',
-            ISC: 'none'
-        }
-    });
-    classSchedule['IS'][2] = schedulesSecondIS;
-
-    let schedulesThirdIS = await generateV3({
-        department: 'IS',
-        year: 3,
-        semester: 2,
-        sectionSpecializations: {
-            ISA: 'Business Analytics',
-            ISB: 'Business Analytics',
-            ISC: 'Service Management'
-        }
-    });
-    classSchedule['IS'][3] = schedulesThirdIS;
-
-    let schedulesFourthIS = await generateV3({
-        department: 'IS',
-        year: 4,
-        semester: 2,
-        sectionSpecializations: {
-            ISA: 'Business Analytics',
-            ISB: 'Business Analytics',
-            ISC: 'Service Management'
-        }
-    });
-    classSchedule['IS'][4] = schedulesFourthIS;
-
-    let roomSchedule = {};
-    // may something di2
-    await assignRooms({ classSchedules: classSchedule, roomSchedule });
-
-    return {
-        classSchedules: classSchedule,
-        roomSchedules: roomSchedule
-    };
     return true;
 };
+
+const evaluateRoomAssignment = (classSchedule: any) => {
+    let conflicts = 0;
+
+    let departmentKeys = Object.keys(classSchedule);
+    for (let i = 0; i < departmentKeys.length; i++){
+        let departmentSched = classSchedule[departmentKeys[i]];
+
+        let yearKeys = Object.keys(departmentSched)
+        for (let j = 0; j < yearKeys.length; j++){
+            let yearSched = departmentSched[yearKeys[j]]
+
+            let classKeys = Object.keys(yearSched)
+            for (let k = 0; k < classKeys.length; k++){
+                let classSched = yearSched[classKeys[k]]
+
+                for (let m = 0; m < SCHOOL_DAYS.length; m++){
+                    let daySched = classSched[SCHOOL_DAYS[m]];
+
+                    if (!daySched){
+                        continue;
+                    }
+
+                    for (let n = 0; n < daySched.length; n++){
+                        let schedBlock = daySched[n];
+
+                        if (schedBlock.room == null){
+                            conflicts++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return conflicts;
+}
 
 // mali ung pag assign ng saturday sa room sched meron sat sa class sched pero walang sat sa room sched
 const generateV3 = async ({
