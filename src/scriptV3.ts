@@ -28,6 +28,21 @@ import { SCHOOL_DAYS } from './constants';
 //     csd: 'none' // dapat sa front end may tick box lng to check na wala pang specializations at this level para lahat matic none
 // }
 
+// cross over ung ginenerate na timeblocks
+
+// loop this by 100 generations
+
+// mag generate muna ng 100 na timeblocks
+// assignan lahat un ng room and tas
+// evaluate
+
+// ung top 50 iccrossover ng via sections UNG TIMEBLOCK LAYER LNG
+// so 100 na ulit
+// assignan ulit un lahat ng room and tas
+// evaluate
+
+// ung curriculum ng IS
+
 const DB_HOST = 'localhost';
 const DB_PORT = 5432;
 const DB_USER = 'postgres';
@@ -56,7 +71,11 @@ export const runGAV3 = async () => {
     // generate 1st year
 
     // GENERATE CS
-    let classSchedule: any = {}
+    let classSchedule: any = {
+        CS: {},
+        IT: {},
+        IS: {}
+    };
     let schedulesFirst = await generateV3({
         department: 'CS',
         year: 1,
@@ -68,7 +87,7 @@ export const runGAV3 = async () => {
             CSD: 'none'
         }
     });
-    classSchedule[1] = schedulesFirst;
+    classSchedule['CS'][1] = schedulesFirst;
 
     let schedulesSecond = await generateV3({
         department: 'CS',
@@ -81,7 +100,7 @@ export const runGAV3 = async () => {
             CSD: 'none'
         }
     });
-    classSchedule[2] = schedulesSecond;
+    classSchedule['CS'][2] = schedulesSecond;
 
     let schedulesThird = await generateV3({
         department: 'CS',
@@ -93,10 +112,10 @@ export const runGAV3 = async () => {
             CSC: 'Data Science',
             CSD: 'Data Science',
             CSE: 'Data Science',
-            CSF: 'Data Science',
+            CSF: 'Data Science'
         }
     });
-    classSchedule[3] = schedulesThird;
+    classSchedule['CS'][3] = schedulesThird;
 
     let schedulesFourth = await generateV3({
         department: 'CS',
@@ -105,24 +124,141 @@ export const runGAV3 = async () => {
         sectionSpecializations: {
             CSA: 'Core CS',
             CSB: 'Game Development',
-            CSC: 'Data Science',
+            CSC: 'Data Science'
         }
     });
-    classSchedule[4] = schedulesFourth;
+    classSchedule['CS'][4] = schedulesFourth;
 
     // GENERATE IT
+    let schedulesFirstIT = await generateV3({
+        department: 'IT',
+        year: 1,
+        semester: 2,
+        sectionSpecializations: {
+            ITA: 'none',
+            ITB: 'none',
+            ITC: 'none',
+            ITD: 'none',
+            ITE: 'none',
+            ITF: 'none',
+            ITG: 'none',
+            ITH: 'none'
+        }
+    });
+    classSchedule['IT'][1] = schedulesFirstIT;
 
+    let schedulesSecondIT = await generateV3({
+        department: 'IT',
+        year: 2,
+        semester: 2,
+        sectionSpecializations: {
+            ITA: 'none',
+            ITB: 'none',
+            ITC: 'none',
+            ITD: 'none',
+            ITE: 'none',
+            ITF: 'none',
+            ITG: 'none'
+        }
+    });
+    classSchedule['IT'][2] = schedulesSecondIT;
+
+    let schedulesThirdIT = await generateV3({
+        department: 'IT',
+        year: 3,
+        semester: 2,
+        sectionSpecializations: {
+            ITA: 'Network and Security',
+            ITB: 'Network and Security',
+            ITC: 'Network and Security',
+            ITD: 'Web and Mobile Dev',
+            ITE: 'Web and Mobile Dev',
+            ITF: 'Web and Mobile Dev',
+            ITG: 'IT Automation',
+            ITH: 'IT Automation',
+            ITI: 'IT Automation'
+        }
+    });
+    classSchedule['IT'][3] = schedulesThirdIT;
+
+    let schedulesFourthIT = await generateV3({
+        department: 'IT',
+        year: 4,
+        semester: 2,
+        sectionSpecializations: {
+            ITA: 'Network and Security',
+            ITB: 'Network and Security',
+            ITC: 'Network and Security',
+            ITD: 'Web and Mobile Dev',
+            ITE: 'Web and Mobile Dev',
+            ITF: 'Web and Mobile Dev',
+            ITG: 'IT Automation'
+        }
+    });
+    classSchedule['IT'][4] = schedulesFourthIT;
+
+    // GENERATE UNG SA IS
+    let schedulesFirstIS = await generateV3({
+        department: 'IS',
+        year: 1,
+        semester: 2,
+        sectionSpecializations: {
+            ISA: 'none',
+            ISB: 'none',
+            ISC: 'none',
+            ISD: 'none'
+        }
+    });
+    classSchedule['IS'][1] = schedulesFirstIS;
+
+    let schedulesSecondIS = await generateV3({
+        department: 'IS',
+        year: 2,
+        semester: 2,
+        sectionSpecializations: {
+            ISA: 'none',
+            ISB: 'none',
+            ISC: 'none'
+        }
+    });
+    classSchedule['IS'][2] = schedulesSecondIS;
+
+    let schedulesThirdIS = await generateV3({
+        department: 'IS',
+        year: 3,
+        semester: 2,
+        sectionSpecializations: {
+            ISA: 'Business Analytics',
+            ISB: 'Business Analytics',
+            ISC: 'Service Management'
+        }
+    });
+    classSchedule['IS'][3] = schedulesThirdIS;
+
+    let schedulesFourthIS = await generateV3({
+        department: 'IS',
+        year: 4,
+        semester: 2,
+        sectionSpecializations: {
+            ISA: 'Business Analytics',
+            ISB: 'Business Analytics',
+            ISC: 'Service Management'
+        }
+    });
+    classSchedule['IS'][4] = schedulesFourthIS;
 
     let roomSchedule = {};
-    await assignRooms({ classSchedules: classSchedule, roomSchedule, department: 'CS' });
+    // may something di2
+    await assignRooms({ classSchedules: classSchedule, roomSchedule });
 
     return {
         classSchedules: classSchedule,
         roomSchedules: roomSchedule
-    }
+    };
     return true;
 };
 
+// mali ung pag assign ng saturday sa room sched meron sat sa class sched pero walang sat sa room sched
 const generateV3 = async ({
     department,
     year,
@@ -136,8 +272,6 @@ const generateV3 = async ({
 }) => {
     let specializationsAndSections: any = {};
     let specializationsAndCurriculum: any = {};
-
-    console.log('year', year)
 
     // group sectionSpecializations by specialization not section
     let sectionKeys = Object.keys(sectionSpecializations);
@@ -168,6 +302,7 @@ const generateV3 = async ({
                 year,
                 specializations[i]
             ]);
+
             const curriculum = res.rows[0].courses;
 
             specializationsAndCurriculum[specializations[i]] = curriculum;
@@ -189,12 +324,10 @@ const generateV3 = async ({
         let sections = specializationsAndSections[specializations[i]];
 
         loop4: for (let j = 0; j < sections.length; ) {
-            // console.log('sections', sections)
-            
             let specCurriculum = [
                 ...specializationsAndCurriculum[specializations[i]]
             ];
-            
+
             let section = sections[j];
 
             let availableDays = await getAvailableDays({ year, department });
@@ -206,18 +339,57 @@ const generateV3 = async ({
 
             // console.log(section);
             // console.log(specializationsAndCurriculum[specializations[i]]);
-            console.log('ad', availableDays);
-            console.log('md', maxDays);
+            // console.log('ad', availableDays);
+            // console.log('md', maxDays);
             // console.log(availableTime);
             // console.log(requiredCourses);
 
             // loop thru the available days and max days
 
+            // start j range from 0-3 para ndi nag kkumpol sa start ng week ung assignments
+
+            // M T W TH F S
+            let start;
+            let skip;
+            if (year == 2 || year == 3) {
+                let jProb = Math.random();
+                if (jProb <= 0.1) {
+                    console.log('start at 0');
+                    start = 0;
+                } else if (jProb <= 0.2) {
+                    console.log('start at 1');
+                    start = 1;
+                } else if (jProb <= 0.7) {
+                    console.log('start at 2');
+                    start = 2;
+                } else {
+                    console.log('start at 3');
+                    start = 3;
+                }
+            } else if (year == 4){
+                let skipProb = Math.random()
+                if (skipProb <= 0.3){
+                    start = 0;
+                    skip = 5;
+                }else{
+                    start = 4;
+                    skip = 1;
+                }
+            } else {
+                start = 0;
+            }
+
             let consecutiveHours = 0;
             let assignedDays = 0;
-            loop2: for (let k = 0; k < availableDays.length; ) {
+            loop2: for (let k = start; k < availableDays.length; ) {
 
-                if (assignedDays >= maxDays){
+                // try random skip based on probability
+                let skipProb = Math.random();
+                if (skipProb >= 0.6) {
+                    continue loop2;
+                }
+
+                if (assignedDays >= maxDays) {
                     break loop2;
                 }
 
@@ -245,6 +417,7 @@ const generateV3 = async ({
                 loop3: for (
                     let currentTime = startTime;
                     currentTime < maxEndTime;
+
                 ) {
                     if (tries >= 10) {
                         // console.log('too many tries');
@@ -339,7 +512,10 @@ const generateV3 = async ({
                         // );
                         let militaryTime =
                             convertMinutesToMilitaryTime(breakTime);
-                        currentTime = addMilitaryTimes(currentTime, militaryTime);
+                        currentTime = addMilitaryTimes(
+                            currentTime,
+                            militaryTime
+                        );
 
                         // console.log(
                         //     'break time in military time: ',
@@ -415,8 +591,10 @@ const generateV3 = async ({
 
                     // check if pwede pa sa end time
                     if (
-                        addMilitaryTimes(currentTime, subtractMilitaryTime(endTimeCopy, currentTime)) >
-                        maxEndTime
+                        addMilitaryTimes(
+                            currentTime,
+                            subtractMilitaryTime(endTimeCopy, currentTime)
+                        ) > maxEndTime
                     ) {
                         // console.log('class too long');
                         // console.log('current time: ', currentTime);
@@ -581,8 +759,8 @@ const generateV3 = async ({
 
                     // minus the units
                     requiredCourses[courseDetails.subjectCode] -=
-                    courseDetails.unitsPerClass;
-                    
+                        courseDetails.unitsPerClass;
+
                     // console.log('new current time: ', currentTime);
                     // console.log('new consecutive hours: ', consecutiveHours);
                 }
@@ -599,17 +777,12 @@ const generateV3 = async ({
                 }
 
                 schedules[section][schoolDay] = daySched;
-                                
+
                 // for max and available days
                 assignedDays++;
-                if (year === 4){
-                    let prob = Math.random()
-                    if (prob > 0.5){
-                        k+=5;
-                    }else{
-                        k++
-                    }
-                }else{
+                if (year == 4 && skip) {
+                    k += skip;
+                } else {
                     k++;
                 }
             }
@@ -651,74 +824,83 @@ const generateV3 = async ({
     //
 };
 
-// may conflict pa rin 
+// may conflict pa rin
 const assignRooms = async ({
     classSchedules,
-    roomSchedule,
-    department
+    roomSchedule
 }: {
     classSchedules: any;
     roomSchedule: any;
-    department: string;
 }) => {
     // loop thru sections in generate
-    let classScheduleKeys = Object.keys(classSchedules);
-    for (let i = 0; i < classScheduleKeys.length; i++) {
-        let yearSched = classSchedules[classScheduleKeys[i]];
+    let departmentKeys = Object.keys(classSchedules);
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = classSchedules[departmentKeys[i]];
 
-        let yearSchedKeys = Object.keys(yearSched);
-        for (let j = 0; j < yearSchedKeys.length; j++){
-            let classSched = yearSched[yearSchedKeys[j]]
+        let yearKeys = Object.keys(departmentSched);
+        for (let j = 0; j < yearKeys.length; j++) {
+            let yearSched = departmentSched[yearKeys[j]];
 
-            // loop thru schooldays
-            for (let k = 0; k < SCHOOL_DAYS.length; k++) {
-                let daySched = classSched[SCHOOL_DAYS[k]];
-    
-                // loop thru day sched
-                for (let m = 0; m < (daySched?.length ?? 0); m++) {
-                    let schedBlock = daySched[m];
-    
-                    let course = schedBlock.course;
-                    let timeBlock = schedBlock.timeBlock;
-    
-                    if (course.subjectCode.startsWith('PATHFIT')){
-                        schedBlock.room = 'PE ROOM';
-                        continue;
+            let classKeys = Object.keys(yearSched);
+            for (let k = 0; k < classKeys.length; k++) {
+                let classSched = yearSched[classKeys[k]];
+
+                for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                    let daySched = classSched[SCHOOL_DAYS[m]];
+
+                    // loop thru day sched
+                    for (let n = 0; n < (daySched?.length ?? 0); n++) {
+                        let schedBlock = daySched[n];
+
+                        let course = schedBlock.course;
+                        let timeBlock = schedBlock.timeBlock;
+
+                        if (course.subjectCode.startsWith('PATHFIT')) {
+                            schedBlock.room = 'PE ROOM';
+                            continue;
+                        }
+
+                        // assign room
+                        let room = await findRoomForCourse({
+                            course: course.subjectCode,
+                            courseType: course.type,
+                            roomSchedule,
+                            specificRoomAssignment:
+                                course.specificRoomAssignment,
+                            department: departmentKeys[i],
+                            timeBlock,
+                            schoolDay: SCHOOL_DAYS[m]
+                        });
+
+                        schedBlock.room = room;
+
+                        if (room != null) {
+                            if (!roomSchedule?.[room]) {
+                                roomSchedule[room] = {
+                                    M: [],
+                                    T: [],
+                                    W: [],
+                                    TH: [],
+                                    F: [],
+                                    S: []
+                                };
+                            }
+                            console.log(SCHOOL_DAYS[m])
+                            roomSchedule[room][SCHOOL_DAYS[m]].push({
+                                course: course.subjectCode,
+                                timeBlock
+                            });
+                        }
                     }
-    
-                    // assign room
-                    let room = await findRoomForCourse({
-                        course: course.subjectCode,
-                        courseType: course.type,
-                        roomSchedule,
-                        specificRoomAssignment: course.specificRoomAssignment,
-                        department,
-                        timeBlock,
-                        schoolDay: SCHOOL_DAYS[j]
-                    });
-                    
-                    schedBlock.room = room;
-                    if (!roomSchedule?.[room]) {
-                        roomSchedule[room] = {
-                            M: [],
-                            T: [],
-                            W: [],
-                            TH: [],
-                            F: [],
-                            S: [],
-                        };
-                    }
-                    roomSchedule[room][SCHOOL_DAYS[j]].push({ course: course.subjectCode, timeBlock });
                 }
             }
         }
-
     }
     // before adding check if may conflict
     // if wala add if meron check ung next if pwede
     // loop until makakuha ng pwede
     // if wala pwede set as null tapos move on sa next sched
-    
+
     // return class sched n may rooms na
 };
 
@@ -764,8 +946,8 @@ const findRoomForCourse = async ({
         if (!roomAvailability) {
             continue;
         }
-        
-        return prospectRoom.room_id
+
+        return prospectRoom.room_id;
     }
 
     // wala pa narereturn ibig sabihin wala pa
@@ -774,8 +956,8 @@ const findRoomForCourse = async ({
     const res2 = await client.query(query2, [courseType, department]);
     const availableRooms2 = res2.rows;
 
-     // loop thru available rooms
-     for (let i = 0; i < availableRooms2.length; i++) {
+    // loop thru available rooms
+    for (let i = 0; i < availableRooms2.length; i++) {
         let prospectRoom = availableRooms2[i];
 
         // check if pwede sa room schedule
@@ -789,18 +971,17 @@ const findRoomForCourse = async ({
         if (!roomAvailability) {
             continue;
         }
-        
-        return prospectRoom.room_id
+
+        return prospectRoom.room_id;
     }
-    
+
     // wala na talaga kuha na sa ibang department ng kahit ano
-    const query3 =
-        'SELECT room_id FROM rooms WHERE main_department != $1';
+    const query3 = 'SELECT room_id FROM rooms WHERE main_department != $1';
     const res3 = await client.query(query3, [department]);
     const availableRooms3 = res3.rows;
 
-     // loop thru available rooms
-     for (let i = 0; i < availableRooms3.length; i++) {
+    // loop thru available rooms
+    for (let i = 0; i < availableRooms3.length; i++) {
         let prospectRoom = availableRooms3[i];
 
         // check if pwede sa room schedule
@@ -814,10 +995,10 @@ const findRoomForCourse = async ({
         if (!roomAvailability) {
             continue;
         }
-        
-        return prospectRoom.room_id
+
+        return prospectRoom.room_id;
     }
-    
+
     return null;
 };
 
@@ -857,7 +1038,7 @@ const checkRoomAvailability = ({
                 parseInt(timeBlock.end) <= parseInt(roomTimeBlock.end))
         ) {
             return false;
-        } //1200 1500 //1230 1400 
+        } //1200 1500 //1230 1400
     }
 
     return true;
@@ -956,7 +1137,7 @@ const getStartAndEndTime = ({
         end: 2100
     };
 
-    if (!startRestriction && !endRestriction){
+    if (!startRestriction && !endRestriction) {
         return standardAvailableTime;
     }
 
