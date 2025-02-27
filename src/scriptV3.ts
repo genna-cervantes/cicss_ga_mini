@@ -71,6 +71,7 @@ export const runGAV3 = async () => {
     
     let population: {
         classSchedule: any,
+        classScheduleWithRooms: any
         roomConflicts: number
     }[] = []
 
@@ -259,13 +260,14 @@ export const runGAV3 = async () => {
         console.log('assigning rooms')
         let roomSchedule = {};
         // may something di2
-        await assignRooms({ classSchedules: classSchedule, roomSchedule });
+        let classScheduleWithRooms = await assignRooms({ classSchedules: classSchedule, roomSchedule });
 
         let roomConflicts = evaluateRoomAssignment(classSchedule)
 
         console.log('pushing to population')
         population.push({
             classSchedule,
+            classScheduleWithRooms,
             roomConflicts
         })
     }
@@ -273,53 +275,85 @@ export const runGAV3 = async () => {
     // console.log('top 50')
     population = getTop50(population)
 
-    // cross over the population
-    let half = population.length / 2
-    for (let i = 0; i < half; i++){
-        let chromosomeA = population[i].classSchedule
-        let chromosomeB = population[half + i].classSchedule
-
-        // loop thru the sched
-        // for every year key i generate a random cross over point
-        // tapos i cross over
-        let departmentKeys = Object.keys(chromosomeA)
-        for (let j = 0; j < departmentKeys.length; j++){
-            let departmentSched = chromosomeA[departmentKeys[j]];
-            let departmentSchedB = chromosomeB[departmentKeys[j]];
-
-            let yearKeys = Object.keys(departmentSched)
-            for (let k = 0; k < yearKeys.length; k++){
-                let yearSched = departmentSched[yearKeys[k]];
-                let yearSchedB = departmentSchedB[yearKeys[k]];
-                
-                let classKeys = Object.keys(yearSched);
-                let crossoverPoint = Math.floor(Math.random() * classKeys.length)
-
-                for (let m = 0; m < crossoverPoint; m++){
-                    let classKey = classKeys[m] // CSA CSB CSC | CSD CSE CSF
-
-                    console.log('before')
-                    console.log('yr sched', yearSched)
-                    console.log('yr sched b', yearSchedB)
+    for (let g = 0; g < 10; g++){
+        console.log('crossover num: ', g)
+        // cross over the population
+        let half = population.length / 2
+        for (let i = 0; i < half; i++){
+            let chromosomeA = structuredClone(population[i].classSchedule)
+            let chromosomeB = structuredClone(population[half + i].classSchedule)
+    
+            // loop thru the sched
+            // for every year key i generate a random cross over point
+            // tapos i cross over
+            let departmentKeys = Object.keys(chromosomeA)
+            for (let j = 0; j < departmentKeys.length; j++){
+                let departmentSched = chromosomeA[departmentKeys[j]];
+                let departmentSchedB = chromosomeB[departmentKeys[j]];
+    
+                let yearKeys = Object.keys(departmentSched)
+                for (let k = 0; k < yearKeys.length; k++){
+                    let yearSched = departmentSched[yearKeys[k]];
+                    let yearSchedB = departmentSchedB[yearKeys[k]];
                     
-                    let schedSwitch = yearSched[classKey];
-                    yearSched[classKey] = yearSchedB[classKey]
-                    yearSchedB[classKey] = schedSwitch;
-                    
-                    console.log('after')
-                    console.log('yr sched', yearSched)
-                    console.log('yr sched b', yearSchedB)
-                    
+                    let classKeys = Object.keys(yearSched);
+                    let crossoverPoint = Math.floor(Math.random() * classKeys.length)
+    
+                    for (let m = 0; m < crossoverPoint; m++){
+                        let classKey = classKeys[m] // CSA CSB CSC | CSD CSE CSF
+
+                        // console.log('before')
+                        // console.log('yr sched', yearSched)
+                        // console.log('yr sched b', yearSchedB)
+                        
+                        let schedSwitch = yearSched[classKey];
+                        yearSched[classKey] = yearSchedB[classKey]
+                        yearSchedB[classKey] = schedSwitch;
+                        
+                        // console.log('after')
+                        // console.log('yr sched', yearSched)
+                        // console.log('yr sched b', yearSchedB)
+                        
+                    }
                 }
             }
+    
+            let roomSchedule = {}
+            // add rooms
+            console.log('adding new chromosome a')
+            let chromosomeAClassScheduleWithRooms = await assignRooms({ classSchedules: chromosomeA, roomSchedule });
+            let chromosomeARoomConflicts = evaluateRoomAssignment(chromosomeAClassScheduleWithRooms)
+            population.push({
+                classSchedule: chromosomeA,
+                classScheduleWithRooms: chromosomeAClassScheduleWithRooms,
+                roomConflicts: chromosomeARoomConflicts
+            })
+            console.log('room conflict a', chromosomeARoomConflicts)
+            
+            let roomScheduleB = {}
+            console.log('adding new chromosome b')
+            let chromosomeBClassScheduleWithRooms = await assignRooms({ classSchedules: chromosomeB, roomSchedule: roomScheduleB });
+            let chromosomeBRoomConflicts = evaluateRoomAssignment(chromosomeBClassScheduleWithRooms)
+            population.push({
+                classSchedule: chromosomeB,
+                classScheduleWithRooms: chromosomeBClassScheduleWithRooms,
+                roomConflicts: chromosomeBRoomConflicts
+            })
+            console.log('room conflict b', chromosomeBRoomConflicts)
+
         }
+        population = getTop50(population)
     }
+    
+    population = getTop50(population)
+    console.log(population)
+    console.log(population[0])
 
     return true;
 };
 
 const getTop50 = (population: any) => {
-    let top50 = population.sort((a: any, b: any) => b.roomConflicts - a.roomConflicts).slice(0, 50)
+    let top50 = population.sort((a: any, b: any) => a.roomConflicts - b.roomConflicts).slice(0, 50)
     return top50;
 }
 
@@ -933,10 +967,12 @@ const assignRooms = async ({
     classSchedules: any;
     roomSchedule: any;
 }) => {
+    let classSchedulesCopy = structuredClone(classSchedules)
+    
     // loop thru sections in generate
-    let departmentKeys = Object.keys(classSchedules);
+    let departmentKeys = Object.keys(classSchedulesCopy);
     for (let i = 0; i < departmentKeys.length; i++) {
-        let departmentSched = classSchedules[departmentKeys[i]];
+        let departmentSched = classSchedulesCopy[departmentKeys[i]];
 
         let yearKeys = Object.keys(departmentSched);
         for (let j = 0; j < yearKeys.length; j++) {
@@ -996,6 +1032,8 @@ const assignRooms = async ({
             }
         }
     }
+
+    return classSchedulesCopy
     // before adding check if may conflict
     // if wala add if meron check ung next if pwede
     // loop until makakuha ng pwede
