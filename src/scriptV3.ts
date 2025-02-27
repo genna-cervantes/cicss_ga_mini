@@ -275,7 +275,7 @@ export const runGAV3 = async () => {
     // console.log('top 50')
     population = getTop50(population)
 
-    for (let g = 0; g < 10; g++){
+    for (let g = 0; g < 5; g++){
         console.log('crossover num: ', g)
         // cross over the population
         let half = population.length / 2
@@ -349,8 +349,12 @@ export const runGAV3 = async () => {
     console.log(population)
     console.log(population[0])
 
-    return true;
+    return {chromosome: population[0].classScheduleWithRooms};
 };
+
+// ung specific rooms sa it iconsider na
+// eval function sa new structure
+// start ung sa pag lagay ng tas
 
 const getTop50 = (population: any) => {
     let top50 = population.sort((a: any, b: any) => a.roomConflicts - b.roomConflicts).slice(0, 50)
@@ -1055,13 +1059,26 @@ const findRoomForCourse = async ({
     course: string;
     courseType: string;
     roomSchedule: any;
-    specificRoomAssignment: any;
+    specificRoomAssignment: string;
     department: string;
     timeBlock: any;
     schoolDay: string;
 }) => {
     if (specificRoomAssignment) {
         // check kung pwede sa room na un pero dapat oo lolz
+        // check if pwede sa room schedule
+        let roomAvailability = checkRoomAvailability({
+            roomSchedule,
+            timeBlock,
+            room: specificRoomAssignment,
+            schoolDay
+        });
+
+        if (roomAvailability) {
+            return specificRoomAssignment;
+        }else{
+            return null;
+        }
     }
 
     const query =

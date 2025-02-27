@@ -87,6 +87,10 @@ app.get('/test-ga-v3', async (req, res) => {
     res.json(schedules)
 })
 
+// app.get('/test-room-real-ba', async (req, res) => {
+//     let chromosome =
+// })
+
 app.get('/sametop', (req, res) => {
     let arr1 = [
         24, 10, 9, 20, 45, 83, 55, 73, 6, 50, 82, 81, 33, 34, 2, 43, 58, 97, 56,
