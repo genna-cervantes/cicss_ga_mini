@@ -256,13 +256,13 @@ export const runGAV3 = async () => {
         });
         classSchedule['IS'][4] = schedulesFourthIS;
 
-        console.log('assigning tas');
-        let TASSchedule = {};
-        let scheduleWithTASAssignment = assignTAS({
-            classSchedules: classSchedule,
-            TASSchedule
-        });
-        return scheduleWithTASAssignment;
+        // console.log('assigning tas');
+        // let TASSchedule = {};
+        // let scheduleWithTASAssignment = assignTAS({
+        //     classSchedules: classSchedule,
+        //     TASSchedule
+        // });
+        // return scheduleWithTASAssignment;
 
         console.log('assigning rooms');
         let roomSchedule = {};
@@ -285,8 +285,13 @@ export const runGAV3 = async () => {
     // console.log('top 50')
     population = getTop50(population);
 
-    for (let g = 0; g < 5; g++) {
+    // max gens is 10
+    // pero pwede n mag exit once may score na na 0
+
+    loop0:
+    for (let g = 0; g < 10; g++) {
         console.log('crossover num: ', g);
+        
         // cross over the population
         let half = population.length / 2;
         for (let i = 0; i < half; i++) {
@@ -364,7 +369,12 @@ export const runGAV3 = async () => {
             });
             console.log('room conflict b', chromosomeBRoomConflicts);
         }
+
         population = getTop50(population);
+        if (population[0].roomConflicts <= 0 && population.length >= 50){
+            console.log('broke out early')
+            break loop0;
+        }
     }
 
     population = getTop50(population);
