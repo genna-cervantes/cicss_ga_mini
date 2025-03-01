@@ -5,6 +5,7 @@
 import { spec } from 'node:test/reporters';
 import { Client } from 'pg';
 import { SCHOOL_DAYS } from './constants';
+import { evaluateV3 } from './evaluatev3';
 
 // assign rooms while checking conflict
 //   - add sa room sched tapos don mag check ng conflict
@@ -257,6 +258,11 @@ export const runGAV3 = async () => {
         });
         classSchedule['IS'][4] = schedulesFourthIS;
 
+        console.log('assigning tas')
+        let TASSchedule = {};
+        let scheduleWithTASAssignment = assignTAS({classSchedules: classSchedule, TASSchedule})
+        return;
+
         console.log('assigning rooms')
         let roomSchedule = {};
         // may something di2
@@ -349,11 +355,13 @@ export const runGAV3 = async () => {
     console.log(population)
     console.log(population[0])
 
+    // evaluateV3({chromosome: population[0].classScheduleWithRooms, semester: 2})
+
     return {chromosome: population[0].classScheduleWithRooms};
 };
 
-// ung specific rooms sa it iconsider na
-// eval function sa new structure
+// eval function sa new structure -> this wont work sa new kasi nga null ung pag check kung may conflict b ro wala
+
 // start ung sa pag lagay ng tas
 
 const getTop50 = (population: any) => {
@@ -962,6 +970,41 @@ const generateV3 = async ({
 
     //
 };
+
+const assignTAS = async ({classSchedules, TASSchedule}: {classSchedules: any, TASSchedule: any}) => {
+    let classSchedulesCopy = structuredClone(classSchedules);
+
+    // loop thru sections in generate
+    let departmentKeys = Object.keys(classSchedulesCopy);
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = classSchedulesCopy[departmentKeys[i]];
+
+        let yearKeys = Object.keys(departmentSched);
+        for (let j = 0; j < yearKeys.length; j++) {
+            let yearSched = departmentSched[yearKeys[j]];
+
+            let classKeys = Object.keys(yearSched);
+            for (let k = 0; k < classKeys.length; k++) {
+                let classSched = yearSched[classKeys[k]];
+
+                for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                    let daySched = classSched[SCHOOL_DAYS[m]];
+
+                    // loop thru day sched
+                    for (let n = 0; n < (daySched?.length ?? 0); n++) {
+                        let schedBlock = daySched[n];
+
+                        let course = schedBlock.course;
+                        let timeBlock = schedBlock.timeBlock;
+
+                        console.log(course);
+                    }
+                }
+            }
+        }
+    }
+
+}
 
 // may conflict pa rin
 const assignRooms = async ({
