@@ -73,6 +73,7 @@ export const runGAV3 = async () => {
         classSchedule: any;
         classScheduleWithRooms: any;
         roomConflicts: number;
+        TASConflicts: number;
     }[] = [];
 
     for (let i = 0; i < 10; i++) {
@@ -259,28 +260,30 @@ export const runGAV3 = async () => {
         // check if mas okay mauna ung room or mauna ung tas
         console.log('assigning tas');
         let TASSchedule = {};
-        let scheduleWithTASAssignment = assignTAS({
+        let scheduleWithTASAssignment = await assignTAS({
             classSchedules: classSchedule,
             TASSchedule
         });
-        return scheduleWithTASAssignment;
 
-        // console.log('assigning rooms');
-        // let roomSchedule = {};
+        let TASConflicts = evaluateTASAssignment(classSchedule);
         
-        // let classScheduleWithRooms = await assignRooms({
-        //     classSchedules: classSchedule,
-        //     roomSchedule
-        // });
+        console.log('assigning rooms');
+        let roomSchedule = {};
+        
+        let classScheduleWithRooms = await assignRooms({
+            classSchedules: scheduleWithTASAssignment,
+            roomSchedule
+        });
 
-        // let roomConflicts = evaluateRoomAssignment(classSchedule);
+        let roomConflicts = evaluateRoomAssignment(classScheduleWithRooms);
 
-        // console.log('pushing to population');
-        // population.push({
-        //     classSchedule,
-        //     classScheduleWithRooms,
-        //     roomConflicts
-        // });
+        console.log('pushing to population');
+        population.push({
+            classSchedule,
+            classScheduleWithRooms,
+            roomConflicts,
+            TASConflicts
+        });
     }
 
     // console.log('top 50')
@@ -337,43 +340,68 @@ export const runGAV3 = async () => {
                 }
             }
 
+            let TASSchedule = {};
             let roomSchedule = {};
             // add rooms
             console.log('adding new chromosome a');
-            let chromosomeAClassScheduleWithRooms = await assignRooms({
+            let chromosomeAClassScheduleWithTAS = await assignTAS({
                 classSchedules: chromosomeA,
+                TASSchedule
+            });
+            let chromosomeATASConflicts = evaluateTASAssignment(
+                chromosomeAClassScheduleWithTAS
+            );
+
+            let chromosomeAClassScheduleWithRooms = await assignRooms({
+                classSchedules: chromosomeAClassScheduleWithTAS,
                 roomSchedule
             });
             let chromosomeARoomConflicts = evaluateRoomAssignment(
                 chromosomeAClassScheduleWithRooms
             );
+
             population.push({
                 classSchedule: chromosomeA,
                 classScheduleWithRooms: chromosomeAClassScheduleWithRooms,
-                roomConflicts: chromosomeARoomConflicts
+                roomConflicts: chromosomeARoomConflicts,
+                TASConflicts: chromosomeATASConflicts
+
             });
             console.log('room conflict a', chromosomeARoomConflicts);
+            console.log('tas conflict a', chromosomeATASConflicts);
 
+            let TASScheduleB = {};
             let roomScheduleB = {};
             console.log('adding new chromosome b');
-            let chromosomeBClassScheduleWithRooms = await assignRooms({
+            let chromosomeBClassScheduleWithTAS = await assignTAS({
                 classSchedules: chromosomeB,
+                TASSchedule: TASScheduleB
+            });
+            let chromosomeBTASConflicts = evaluateTASAssignment(
+                chromosomeBClassScheduleWithTAS
+            );
+
+            let chromosomeBClassScheduleWithRooms = await assignRooms({
+                classSchedules: chromosomeBClassScheduleWithTAS,
                 roomSchedule: roomScheduleB
             });
             let chromosomeBRoomConflicts = evaluateRoomAssignment(
                 chromosomeBClassScheduleWithRooms
             );
+
             population.push({
                 classSchedule: chromosomeB,
                 classScheduleWithRooms: chromosomeBClassScheduleWithRooms,
-                roomConflicts: chromosomeBRoomConflicts
+                roomConflicts: chromosomeBRoomConflicts,
+                TASConflicts: chromosomeBTASConflicts
             });
             console.log('room conflict b', chromosomeBRoomConflicts);
+            console.log('tas conflict b', chromosomeATASConflicts);
         }
 
         population = getTop50(population);
-        if (population[0].roomConflicts <= 0 && population.length >= 50){
-            console.log('broke out early')
+        if (population[0].roomConflicts <= 0 && population[0].TASConflicts <= 0 && population.length >= 50){
+            console.log('broke out early', g)
             break loop0;
         }
     }
@@ -393,9 +421,47 @@ export const runGAV3 = async () => {
 
 const getTop50 = (population: any) => {
     let top50 = population
-        .sort((a: any, b: any) => a.roomConflicts - b.roomConflicts)
+        .sort((a: any, b: any) => 
+            a.TASConflicts - b.TASConflicts || a.roomConflicts - b.roomConflicts
+        )
         .slice(0, 50);
     return top50;
+};
+
+const evaluateTASAssignment = (classSchedule: any) => {
+    let conflicts = 0;
+
+    let departmentKeys = Object.keys(classSchedule);
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = classSchedule[departmentKeys[i]];
+
+        let yearKeys = Object.keys(departmentSched);
+        for (let j = 0; j < yearKeys.length; j++) {
+            let yearSched = departmentSched[yearKeys[j]];
+
+            let classKeys = Object.keys(yearSched);
+            for (let k = 0; k < classKeys.length; k++) {
+                let classSched = yearSched[classKeys[k]];
+
+                for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                    let daySched = classSched[SCHOOL_DAYS[m]];
+
+                    if (!daySched) {
+                        continue;
+                    }
+
+                    for (let n = 0; n < daySched.length; n++) {
+                        let schedBlock = daySched[n];
+
+                        if (schedBlock.tas == null) {
+                            conflicts++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return conflicts;
 };
 
 const evaluateRoomAssignment = (classSchedule: any) => {
@@ -1053,13 +1119,15 @@ const assignTAS = async ({
                                     W: [],
                                     TH: [],
                                     F: [],
-                                    S: []
+                                    S: [],
+                                    units: 0
                                 };
                             }
                             TASSchedule[tas.tas_id][SCHOOL_DAYS[m]].push({
                                 course: course.subjectCode,
                                 timeBlock
                             });
+                            TASSchedule[tas.tas_id]['units'] += course.unitsPerClass
                         }   
                     }
                 }
@@ -1089,10 +1157,16 @@ const findTASForCourse = async ({
     const res = await client.query(query, [course, department]);
     const availableTAS = res.rows;
 
+    loop0:
     for (let i = 0; i < availableTAS.length; i++) {
         let prospectTAS = availableTAS[i];
 
-        // check if pwede sa room schedule
+        // check if pwede pa sa units
+        if (TASSchedule[prospectTAS.tas_id]['units'] >= prospectTAS.units){
+            break loop0;
+        }
+
+        // check if pwede sa tas schedule
         let roomAvailability = checkTASAvailability({
             TASSchedule,
             timeBlock,
@@ -1116,8 +1190,13 @@ const findTASForCourse = async ({
     const res1 = await client.query(query1, [course, department]);
     const availableTAS1 = res1.rows;
 
+    loop1:
     for (let i = 0; i < availableTAS1.length; i++) {
         let prospectTAS = availableTAS1[i];
+
+        if (TASSchedule[prospectTAS.tas_id]['units'] >= prospectTAS.units){
+            break loop1;
+        }
 
         // check if pwede sa room schedule
         let roomAvailability = checkTASAvailability({
@@ -1143,8 +1222,13 @@ const findTASForCourse = async ({
     const res2 = await client.query(query2, [course, department]);
     const availableTAS2 = res2.rows;
 
+    loop2:
     for (let i = 0; i < availableTAS2.length; i++) {
         let prospectTAS = availableTAS2[i];
+
+        if (TASSchedule[prospectTAS.tas_id]['units'] >= prospectTAS.units){
+            break loop2;
+        }
 
         // check if pwede sa room schedule
         let roomAvailability = checkTASAvailability({
@@ -1170,8 +1254,13 @@ const findTASForCourse = async ({
     const res3 = await client.query(query3, [course, department]);
     const availableTAS3 = res3.rows;
 
+    loop3:
     for (let i = 0; i < availableTAS3.length; i++) {
         let prospectTAS = availableTAS3[i];
+
+        if (TASSchedule[prospectTAS.tas_id]['units'] >= prospectTAS.units){
+            break loop3;
+        }
 
         // check if pwede sa room schedule
         let roomAvailability = checkTASAvailability({
