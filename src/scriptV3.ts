@@ -256,30 +256,31 @@ export const runGAV3 = async () => {
         });
         classSchedule['IS'][4] = schedulesFourthIS;
 
-        // console.log('assigning tas');
-        // let TASSchedule = {};
-        // let scheduleWithTASAssignment = assignTAS({
-        //     classSchedules: classSchedule,
-        //     TASSchedule
-        // });
-        // return scheduleWithTASAssignment;
-
-        console.log('assigning rooms');
-        let roomSchedule = {};
-        // may something di2
-        let classScheduleWithRooms = await assignRooms({
+        // check if mas okay mauna ung room or mauna ung tas
+        console.log('assigning tas');
+        let TASSchedule = {};
+        let scheduleWithTASAssignment = assignTAS({
             classSchedules: classSchedule,
-            roomSchedule
+            TASSchedule
         });
+        return scheduleWithTASAssignment;
 
-        let roomConflicts = evaluateRoomAssignment(classSchedule);
+        // console.log('assigning rooms');
+        // let roomSchedule = {};
+        
+        // let classScheduleWithRooms = await assignRooms({
+        //     classSchedules: classSchedule,
+        //     roomSchedule
+        // });
 
-        console.log('pushing to population');
-        population.push({
-            classSchedule,
-            classScheduleWithRooms,
-            roomConflicts
-        });
+        // let roomConflicts = evaluateRoomAssignment(classSchedule);
+
+        // console.log('pushing to population');
+        // population.push({
+        //     classSchedule,
+        //     classScheduleWithRooms,
+        //     roomConflicts
+        // });
     }
 
     // console.log('top 50')
@@ -1082,6 +1083,7 @@ const findTASForCourse = async ({
     timeBlock: any;
     schoolDay: string;
 }) => {
+    // try teaches that course and in that department
     const query =
         'SELECT * FROM teaching_academic_staff WHERE $1 = ANY(courses) AND main_department = $2;';
     const res = await client.query(query, [course, department]);
@@ -1089,6 +1091,87 @@ const findTASForCourse = async ({
 
     for (let i = 0; i < availableTAS.length; i++) {
         let prospectTAS = availableTAS[i];
+
+        // check if pwede sa room schedule
+        let roomAvailability = checkTASAvailability({
+            TASSchedule,
+            timeBlock,
+            tas: prospectTAS.tas_id,
+            schoolDay
+        });
+
+        if (!roomAvailability) {
+            continue;
+        }
+
+        return {
+            tas_id: prospectTAS.tas_id,
+            tas_name: prospectTAS.name
+        };
+    }
+
+    // try teaches that course but not in that department
+    const query1 =
+        'SELECT * FROM teaching_academic_staff WHERE $1 = ANY(courses) AND main_department != $2;';
+    const res1 = await client.query(query1, [course, department]);
+    const availableTAS1 = res1.rows;
+
+    for (let i = 0; i < availableTAS1.length; i++) {
+        let prospectTAS = availableTAS1[i];
+
+        // check if pwede sa room schedule
+        let roomAvailability = checkTASAvailability({
+            TASSchedule,
+            timeBlock,
+            tas: prospectTAS.tas_id,
+            schoolDay
+        });
+
+        if (!roomAvailability) {
+            continue;
+        }
+
+        return {
+            tas_id: prospectTAS.tas_id,
+            tas_name: prospectTAS.name
+        };
+    }
+
+    // try in that department but does not teach that course
+    const query2 =
+        'SELECT * FROM teaching_academic_staff WHERE $1 != ANY(courses) AND main_department = $2;';
+    const res2 = await client.query(query2, [course, department]);
+    const availableTAS2 = res2.rows;
+
+    for (let i = 0; i < availableTAS2.length; i++) {
+        let prospectTAS = availableTAS2[i];
+
+        // check if pwede sa room schedule
+        let roomAvailability = checkTASAvailability({
+            TASSchedule,
+            timeBlock,
+            tas: prospectTAS.tas_id,
+            schoolDay
+        });
+
+        if (!roomAvailability) {
+            continue;
+        }
+
+        return {
+            tas_id: prospectTAS.tas_id,
+            tas_name: prospectTAS.name
+        };
+    }
+
+    // try all
+    const query3 =
+        'SELECT * FROM teaching_academic_staff WHERE $1 != ANY(courses) AND main_department != $2;';
+    const res3 = await client.query(query3, [course, department]);
+    const availableTAS3 = res3.rows;
+
+    for (let i = 0; i < availableTAS3.length; i++) {
+        let prospectTAS = availableTAS3[i];
 
         // check if pwede sa room schedule
         let roomAvailability = checkTASAvailability({
