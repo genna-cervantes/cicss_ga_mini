@@ -265,7 +265,13 @@ export const runGAV3 = async () => {
             TASSchedule
         });
 
-        let TASConflicts = evaluateTASAssignment(classSchedule);
+        let TASConflicts = evaluateTASAssignment(scheduleWithTASAssignment);
+
+        return {
+            scheduleWithTASAssignment,
+            TASSchedule,
+            TASConflicts
+        }
         
         console.log('assigning rooms');
         let roomSchedule = {};
@@ -1163,7 +1169,7 @@ const findTASForCourse = async ({
 
         // check if pwede pa sa units
         if ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >= prospectTAS.units){
-            break loop0;
+            continue loop0;
         }
 
         // check if pwede sa tas schedule
@@ -1195,7 +1201,7 @@ const findTASForCourse = async ({
         let prospectTAS = availableTAS1[i];
 
         if ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >= prospectTAS.units){
-            break loop1;
+            continue loop1;
         }
 
         // check if pwede sa room schedule
@@ -1227,7 +1233,7 @@ const findTASForCourse = async ({
         let prospectTAS = availableTAS2[i];
 
         if ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >= prospectTAS.units){
-            break loop2;
+            continue loop2;
         }
 
         // check if pwede sa room schedule
@@ -1259,7 +1265,7 @@ const findTASForCourse = async ({
         let prospectTAS = availableTAS3[i];
 
         if ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >= prospectTAS.units){
-            break loop3;
+            continue loop3;
         }
 
         // check if pwede sa room schedule
