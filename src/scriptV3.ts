@@ -1162,7 +1162,7 @@ const findTASForCourse = async ({
         let prospectTAS = availableTAS[i];
 
         // check if pwede pa sa units
-        if (TASSchedule[prospectTAS.tas_id]['units'] >= prospectTAS.units){
+        if ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >= prospectTAS.units){
             break loop0;
         }
 
@@ -1194,7 +1194,7 @@ const findTASForCourse = async ({
     for (let i = 0; i < availableTAS1.length; i++) {
         let prospectTAS = availableTAS1[i];
 
-        if (TASSchedule[prospectTAS.tas_id]['units'] >= prospectTAS.units){
+        if ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >= prospectTAS.units){
             break loop1;
         }
 
@@ -1226,7 +1226,7 @@ const findTASForCourse = async ({
     for (let i = 0; i < availableTAS2.length; i++) {
         let prospectTAS = availableTAS2[i];
 
-        if (TASSchedule[prospectTAS.tas_id]['units'] >= prospectTAS.units){
+        if ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >= prospectTAS.units){
             break loop2;
         }
 
@@ -1258,7 +1258,7 @@ const findTASForCourse = async ({
     for (let i = 0; i < availableTAS3.length; i++) {
         let prospectTAS = availableTAS3[i];
 
-        if (TASSchedule[prospectTAS.tas_id]['units'] >= prospectTAS.units){
+        if ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >= prospectTAS.units){
             break loop3;
         }
 
