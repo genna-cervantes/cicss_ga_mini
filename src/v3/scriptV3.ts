@@ -285,7 +285,8 @@ export const runGAV3 = async () => {
         let roomConflicts = evaluateRoomAssignment(classScheduleWithRooms);
 
         // evaluate everything else
-        let {score, allViolations: violations } = evaluateV3({schedule: classScheduleWithRooms, semester: 2})
+        console.log('evaluating')
+        let {score, allViolations: violations } = await evaluateV3({schedule: classScheduleWithRooms, TASSchedule, roomSchedule, semester: 2})
         return {schedule: classScheduleWithRooms, violations, score}
 
         console.log('pushing to population');
@@ -425,8 +426,8 @@ export const runGAV3 = async () => {
 
     // evaluateV3({chromosome: population[0].classScheduleWithRooms, semester: 2})
 
-    let violations = evaluateV3({schedule: population[0].classScheduleWithRooms, semester: 2})
-    return {schedule: population[0].classScheduleWithRooms, violations}
+    // let violations = evaluateV3({schedule: population[0].classScheduleWithRooms, TASSchedule, roomSchedule, semester: 2})
+    // return {schedule: population[0].classScheduleWithRooms, violations}
 
     return { chromosome: population[0].classScheduleWithRooms };
 };
@@ -1104,6 +1105,8 @@ const assignTAS = async ({
                 for (let m = 0; m < SCHOOL_DAYS.length; m++) {
                     let daySched = classSched[SCHOOL_DAYS[m]];
 
+                    // if may assigned na na prof for -LC/-LB before
+
                     // loop thru day sched
                     for (let n = 0; n < (daySched?.length ?? 0); n++) {
                         let schedBlock = daySched[n];
@@ -1144,6 +1147,7 @@ const assignTAS = async ({
                             }
                             TASSchedule[tas.tas_id][SCHOOL_DAYS[m]].push({
                                 course: course.subjectCode,
+                                section: classKeys[k],
                                 timeBlock
                             });
                             TASSchedule[tas.tas_id]['units'] +=
@@ -1504,7 +1508,7 @@ const findRoomForCourse = async ({
             const res = await client.query(query, [specificRoomAssignment]);
             const room = res.rows[0];
             return room;
-            
+
         } else {
             return null;
         }
