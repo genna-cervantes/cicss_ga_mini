@@ -1,5 +1,5 @@
 import { Client } from 'pg';
-import { evaluateCoursesAssignment } from '../v1/evaluate';
+import { evaluateCoursesAssignment } from './evaluate';
 import { generateYearGene } from '../v1/generate';
 import { SCHOOL_DAYS } from '../constants';
 

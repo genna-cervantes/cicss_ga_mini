@@ -1,5 +1,5 @@
-import { evaluate } from './evaluate';
-import { evaluateFitnessScore } from '../v2/fitnessFunctions';
+import { evaluate } from '../v2/evaluate';
+import { evaluateFitnessScore } from './fitnessFunctions';
 import { generateChromosome } from './generate';
 
 export const runScript = async () => {

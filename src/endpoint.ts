@@ -1,7 +1,7 @@
 import express from 'express';
 import { runAlgo, runAlgoNoCrossOver, runScript } from './v1/script';
 import { generateChromosome } from './v1/generate';
-import { evaluate, evaluateFast } from './v1/evaluate';
+import { evaluate, evaluateFast } from './v2/evaluate';
 import { chromosome } from './data';
 import { generateChromosomeV2 } from './v2/generateV2';
 import { runGAV2 } from './v2/scriptV2';

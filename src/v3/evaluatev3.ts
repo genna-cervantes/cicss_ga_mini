@@ -1,62 +1,89 @@
-import { SCHOOL_DAYS } from "../constants";
-import { chromosome } from "../data";
+import { SCHOOL_DAYS } from '../constants';
+import { chromosome } from '../data';
 
-const evaluateRoomAssignment = ({chromosome}: {chromosome: any}) => {
+const evaluateRoomTypeAssignment = (classSchedule: any) => {
+    let violationCount = 0;
+    let violations = [];
 
-    let roomSchedule = classToRoomSchedule(chromosome);
-
-    console.log('rs', roomSchedule)
-}
-
-const classToRoomSchedule = (chromosome: any) => {
-
-    let roomSchedule: any = {};
-
-    let departmentKeys = Object.keys(chromosome);
-    for (let i = 0; i < departmentKeys.length; i++){
-        let departmentSched = chromosome[departmentKeys[i]];
+    let departmentKeys = Object.keys(classSchedule);
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = classSchedule[departmentKeys[i]];
 
         let yearKeys = Object.keys(departmentSched);
-        for (let j = 0; j < yearKeys.length; j++){
+        for (let j = 0; j < yearKeys.length; j++) {
             let yearSched = departmentSched[yearKeys[j]];
 
             let classKeys = Object.keys(yearSched);
-            for (let k = 0; k < classKeys.length; k++){
+            for (let k = 0; k < classKeys.length; k++) {
                 let classSched = yearSched[classKeys[k]];
 
-                for (let m = 0; m < SCHOOL_DAYS.length; m++){
+                for (let m = 0; m < SCHOOL_DAYS.length; m++) {
                     let daySched = classSched[SCHOOL_DAYS[m]];
 
                     if (!daySched){
                         continue;
                     }
 
-                    for (let n = 0; n < daySched.length; n++){
+                    for (let n = 0; n < daySched.length; n++) {
                         let schedBlock = daySched[n];
 
-                        let roomId = schedBlock.room.room_id;
-
-                        if (!roomSchedule[roomId]){
-                            roomSchedule[roomId] = {
-                                M: [],
-                                T: [],
-                                W: [],
-                                TH: [],
-                                F: [],
-                                S: []
-                            }
+                        if (
+                            schedBlock.course.subjectCode.startsWith('PATHFIT')
+                        ) {
+                            continue;
                         }
 
-                        roomSchedule[roomId][SCHOOL_DAYS[m]].push({...schedBlock, section: classKeys[k], year: yearKeys[j]})
+                        // check course per sched block
+                        if (schedBlock.course.type !== schedBlock.room.type) {
+                            if (
+                                !schedBlock.course.subjectCode.includes(
+                                    'CSELEC'
+                                )
+                            ) {
+                                violationCount++;
+                                violations.push({
+                                    course: schedBlock.course.subject_code,
+                                    section: classKeys[k],
+                                    type: 'room type assignment',
+                                    description:
+                                        'lec course assigned to lab and vice versa',
+                                    time: {
+                                        day: SCHOOL_DAYS[k],
+                                        time: schedBlock.timeBlock
+                                    },
+                                    room: schedBlock.room.room_id
+                                });
+                            }
+                        }
                     }
                 }
             }
         }
     }
 
-    return roomSchedule;
-}
+    return {
+        violationCount,
+        violations
+    };
+};
 
-export const evaluateV3 = ({chromosome, semester}: {chromosome: any, semester: number}) => {
-    evaluateRoomAssignment({chromosome})
-}
+export const evaluateV3 = ({
+    schedule,
+    semester
+}: {
+    schedule: any;
+    semester: number;
+}) => {
+    let score = 100;
+    let allViolations = [];
+
+    // room type
+    let {violationCount, violations} = evaluateRoomTypeAssignment(schedule)
+    allViolations.push({violationCount, violations})
+    score -= violationCount;
+
+    return {
+        score,
+        allViolations
+    }
+};

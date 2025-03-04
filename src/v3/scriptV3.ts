@@ -268,11 +268,11 @@ export const runGAV3 = async () => {
         let TASConflicts = evaluateTASAssignment(scheduleWithTASAssignment);
 
         // ung sa restrictions nila dapat masunod din
-        return {
-            scheduleWithTASAssignment,
-            TASSchedule,
-            TASConflicts
-        }
+        // return {
+        //     scheduleWithTASAssignment,
+        //     TASSchedule,
+        //     TASConflicts
+        // }
 
         console.log('assigning rooms');
         let roomSchedule = {};
@@ -283,6 +283,10 @@ export const runGAV3 = async () => {
         });
 
         let roomConflicts = evaluateRoomAssignment(classScheduleWithRooms);
+
+        // evaluate everything else
+        let {score, allViolations: violations } = evaluateV3({schedule: classScheduleWithRooms, semester: 2})
+        return {schedule: classScheduleWithRooms, violations, score}
 
         console.log('pushing to population');
         population.push({
@@ -420,6 +424,9 @@ export const runGAV3 = async () => {
     console.log(population[0]);
 
     // evaluateV3({chromosome: population[0].classScheduleWithRooms, semester: 2})
+
+    let violations = evaluateV3({schedule: population[0].classScheduleWithRooms, semester: 2})
+    return {schedule: population[0].classScheduleWithRooms, violations}
 
     return { chromosome: population[0].classScheduleWithRooms };
 };
@@ -1492,14 +1499,19 @@ const findRoomForCourse = async ({
         });
 
         if (roomAvailability) {
-            return specificRoomAssignment;
+            const query =
+            'SELECT * FROM rooms WHERE room_id = $1';
+            const res = await client.query(query, [specificRoomAssignment]);
+            const room = res.rows[0];
+            return room;
+            
         } else {
             return null;
         }
     }
 
     const query =
-        'SELECT room_id FROM rooms WHERE type = $1 AND main_department = $2';
+        'SELECT * FROM rooms WHERE type = $1 AND main_department = $2';
     const res = await client.query(query, [courseType, department]);
     const availableRooms = res.rows;
 
@@ -1519,12 +1531,12 @@ const findRoomForCourse = async ({
             continue;
         }
 
-        return prospectRoom.room_id;
+        return prospectRoom;
     }
 
     // wala pa narereturn ibig sabihin wala pa
     const query2 =
-        'SELECT room_id FROM rooms WHERE type != $1 AND main_department = $2';
+        'SELECT * FROM rooms WHERE type != $1 AND main_department = $2';
     const res2 = await client.query(query2, [courseType, department]);
     const availableRooms2 = res2.rows;
 
@@ -1544,11 +1556,11 @@ const findRoomForCourse = async ({
             continue;
         }
 
-        return prospectRoom.room_id;
+        return prospectRoom;
     }
 
     // wala na talaga kuha na sa ibang department ng kahit ano
-    const query3 = 'SELECT room_id FROM rooms WHERE main_department != $1';
+    const query3 = 'SELECT * FROM rooms WHERE main_department != $1';
     const res3 = await client.query(query3, [department]);
     const availableRooms3 = res3.rows;
 
@@ -1568,7 +1580,7 @@ const findRoomForCourse = async ({
             continue;
         }
 
-        return prospectRoom.room_id;
+        return prospectRoom;
     }
 
     return null;

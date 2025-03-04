@@ -1,6 +1,6 @@
 import { Client } from 'pg';
 import { SCHOOL_DAYS } from '../constants';
-import { evaluateFast, groupSchedByRoom, groupSchedByTAS } from '../v1/evaluate';
+import { evaluateFast, groupSchedByRoom, groupSchedByTAS } from './evaluate';
 import { generateChromosomeV2, getEndTime } from './generateV2';
 import { chromosome } from '../data';
 
