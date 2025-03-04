@@ -285,9 +285,20 @@ export const runGAV3 = async () => {
         let roomConflicts = evaluateRoomAssignment(classScheduleWithRooms);
 
         // evaluate everything else
-        console.log('evaluating')
-        let {score, allViolations: violations } = await evaluateV3({schedule: classScheduleWithRooms, TASSchedule, roomSchedule, semester: 2})
-        return {schedule: classScheduleWithRooms, violations, score}
+        // console.log('evaluating');
+        // let { score, allViolations: violations } = await evaluateV3({
+        //     schedule: classScheduleWithRooms,
+        //     TASSchedule,
+        //     roomSchedule,
+        //     semester: 2
+        // });
+        // return { schedule: classScheduleWithRooms, violations, score };
+
+        // return {
+        //     classScheduleWithRooms,
+        //     roomSchedule,
+        //     roomConflicts
+        // }
 
         console.log('pushing to population');
         population.push({
@@ -1102,6 +1113,8 @@ const assignTAS = async ({
             for (let k = 0; k < classKeys.length; k++) {
                 let classSched = yearSched[classKeys[k]];
 
+                let tasTracker: any = {};
+
                 for (let m = 0; m < SCHOOL_DAYS.length; m++) {
                     let daySched = classSched[SCHOOL_DAYS[m]];
 
@@ -1119,6 +1132,41 @@ const assignTAS = async ({
                                 tas_id: 'GENED PROF'
                             };
                             continue;
+                        }
+
+                        if (tasTracker[course.subjectCode]) {
+                            const query =
+                                'SELECT * FROM teaching_academic_staff WHERE tas_id = $1;';
+                            const res = await client.query(query, [
+                                tasTracker[course.subjectCode]
+                            ]);
+                            const prospectTAS = res.rows[0];
+
+                            schedBlock.tas = prospectTAS;
+
+                            if (!TASSchedule?.[prospectTAS.tas_id]) {
+                                TASSchedule[prospectTAS.tas_id] = {
+                                    M: [],
+                                    T: [],
+                                    W: [],
+                                    TH: [],
+                                    F: [],
+                                    S: [],
+                                    units: 0
+                                };
+                            }
+                            TASSchedule[prospectTAS.tas_id][
+                                SCHOOL_DAYS[m]
+                            ].push({
+                                course: course.subjectCode,
+                                section: classKeys[k],
+                                timeBlock
+                            });
+                            TASSchedule[prospectTAS.tas_id]['units'] +=
+                                course.unitsPerClass;
+
+                            continue;
+                            // no way to unassign nthe previous one e so sa ibang violation nlngn siya mag ano
                         }
 
                         // assign room
@@ -1152,6 +1200,8 @@ const assignTAS = async ({
                             });
                             TASSchedule[tas.tas_id]['units'] +=
                                 course.unitsPerClass;
+
+                            tasTracker[course.subjectCode] = tas.tas_id;
                         }
                     }
                 }
@@ -1188,7 +1238,7 @@ const findTASForCourse = async ({
 
         // check if pwede pa sa units
         if (
-            ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) + classUnits) >=
+            (TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) + classUnits >=
             prospectTAS.units
         ) {
             continue loop0;
@@ -1224,7 +1274,7 @@ const findTASForCourse = async ({
         let prospectTAS = availableTAS1[i];
 
         if (
-            ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) + classUnits) >=
+            (TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) + classUnits >=
             prospectTAS.units
         ) {
             continue loop1;
@@ -1260,7 +1310,7 @@ const findTASForCourse = async ({
         let prospectTAS = availableTAS2[i];
 
         if (
-            ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) + classUnits) >=
+            (TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) + classUnits >=
             prospectTAS.units
         ) {
             continue loop2;
@@ -1296,7 +1346,7 @@ const findTASForCourse = async ({
         let prospectTAS = availableTAS3[i];
 
         if (
-            ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) + classUnits) >=
+            (TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) + classUnits >=
             prospectTAS.units
         ) {
             continue loop3;
@@ -1444,8 +1494,8 @@ const assignRooms = async ({
                         schedBlock.room = room;
 
                         if (room != null) {
-                            if (!roomSchedule?.[room]) {
-                                roomSchedule[room] = {
+                            if (!roomSchedule?.[room.room_id]) {
+                                roomSchedule[room.room_id] = {
                                     M: [],
                                     T: [],
                                     W: [],
@@ -1454,7 +1504,7 @@ const assignRooms = async ({
                                     S: []
                                 };
                             }
-                            roomSchedule[room][SCHOOL_DAYS[m]].push({
+                            roomSchedule[room.room_id][SCHOOL_DAYS[m]].push({
                                 course: course.subjectCode,
                                 timeBlock
                             });
@@ -1503,12 +1553,10 @@ const findRoomForCourse = async ({
         });
 
         if (roomAvailability) {
-            const query =
-            'SELECT * FROM rooms WHERE room_id = $1';
+            const query = 'SELECT * FROM rooms WHERE room_id = $1';
             const res = await client.query(query, [specificRoomAssignment]);
             const room = res.rows[0];
             return room;
-
         } else {
             return null;
         }
