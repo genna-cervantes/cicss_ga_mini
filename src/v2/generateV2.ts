@@ -1,7 +1,7 @@
 import { Client } from 'pg';
-import { evaluateCoursesAssignment } from './evaluate';
-import { generateYearGene } from './generate';
-import { SCHOOL_DAYS } from './constants';
+import { evaluateCoursesAssignment } from '../v1/evaluate';
+import { generateYearGene } from '../v1/generate';
+import { SCHOOL_DAYS } from '../constants';
 
 const DB_HOST = 'localhost';
 const DB_PORT = 5432;

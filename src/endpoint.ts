@@ -1,11 +1,11 @@
 import express from 'express';
-import { runAlgo, runAlgoNoCrossOver, runScript } from './script';
-import { generateChromosome } from './generate';
-import { evaluate, evaluateFast } from './evaluate';
+import { runAlgo, runAlgoNoCrossOver, runScript } from './v1/script';
+import { generateChromosome } from './v1/generate';
+import { evaluate, evaluateFast } from './v1/evaluate';
 import { chromosome } from './data';
-import { generateChromosomeV2 } from './generateV2';
-import { runGAV2 } from './scriptV2';
-import { runGAV3 } from './scriptV3';
+import { generateChromosomeV2 } from './v2/generateV2';
+import { runGAV2 } from './v2/scriptV2';
+import { runGAV3 } from './v3/scriptV3';
 
 const app = express();
 const port = 3000;

@@ -4,7 +4,7 @@
 
 import { spec } from 'node:test/reporters';
 import { Client } from 'pg';
-import { SCHOOL_DAYS } from './constants';
+import { SCHOOL_DAYS } from '../constants';
 import { evaluateV3 } from './evaluatev3';
 
 // assign rooms while checking conflict

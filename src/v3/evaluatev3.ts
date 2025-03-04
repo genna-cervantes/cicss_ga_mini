@@ -1,5 +1,5 @@
-import { SCHOOL_DAYS } from "./constants";
-import { chromosome } from "./data";
+import { SCHOOL_DAYS } from "../constants";
+import { chromosome } from "../data";
 
 const evaluateRoomAssignment = ({chromosome}: {chromosome: any}) => {
 

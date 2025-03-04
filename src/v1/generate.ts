@@ -1,7 +1,7 @@
 import { Client } from 'pg';
 import dotenv from 'dotenv';
-import { SCHOOL_DAYS } from './constants';
-import { evaluateFitnessScore } from './fitnessFunctions';
+import { SCHOOL_DAYS } from '../constants';
+import { evaluateFitnessScore } from '../v2/fitnessFunctions';
 
 dotenv.config();
 

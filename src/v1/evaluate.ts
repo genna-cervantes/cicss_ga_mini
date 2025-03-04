@@ -1,11 +1,11 @@
 import { Client } from 'pg';
-import { chromosome } from './data';
+import { chromosome } from '../data';
 import {
     HARD_CONSTRAINT_WEIGHT,
     MEDIUM_CONSTRAINT_WEIGHT,
     SCHOOL_DAYS,
     SOFT_CONSTRAINT_WEIGHT
-} from './constants';
+} from '../constants';
 import { randomUUID } from 'crypto';
 
 const DB_HOST = 'localhost';

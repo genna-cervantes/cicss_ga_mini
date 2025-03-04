@@ -1,8 +1,8 @@
 import { Client } from 'pg';
-import { SCHOOL_DAYS } from './constants';
-import { evaluateFast, groupSchedByRoom, groupSchedByTAS } from './evaluate';
+import { SCHOOL_DAYS } from '../constants';
+import { evaluateFast, groupSchedByRoom, groupSchedByTAS } from '../v1/evaluate';
 import { generateChromosomeV2, getEndTime } from './generateV2';
-import { chromosome } from './data';
+import { chromosome } from '../data';
 
 const DB_HOST = 'localhost';
 const DB_PORT = 5432;

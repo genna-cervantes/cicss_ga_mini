@@ -1,5 +1,5 @@
 import { Client } from 'pg';
-import { SCHOOL_DAYS } from './constants';
+import { SCHOOL_DAYS } from '../constants';
 
 const DB_HOST = 'localhost';
 const DB_PORT = 5432;
