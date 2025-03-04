@@ -1114,6 +1114,7 @@ const assignTAS = async ({
                         // assign room
                         let tas = await findTASForCourse({
                             course: course.subjectCode,
+                            classUnits: course.unitsPerClass,
                             TASSchedule,
                             department: departmentKeys[i],
                             timeBlock,
@@ -1152,12 +1153,14 @@ const assignTAS = async ({
 
 const findTASForCourse = async ({
     course,
+    classUnits,
     TASSchedule,
     department,
     timeBlock,
     schoolDay
 }: {
     course: string;
+    classUnits: number;
     TASSchedule: any;
     department: string;
     timeBlock: any;
@@ -1174,7 +1177,7 @@ const findTASForCourse = async ({
 
         // check if pwede pa sa units
         if (
-            (TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >=
+            ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) + classUnits) >=
             prospectTAS.units
         ) {
             continue loop0;
@@ -1210,7 +1213,7 @@ const findTASForCourse = async ({
         let prospectTAS = availableTAS1[i];
 
         if (
-            (TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >=
+            ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) + classUnits) >=
             prospectTAS.units
         ) {
             continue loop1;
@@ -1246,7 +1249,7 @@ const findTASForCourse = async ({
         let prospectTAS = availableTAS2[i];
 
         if (
-            (TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >=
+            ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) + classUnits) >=
             prospectTAS.units
         ) {
             continue loop2;
@@ -1282,7 +1285,7 @@ const findTASForCourse = async ({
         let prospectTAS = availableTAS3[i];
 
         if (
-            (TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >=
+            ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) + classUnits) >=
             prospectTAS.units
         ) {
             continue loop3;
