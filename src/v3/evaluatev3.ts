@@ -1,5 +1,10 @@
 import { client } from './scriptV3';
-import { SCHOOL_DAYS } from '../constants';
+import {
+    HARD_CONSTRAINT_WEIGHT,
+    MEDIUM_CONSTRAINT_WEIGHT,
+    SCHOOL_DAYS,
+    SOFT_CONSTRAINT_WEIGHT
+} from '../constants';
 import { chromosome } from '../data';
 
 const evaluateRoomTypeAssignment = (classSchedule: any) => {
@@ -31,6 +36,10 @@ const evaluateRoomTypeAssignment = (classSchedule: any) => {
                         if (
                             schedBlock.course.subjectCode.startsWith('PATHFIT')
                         ) {
+                            continue;
+                        }
+
+                        if (schedBlock.room == null) {
                             continue;
                         }
 
@@ -119,17 +128,26 @@ const evaluateTASSpecialty = async (TASSchedule: any) => {
                 let schedBlock = dailySpecProfSched[k];
 
                 if (!courses.includes(schedBlock.course)) {
-                    violationCount++;
-                    violations.push({
-                        type: 'TAS assignment not specialty',
-                        TAS: schedBlock.prof,
-                        courses: schedBlock.course,
-                        time: {
-                            day: SCHOOL_DAYS[j],
-                            time: schedBlock.timeBlock.start
-                        },
-                        sections: schedBlock.section
-                    });
+                    // pag wala pa
+                    if (
+                        !violations.find(
+                            (v: any) =>
+                                v.TAS === profKeys[i] &&
+                                v.course === schedBlock.course
+                        )
+                    ) {
+                        violationCount++;
+                        violations.push({
+                            type: 'TAS assignment not specialty',
+                            TAS: profKeys[i],
+                            course: schedBlock.course,
+                            time: {
+                                day: SCHOOL_DAYS[j],
+                                time: schedBlock.timeBlock.start
+                            },
+                            sections: schedBlock.section
+                        });
+                    }
                 }
             }
         }
@@ -139,6 +157,256 @@ const evaluateTASSpecialty = async (TASSchedule: any) => {
         violationCount,
         violations
     };
+};
+
+const evaluateDayLength = (classSchedule: any) => {
+    let violationCount = 0;
+    let violations = [];
+
+    let departmentKeys = Object.keys(classSchedule);
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = classSchedule[departmentKeys[i]];
+
+        let yearKeys = Object.keys(departmentSched);
+        for (let j = 0; j < yearKeys.length; j++) {
+            let yearSched = departmentSched[yearKeys[j]];
+
+            let classKeys = Object.keys(yearSched);
+            for (let k = 0; k < classKeys.length; k++) {
+                let classSched = yearSched[classKeys[k]];
+
+                for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                    let daySched = classSched[SCHOOL_DAYS[m]];
+
+                    if ((daySched?.length ?? 0) <= 0) {
+                        continue;
+                    }
+
+                    let ascendingSched = daySched.sort(
+                        (schedBlock1: any, schedBlock2: any) => {
+                            return (
+                                parseInt(schedBlock1.timeBlock.start, 10) -
+                                parseInt(schedBlock2.timeBlock.start, 10)
+                            );
+                        }
+                    );
+
+                    let dayStart = parseInt(ascendingSched[0].timeBlock.start);
+                    let dayEnd = parseInt(
+                        ascendingSched[ascendingSched.length - 1].timeBlock.end
+                    );
+
+                    if (dayEnd - dayStart > 1000) {
+                        violationCount++;
+                        violations.push({
+                            type: 'Section assigned more than 10 hours in a day',
+                            year: yearKeys[j],
+                            section: classKeys[k],
+                            day: SCHOOL_DAYS[m],
+                            assignedUnits: dayEnd - dayStart
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    return {
+        violations,
+        violationCount
+    };
+};
+
+const evaluateClassLength = (schedule: any, type: string) => {
+    let violationCount = 0;
+    let violations: any = [];
+
+    if (type === 'class') {
+        let departmentKeys = Object.keys(schedule);
+        for (let i = 0; i < departmentKeys.length; i++) {
+            let departmentSched = schedule[departmentKeys[i]];
+
+            let yearKeys = Object.keys(departmentSched);
+            for (let j = 0; j < yearKeys.length; j++) {
+                let yearSched = departmentSched[yearKeys[j]];
+
+                let classKeys = Object.keys(yearSched);
+                for (let k = 0; k < classKeys.length; k++) {
+                    let classSched = yearSched[classKeys[k]];
+
+                    for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                        let daySched = classSched[SCHOOL_DAYS[m]];
+
+                        if (!daySched) {
+                            continue;
+                        }
+
+                        let ascendingSched = daySched.sort(
+                            (schedBlock1: any, schedBlock2: any) => {
+                                return (
+                                    parseInt(schedBlock1.timeBlock.start, 10) -
+                                    parseInt(schedBlock2.timeBlock.start, 10)
+                                );
+                            }
+                        );
+
+                        let hours = 0;
+                        for (let l = 0; l < ascendingSched.length - 1; l++) {
+                            if (ascendingSched[l].course.type === 'lec') {
+                                hours += ascendingSched[l].course.units;
+                            } else {
+                                hours += ascendingSched[l].course.units * 3;
+                            }
+
+                            if (hours > 3) {
+                                violationCount++;
+                                violations.push({
+                                    type: 'Section assigned more than 3 consecutive hours of class',
+                                    section: classKeys[k],
+                                    day: SCHOOL_DAYS[m],
+                                    courses: [
+                                        ascendingSched[l].course.subject_code
+                                    ],
+                                    time: ascendingSched[l].timeBlock.start
+                                });
+                            }
+
+                            if (
+                                ascendingSched[l].timeBlock.end <
+                                ascendingSched[l + 1].timeBlock.start
+                            ) {
+                                hours = 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        let profKeys = Object.keys(schedule);
+        for (let i = 0; i < profKeys.length; i++) {
+            let specProfSched = schedule[profKeys[i]];
+            for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+                let dailySpecProfSched = specProfSched[SCHOOL_DAYS[j]];
+
+                let ascendingSched = dailySpecProfSched.sort(
+                    (schedBlock1: any, schedBlock2: any) => {
+                        return (
+                            parseInt(schedBlock1.timeBlock.start, 10) -
+                            parseInt(schedBlock2.timeBlock.start, 10)
+                        );
+                    }
+                );
+
+                let hours = 0;
+                for (let l = 0; l < ascendingSched.length - 1; l++) {
+                    if (ascendingSched[l].course.type === 'lec') {
+                        hours += ascendingSched[l].course.units;
+                    } else {
+                        hours += ascendingSched[l].course.units * 3;
+                    }
+
+                    if (hours > 3) {
+                        violationCount++;
+                        violations.push({
+                            type: 'TAS assigned more than 3 consecutive hours of class',
+                            tas: profKeys[i],
+                            day: SCHOOL_DAYS[j],
+                            courses: [ascendingSched[l].course.subject_code],
+                            time: ascendingSched[l].timeBlock.start
+                        });
+                    }
+
+                    if (
+                        ascendingSched[l].timeBlock.end <
+                        ascendingSched[l + 1].timeBlock.start
+                    ) {
+                        hours = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    return {
+        violationCount,
+        violations
+    };
+};
+
+const evaluateGenedConstraints = async (classSchedule: any) => {
+    let violationCount = 0;
+    let violations = [];
+
+    const genedCoursesAndConstraints: any = {};
+
+    const getGenedConstraintsQuery =
+        "SELECT subject_code, restrictions FROM courses WHERE category = 'gened'";
+    const res = await client.query(getGenedConstraintsQuery);
+    const genedCoursesAndConstraintsRes = res.rows;
+
+    genedCoursesAndConstraintsRes.forEach((ge: any) => {
+        genedCoursesAndConstraints[ge.subject_code] = ge.restrictions;
+    });
+
+    let departmentKeys = Object.keys(classSchedule);
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = classSchedule[departmentKeys[i]];
+
+        let yearKeys = Object.keys(departmentSched);
+        for (let j = 0; j < yearKeys.length; j++) {
+            let yearSched = departmentSched[yearKeys[j]];
+
+            let classKeys = Object.keys(yearSched);
+            for (let k = 0; k < classKeys.length; k++) {
+                let classSched = yearSched[classKeys[k]];
+
+                for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                    let daySched = classSched[SCHOOL_DAYS[m]];
+
+                    if (!daySched){
+                        continue;
+                    }
+
+                    for (let l = 0; l < daySched.length; l++) {
+                        let schedBlock = daySched[l];
+
+                        if (schedBlock.course.category !== 'gened') {
+                            continue;
+                        }
+
+                        let constraints =
+                            genedCoursesAndConstraints[
+                                schedBlock.course.subjectCode
+                            ][SCHOOL_DAYS[m]];
+                        for (let n = 0; n < constraints.length; n++) {
+                            if (
+                                parseInt(schedBlock.timeBlock.start) >
+                                    parseInt(constraints[n].start) &&
+                                parseInt(schedBlock.timeBlock.end) <
+                                    parseInt(constraints[n].end)
+                            ) {
+                                violationCount++;
+                                violations.push({
+                                    type: 'Gened course constraint not followed',
+                                    section: classKeys[k],
+                                    day: SCHOOL_DAYS[m],
+                                    courses: [schedBlock.course.subjectCode],
+                                    time: schedBlock.timeBlock.start
+                                });
+                            }
+                        }
+                        // check if within ung timeslot neto don sa constraint ng
+                    }
+                }
+            }
+        }
+    }
+
+    return {
+        violationCount,
+        violations
+    }
 };
 
 const violationTypes = [
@@ -183,7 +451,7 @@ export const evaluateV3 = async ({
                     violationCount,
                     violations
                 });
-                score -= violationCount;
+                score -= violationCount * HARD_CONSTRAINT_WEIGHT;
                 break;
 
             case 'tasUnits':
@@ -194,7 +462,7 @@ export const evaluateV3 = async ({
                     violationCount,
                     violations
                 });
-                score -= violationCount;
+                score -= violationCount * HARD_CONSTRAINT_WEIGHT;
                 break;
 
             case 'tasSpecialty':
@@ -205,7 +473,52 @@ export const evaluateV3 = async ({
                     violationCount,
                     violations
                 });
-                score -= violationCount;
+                score -= violationCount * HARD_CONSTRAINT_WEIGHT;
+                break;
+
+            case 'dayLength':
+                ({ violationCount, violations } = evaluateDayLength(schedule));
+                allViolations.push({
+                    violationType,
+                    violationCount,
+                    violations
+                });
+                score -= violationCount * SOFT_CONSTRAINT_WEIGHT;
+                break;
+
+            case 'classLength':
+                ({ violationCount, violations } = evaluateClassLength(
+                    schedule,
+                    'class'
+                ));
+                allViolations.push({
+                    violationType: `${violationType}(CLASS)`,
+                    violationCount,
+                    violations
+                });
+                score -= violationCount * HARD_CONSTRAINT_WEIGHT;
+
+                ({ violationCount, violations } = evaluateClassLength(
+                    TASSchedule,
+                    'tas'
+                ));
+                allViolations.push({
+                    violationType: `${violationType}(TAS)`,
+                    violationCount,
+                    violations
+                });
+                score -= violationCount * MEDIUM_CONSTRAINT_WEIGHT;
+                break;
+
+            case 'gened':
+                ({ violationCount, violations } =
+                    await evaluateGenedConstraints(schedule));
+                allViolations.push({
+                    violationType: violationType,
+                    violationCount,
+                    violations
+                });
+                score -= violationCount * MEDIUM_CONSTRAINT_WEIGHT;
                 break;
         }
     }

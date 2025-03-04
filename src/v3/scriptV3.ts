@@ -285,14 +285,14 @@ export const runGAV3 = async () => {
         let roomConflicts = evaluateRoomAssignment(classScheduleWithRooms);
 
         // evaluate everything else
-        // console.log('evaluating');
-        // let { score, allViolations: violations } = await evaluateV3({
-        //     schedule: classScheduleWithRooms,
-        //     TASSchedule,
-        //     roomSchedule,
-        //     semester: 2
-        // });
-        // return { schedule: classScheduleWithRooms, violations, score };
+        console.log('evaluating');
+        let { score, allViolations: violations } = await evaluateV3({
+            schedule: classScheduleWithRooms,
+            TASSchedule,
+            roomSchedule,
+            semester: 2
+        });
+        return { schedule: classScheduleWithRooms, violations, score };
 
         // return {
         //     classScheduleWithRooms,
