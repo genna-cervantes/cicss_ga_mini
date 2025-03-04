@@ -267,15 +267,16 @@ export const runGAV3 = async () => {
 
         let TASConflicts = evaluateTASAssignment(scheduleWithTASAssignment);
 
+        // ung sa restrictions nila dapat masunod din
         return {
             scheduleWithTASAssignment,
             TASSchedule,
             TASConflicts
         }
-        
+
         console.log('assigning rooms');
         let roomSchedule = {};
-        
+
         let classScheduleWithRooms = await assignRooms({
             classSchedules: scheduleWithTASAssignment,
             roomSchedule
@@ -298,10 +299,9 @@ export const runGAV3 = async () => {
     // max gens is 10
     // pero pwede n mag exit once may score na na 0
 
-    loop0:
-    for (let g = 0; g < 10; g++) {
+    loop0: for (let g = 0; g < 10; g++) {
         console.log('crossover num: ', g);
-        
+
         // cross over the population
         let half = population.length / 2;
         for (let i = 0; i < half; i++) {
@@ -371,7 +371,6 @@ export const runGAV3 = async () => {
                 classScheduleWithRooms: chromosomeAClassScheduleWithRooms,
                 roomConflicts: chromosomeARoomConflicts,
                 TASConflicts: chromosomeATASConflicts
-
             });
             console.log('room conflict a', chromosomeARoomConflicts);
             console.log('tas conflict a', chromosomeATASConflicts);
@@ -406,8 +405,12 @@ export const runGAV3 = async () => {
         }
 
         population = getTop50(population);
-        if (population[0].roomConflicts <= 0 && population[0].TASConflicts <= 0 && population.length >= 50){
-            console.log('broke out early', g)
+        if (
+            population[0].roomConflicts <= 0 &&
+            population[0].TASConflicts <= 0 &&
+            population.length >= 50
+        ) {
+            console.log('broke out early', g);
             break loop0;
         }
     }
@@ -427,8 +430,10 @@ export const runGAV3 = async () => {
 
 const getTop50 = (population: any) => {
     let top50 = population
-        .sort((a: any, b: any) => 
-            a.TASConflicts - b.TASConflicts || a.roomConflicts - b.roomConflicts
+        .sort(
+            (a: any, b: any) =>
+                a.TASConflicts - b.TASConflicts ||
+                a.roomConflicts - b.roomConflicts
         )
         .slice(0, 50);
     return top50;
@@ -1133,8 +1138,9 @@ const assignTAS = async ({
                                 course: course.subjectCode,
                                 timeBlock
                             });
-                            TASSchedule[tas.tas_id]['units'] += course.unitsPerClass
-                        }   
+                            TASSchedule[tas.tas_id]['units'] +=
+                                course.unitsPerClass;
+                        }
                     }
                 }
             }
@@ -1163,12 +1169,14 @@ const findTASForCourse = async ({
     const res = await client.query(query, [course, department]);
     const availableTAS = res.rows;
 
-    loop0:
-    for (let i = 0; i < availableTAS.length; i++) {
+    loop0: for (let i = 0; i < availableTAS.length; i++) {
         let prospectTAS = availableTAS[i];
 
         // check if pwede pa sa units
-        if ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >= prospectTAS.units){
+        if (
+            (TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >=
+            prospectTAS.units
+        ) {
             continue loop0;
         }
 
@@ -1177,6 +1185,8 @@ const findTASForCourse = async ({
             TASSchedule,
             timeBlock,
             tas: prospectTAS.tas_id,
+            restrictions: prospectTAS.restrictions,
+            restrictionType: prospectTAS.restriction_type,
             schoolDay
         });
 
@@ -1196,11 +1206,13 @@ const findTASForCourse = async ({
     const res1 = await client.query(query1, [course, department]);
     const availableTAS1 = res1.rows;
 
-    loop1:
-    for (let i = 0; i < availableTAS1.length; i++) {
+    loop1: for (let i = 0; i < availableTAS1.length; i++) {
         let prospectTAS = availableTAS1[i];
 
-        if ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >= prospectTAS.units){
+        if (
+            (TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >=
+            prospectTAS.units
+        ) {
             continue loop1;
         }
 
@@ -1209,6 +1221,8 @@ const findTASForCourse = async ({
             TASSchedule,
             timeBlock,
             tas: prospectTAS.tas_id,
+            restrictions: prospectTAS.restrictions,
+            restrictionType: prospectTAS.restriction_type,
             schoolDay
         });
 
@@ -1228,11 +1242,13 @@ const findTASForCourse = async ({
     const res2 = await client.query(query2, [course, department]);
     const availableTAS2 = res2.rows;
 
-    loop2:
-    for (let i = 0; i < availableTAS2.length; i++) {
+    loop2: for (let i = 0; i < availableTAS2.length; i++) {
         let prospectTAS = availableTAS2[i];
 
-        if ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >= prospectTAS.units){
+        if (
+            (TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >=
+            prospectTAS.units
+        ) {
             continue loop2;
         }
 
@@ -1241,6 +1257,8 @@ const findTASForCourse = async ({
             TASSchedule,
             timeBlock,
             tas: prospectTAS.tas_id,
+            restrictions: prospectTAS.restrictions,
+            restrictionType: prospectTAS.restriction_type,
             schoolDay
         });
 
@@ -1260,11 +1278,13 @@ const findTASForCourse = async ({
     const res3 = await client.query(query3, [course, department]);
     const availableTAS3 = res3.rows;
 
-    loop3:
-    for (let i = 0; i < availableTAS3.length; i++) {
+    loop3: for (let i = 0; i < availableTAS3.length; i++) {
         let prospectTAS = availableTAS3[i];
 
-        if ((TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >= prospectTAS.units){
+        if (
+            (TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) >=
+            prospectTAS.units
+        ) {
             continue loop3;
         }
 
@@ -1273,6 +1293,8 @@ const findTASForCourse = async ({
             TASSchedule,
             timeBlock,
             tas: prospectTAS.tas_id,
+            restrictions: prospectTAS.restrictions,
+            restrictionType: prospectTAS.restriction_type,
             schoolDay
         });
 
@@ -1293,15 +1315,40 @@ const checkTASAvailability = ({
     TASSchedule,
     timeBlock,
     tas,
+    restrictions,
+    restrictionType,
     schoolDay
 }: {
     TASSchedule: any;
     timeBlock: any;
     tas: string;
+    restrictions: any;
+    restrictionType: string;
     schoolDay: string;
 }) => {
-
     let specTASDaySched = TASSchedule?.[tas]?.[schoolDay];
+
+    // check sa restrictions if soft go lng if hard pass
+    let restrictionDaySched = restrictions[schoolDay];
+
+    for (let i = 0; i < (restrictionDaySched?.length ?? 0); i++) {
+        let tasTimeBlock = restrictionDaySched[i];
+
+        if (
+            (parseInt(timeBlock.start) >= parseInt(tasTimeBlock.start) &&
+                parseInt(timeBlock.start) < parseInt(tasTimeBlock.end)) ||
+            (parseInt(timeBlock.end) > parseInt(tasTimeBlock.start) &&
+                parseInt(timeBlock.end) <= parseInt(tasTimeBlock.end)) ||
+            (parseInt(timeBlock.start) <= parseInt(tasTimeBlock.start) &&
+                parseInt(timeBlock.end) >= parseInt(tasTimeBlock.end)) ||
+            (parseInt(timeBlock.start) >= parseInt(tasTimeBlock.start) &&
+                parseInt(timeBlock.end) <= parseInt(tasTimeBlock.end))
+        ) {
+            if (restrictionType === 'hard') {
+                return false;
+            }
+        }
+    }
 
     if (!specTASDaySched) {
         return true;
@@ -1324,8 +1371,7 @@ const checkTASAvailability = ({
         } //1200 1500 //1230 1400
     }
 
-    return true;  
-
+    return true;
 };
 
 // may conflict pa rin
