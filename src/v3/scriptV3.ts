@@ -6,6 +6,7 @@ import { spec } from 'node:test/reporters';
 import { Client } from 'pg';
 import { SCHOOL_DAYS } from '../constants';
 import { evaluateV3 } from './evaluatev3';
+import {v4 as uuidv4} from 'uuid'
 
 // assign rooms while checking conflict
 //   - add sa room sched tapos don mag check ng conflict
@@ -1001,6 +1002,7 @@ const generateV3 = async ({
                     }
 
                     schedBlock = {
+                        id: uuidv4(),
                         course: courseDetails, // courseDetails.subjectCode
                         timeBlock
                     };
@@ -1185,8 +1187,11 @@ const assignTAS = async ({
                             TASSchedule[prospectTAS.tas_id][
                                 SCHOOL_DAYS[m]
                             ].push({
+                                id: schedBlock.id,
                                 course: course.subjectCode,
                                 section: classKeys[k],
+                                year: yearKeys[j],
+                                department: departmentKeys[i],
                                 timeBlock
                             });
                             TASSchedule[prospectTAS.tas_id]['units'] +=
@@ -1221,8 +1226,11 @@ const assignTAS = async ({
                                 };
                             }
                             TASSchedule[tas.tas_id][SCHOOL_DAYS[m]].push({
+                                id: schedBlock.id,
                                 course: course.subjectCode,
                                 section: classKeys[k],
+                                department: departmentKeys[i],
+                                year: yearKeys[i],
                                 timeBlock
                             });
                             TASSchedule[tas.tas_id]['units'] +=

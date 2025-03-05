@@ -51,8 +51,11 @@ const evaluateRoomTypeAssignment = (classSchedule: any) => {
                                 )
                             ) {
                                 violationCount++;
+
                                 violations.push({
-                                    course: schedBlock.course.subject_code,
+                                    schedBlockId: schedBlock.id,
+                                    year: yearKeys[j],
+                                    course: schedBlock.course.subjectCode,
                                     section: classKeys[k],
                                     type: 'room type assignment',
                                     description:
@@ -138,6 +141,7 @@ const evaluateTASSpecialty = async (TASSchedule: any) => {
                     ) {
                         violationCount++;
                         violations.push({
+                            schedBlockId: schedBlock.id,
                             type: 'TAS assignment not specialty',
                             TAS: profKeys[i],
                             course: schedBlock.course,
@@ -145,7 +149,8 @@ const evaluateTASSpecialty = async (TASSchedule: any) => {
                                 day: SCHOOL_DAYS[j],
                                 time: schedBlock.timeBlock.start
                             },
-                            sections: schedBlock.section
+                            sections: schedBlock.section,
+                            year: schedBlock.year
                         });
                     }
                 }
@@ -388,6 +393,7 @@ const evaluateGenedConstraints = async (classSchedule: any) => {
                             ) {
                                 violationCount++;
                                 violations.push({
+                                    schedBlockId: schedBlock.id,
                                     type: 'Gened course constraint not followed',
                                     section: classKeys[k],
                                     day: SCHOOL_DAYS[m],
@@ -435,6 +441,7 @@ export const evaluateClassNumber = (classSchedule: any) => {
                     if (daySched.length === 1) {
                         violationCount++;
                         violations.push({
+                            schedBlockId: daySched[0].id,
                             type: 'Class assinged only 1 class in 1 day',
                             section: classKeys[k],
                             year: yearKeys[j],
@@ -644,6 +651,7 @@ const evaluateAllowedTime = async (classSchedule: any) => {
                             ) {
                                 violationCount++;
                                 violations.push({
+                                    schedBlockId: schedBlock.id,
                                     type: 'Year level time constraint not followed',
                                     year: yearKeys[j],
                                     section: classKeys[k],
@@ -802,6 +810,7 @@ const evaluateTasRequests = async (TASSchedule: any) => {
                         if (restrictionType === 'hard') {
                             violationCount++;
                             violations.push({
+                                schedBlockId: schedBlock.id,
                                 type: 'TAS request not followed',
                                 section: schedBlock.section,
                                 tas: profKeys[i],
@@ -850,7 +859,10 @@ const evaluateRoomProximity = (classSchedule: any) => {
                         let nextSchedBlock = daySched[l + 1];
 
                         // pwede kasi mag null
-                        if (schedBlock.room == null || nextSchedBlock.room == null){
+                        if (
+                            schedBlock.room == null ||
+                            nextSchedBlock.room == null
+                        ) {
                             continue;
                         }
 
@@ -868,7 +880,9 @@ const evaluateRoomProximity = (classSchedule: any) => {
                         if (Math.abs(firstRoomFloor - secondRoomFloor) > 1) {
                             violationCount++;
                             violations.push({
+                                schedBlockId: schedBlock.id,
                                 type: 'Room proximity ideal not followed',
+                                year: yearKeys[j],
                                 section: classKeys[k],
                                 day: SCHOOL_DAYS[m],
                                 courses: [
@@ -894,7 +908,7 @@ const evaluateRoomProximity = (classSchedule: any) => {
     return {
         violationCount,
         violations
-    }
+    };
 };
 
 const violationTypes = [
@@ -942,6 +956,7 @@ export const evaluateV3 = async ({
                 score -= violationCount * HARD_CONSTRAINT_WEIGHT;
                 break;
 
+            // not tied to a single course
             case 'tasUnits':
                 ({ violationCount, violations } =
                     await evaluateTASUnits(TASSchedule));
@@ -952,6 +967,7 @@ export const evaluateV3 = async ({
                 });
                 score -= violationCount * HARD_CONSTRAINT_WEIGHT;
                 break;
+
 
             case 'tasSpecialty':
                 ({ violationCount, violations } =
@@ -1079,7 +1095,7 @@ export const evaluateV3 = async ({
 
             case 'roomProximity':
                 ({ violationCount, violations } =
-                    await evaluateRoomProximity(schedule));
+                    evaluateRoomProximity(schedule));
                 allViolations.push({
                     violationType: violationType,
                     violationCount,
