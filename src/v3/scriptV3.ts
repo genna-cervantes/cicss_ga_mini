@@ -74,6 +74,8 @@ export const runGAV3 = async () => {
         classScheduleWithRooms: any;
         roomConflicts: number;
         TASConflicts: number;
+        score: number;
+        violations: any;
     }[] = [];
 
     for (let i = 0; i < 10; i++) {
@@ -305,7 +307,9 @@ export const runGAV3 = async () => {
             classSchedule,
             classScheduleWithRooms,
             roomConflicts,
-            TASConflicts
+            TASConflicts,
+            score,
+            violations
         });
     }
 
@@ -382,14 +386,25 @@ export const runGAV3 = async () => {
                 chromosomeAClassScheduleWithRooms
             );
 
+            let { score, allViolations: violations } = await evaluateV3({
+                schedule: chromosomeAClassScheduleWithRooms,
+                TASSchedule,
+                roomSchedule,
+                semester: 2
+            });
+
             population.push({
                 classSchedule: chromosomeA,
                 classScheduleWithRooms: chromosomeAClassScheduleWithRooms,
                 roomConflicts: chromosomeARoomConflicts,
-                TASConflicts: chromosomeATASConflicts
+                TASConflicts: chromosomeATASConflicts,
+                score,
+                violations
             });
+
             console.log('room conflict a', chromosomeARoomConflicts);
             console.log('tas conflict a', chromosomeATASConflicts);
+            console.log('score a', score)
 
             let TASScheduleB = {};
             let roomScheduleB = {};
@@ -410,14 +425,25 @@ export const runGAV3 = async () => {
                 chromosomeBClassScheduleWithRooms
             );
 
+            let { score: scoreB, allViolations: violationsB } = await evaluateV3({
+                schedule: chromosomeBClassScheduleWithRooms,
+                TASSchedule,
+                roomSchedule,
+                semester: 2
+            });
+
             population.push({
                 classSchedule: chromosomeB,
                 classScheduleWithRooms: chromosomeBClassScheduleWithRooms,
                 roomConflicts: chromosomeBRoomConflicts,
-                TASConflicts: chromosomeBTASConflicts
+                TASConflicts: chromosomeBTASConflicts,
+                score: scoreB,
+                violations: violationsB
             });
+
             console.log('room conflict b', chromosomeBRoomConflicts);
             console.log('tas conflict b', chromosomeATASConflicts);
+            console.log('score b', scoreB)
         }
 
         population = getTop50(population);
@@ -452,7 +478,8 @@ const getTop50 = (population: any) => {
         .sort(
             (a: any, b: any) =>
                 a.TASConflicts - b.TASConflicts ||
-                a.roomConflicts - b.roomConflicts
+                a.roomConflicts - b.roomConflicts ||
+                a.score - b.score
         )
         .slice(0, 50);
     return top50;

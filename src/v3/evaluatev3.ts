@@ -364,7 +364,7 @@ const evaluateGenedConstraints = async (classSchedule: any) => {
                 for (let m = 0; m < SCHOOL_DAYS.length; m++) {
                     let daySched = classSched[SCHOOL_DAYS[m]];
 
-                    if (!daySched){
+                    if (!daySched) {
                         continue;
                     }
 
@@ -397,6 +397,494 @@ const evaluateGenedConstraints = async (classSchedule: any) => {
                             }
                         }
                         // check if within ung timeslot neto don sa constraint ng
+                    }
+                }
+            }
+        }
+    }
+
+    return {
+        violationCount,
+        violations
+    };
+};
+
+export const evaluateClassNumber = (classSchedule: any) => {
+    let violationCount = 0;
+    let violations: any = [];
+
+    let departmentKeys = Object.keys(classSchedule);
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = classSchedule[departmentKeys[i]];
+
+        let yearKeys = Object.keys(departmentSched);
+        for (let j = 0; j < yearKeys.length; j++) {
+            let yearSched = departmentSched[yearKeys[j]];
+
+            let classKeys = Object.keys(yearSched);
+            for (let k = 0; k < classKeys.length; k++) {
+                let classSched = yearSched[classKeys[k]];
+
+                for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                    let daySched = classSched[SCHOOL_DAYS[m]];
+
+                    if (!daySched) {
+                        continue;
+                    }
+
+                    if (daySched.length === 1) {
+                        violationCount++;
+                        violations.push({
+                            type: 'Class assinged only 1 class in 1 day',
+                            section: classKeys[k],
+                            year: yearKeys[j],
+                            day: SCHOOL_DAYS[k],
+                            courses: [daySched[0].course.subjectCode]
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    return {
+        violationCount,
+        violations
+    };
+};
+
+const evaluateAllowedDays = async (classSchedule: any) => {
+    let violationCount = 0;
+    let violations = [];
+
+    const allowedDaysPerYearAndDepartment: any = {};
+    const allowedDaysQuery =
+        'SELECT department, year, available_days, max_days FROM year_day_restrictions';
+    const res = await client.query(allowedDaysQuery);
+    const allowedDays = res.rows;
+
+    allowedDays.forEach((ad: any) => {
+        if (
+            !allowedDaysPerYearAndDepartment[ad.department] ||
+            !allowedDaysPerYearAndDepartment[ad.department][ad.year]
+        ) {
+            allowedDaysPerYearAndDepartment[ad.department] = {
+                ...allowedDaysPerYearAndDepartment[ad.department],
+                [ad.year]: { available_days: [], max_days: 0 }
+            };
+        }
+        ``;
+
+        allowedDaysPerYearAndDepartment[ad.department][ad.year][
+            'available_days'
+        ] = ad.available_days;
+        allowedDaysPerYearAndDepartment[ad.department][ad.year]['max_days'] =
+            ad.max_days;
+    });
+
+    let departmentKeys = Object.keys(classSchedule);
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = classSchedule[departmentKeys[i]];
+
+        let yearKeys = Object.keys(departmentSched);
+        for (let j = 0; j < yearKeys.length; j++) {
+            let yearSched = departmentSched[yearKeys[j]];
+
+            let classKeys = Object.keys(yearSched);
+            for (let k = 0; k < classKeys.length; k++) {
+                let classSched = yearSched[classKeys[k]];
+
+                // defaullt
+                let specAllowedDays = allowedDaysPerYearAndDepartment[
+                    departmentKeys[i]
+                ]
+                    ? allowedDaysPerYearAndDepartment[departmentKeys[i]][
+                          yearKeys[j]
+                      ]
+                        ? allowedDaysPerYearAndDepartment[departmentKeys[i]][
+                              yearKeys[j]
+                          ]
+                        : { available_days: SCHOOL_DAYS, max_days: 6 }
+                    : { available_days: SCHOOL_DAYS, max_days: 6 };
+
+                let assignedDays = 0;
+                loop1: for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                    let daySched = classSched[SCHOOL_DAYS[m]];
+
+                    if (!daySched) {
+                        continue loop1;
+                    }
+
+                    if (daySched.length >= 1) {
+                        assignedDays++;
+
+                        if (
+                            !specAllowedDays.available_days.includes(
+                                SCHOOL_DAYS[m]
+                            )
+                        ) {
+                            violationCount++;
+                            violations.push({
+                                type: 'Course(s) assigned to restricted day',
+                                year: yearKeys[j],
+                                section: classKeys[k],
+                                day: SCHOOL_DAYS[m]
+                            });
+                            continue loop1; // one time lng need
+                        }
+                    }
+                }
+
+                if (assignedDays > specAllowedDays.max_days) {
+                    violationCount++;
+                    violations.push({
+                        type: 'Year level assigned classes on more than the allowed days',
+                        year: yearKeys[j],
+                        section: classKeys[k]
+                    });
+                }
+            }
+        }
+    }
+
+    return {
+        violationCount,
+        violations
+    };
+};
+
+const evaluateAllowedTime = async (classSchedule: any) => {
+    let violationCount = 0;
+    let violations = [];
+
+    const allowedTimePerYearAndDepartment: any = {};
+    const allowedTimeQuery =
+        'SELECT department, year, restrictions FROM year_time_restrictions';
+    const res = await client.query(allowedTimeQuery);
+    const allowedTime = res.rows;
+
+    allowedTime.forEach((ad: any) => {
+        if (
+            !allowedTimePerYearAndDepartment[ad.department] ||
+            !allowedTimePerYearAndDepartment[ad.department][ad.year]
+        ) {
+            allowedTimePerYearAndDepartment[ad.department] = {
+                ...allowedTimePerYearAndDepartment[ad.department],
+                [ad.year]: { restrictions: [] }
+            };
+        }
+
+        allowedTimePerYearAndDepartment[ad.department][ad.year][
+            'restrictions'
+        ] = ad.restrictions;
+    });
+
+    let departmentKeys = Object.keys(classSchedule);
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = classSchedule[departmentKeys[i]];
+
+        let yearKeys = Object.keys(departmentSched);
+        for (let j = 0; j < yearKeys.length; j++) {
+            let yearSched = departmentSched[yearKeys[j]];
+
+            // defaullt
+            let specAllowedTime = allowedTimePerYearAndDepartment[
+                departmentKeys[i]
+            ]
+                ? allowedTimePerYearAndDepartment[departmentKeys[i]][
+                      yearKeys[j]
+                  ]
+                    ? allowedTimePerYearAndDepartment[departmentKeys[i]][
+                          yearKeys[j]
+                      ]
+                    : {
+                          restrictions: {
+                              F: [],
+                              M: [],
+                              S: [],
+                              T: [],
+                              W: [],
+                              TH: []
+                          }
+                      }
+                : {
+                      restrictions: {
+                          F: [],
+                          M: [],
+                          S: [],
+                          T: [],
+                          W: [],
+                          TH: []
+                      }
+                  };
+
+            let classKeys = Object.keys(yearSched);
+            for (let k = 0; k < classKeys.length; k++) {
+                let classSched = yearSched[classKeys[k]];
+
+                for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                    let daySched = classSched[SCHOOL_DAYS[m]];
+
+                    if (!daySched) {
+                        continue;
+                    }
+
+                    let constraints =
+                        specAllowedTime.restrictions[SCHOOL_DAYS[m]];
+
+                    for (let l = 0; l < daySched.length; l++) {
+                        let schedBlock = daySched[l];
+
+                        for (let n = 0; n < constraints.length; n++) {
+                            if (
+                                parseInt(schedBlock.timeBlock.start) >
+                                    parseInt(constraints[n].start) &&
+                                parseInt(schedBlock.timeBlock.end) <
+                                    parseInt(constraints[n].end)
+                            ) {
+                                violationCount++;
+                                violations.push({
+                                    type: 'Year level time constraint not followed',
+                                    year: yearKeys[j],
+                                    section: classKeys[k],
+                                    day: SCHOOL_DAYS[m],
+                                    course: schedBlock.course.subject_code,
+                                    time: schedBlock.timeBlock.start
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return {
+        violationCount,
+        violations
+    };
+};
+
+const evaluateRestDays = (schedule: any, type: string) => {
+    let violationCount = 0;
+    let violations: any = [];
+
+    if (type === 'CLASS') {
+        let departmentKeys = Object.keys(schedule);
+        for (let i = 0; i < departmentKeys.length; i++) {
+            let departmentSched = schedule[departmentKeys[i]];
+
+            let yearKeys = Object.keys(departmentSched);
+            for (let j = 0; j < yearKeys.length; j++) {
+                let yearSched = departmentSched[yearKeys[j]];
+
+                let classKeys = Object.keys(yearSched);
+                for (let k = 0; k < classKeys.length; k++) {
+                    let classSched = yearSched[classKeys[k]];
+
+                    let restDays = 1;
+                    for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                        let daySched = classSched[SCHOOL_DAYS[m]];
+
+                        if (!daySched) {
+                            restDays++;
+                            continue;
+                        }
+
+                        if (daySched.length <= 0) {
+                            restDays++;
+                        }
+                    }
+
+                    if (restDays < 2) {
+                        violationCount++;
+                        violations.push({
+                            type: 'Rest days less than ideal',
+                            year: yearKeys[j],
+                            section: classKeys[k]
+                        });
+                    }
+                }
+            }
+        }
+    } else if (type === 'TAS') {
+        let profKeys = Object.keys(schedule);
+        for (let i = 0; i < profKeys.length; i++) {
+            let specProfSched = schedule[profKeys[i]];
+            let restDays = 1;
+            for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+                let dailySpecProfSched = specProfSched[SCHOOL_DAYS[j]];
+
+                if (!dailySpecProfSched) {
+                    restDays++;
+                    continue;
+                }
+
+                if (dailySpecProfSched.length <= 0) {
+                    restDays++;
+                }
+            }
+
+            if (restDays < 2) {
+                violationCount++;
+                violations.push({
+                    type: 'Rest days less than ideal',
+                    tasId: profKeys[i]
+                });
+            }
+        }
+    }
+
+    return {
+        violationCount,
+        violations
+    };
+};
+
+const evaluateTasRequests = async (TASSchedule: any) => {
+    let violationCount = 0;
+    let violations = [];
+
+    const TASRequests: any = {};
+
+    const getTASRequestsQuery =
+        'SELECT tas_id, restrictions, restriction_type FROM teaching_academic_staff';
+    const res = await client.query(getTASRequestsQuery);
+    const TASRequestsRes = res.rows;
+
+    TASRequestsRes.forEach((tas: any) => {
+        TASRequests[tas.tas_id] = {
+            restrictions: tas.restrictions,
+            restrictionType: tas.restriction_type
+        };
+    });
+
+    let profKeys = Object.keys(TASSchedule);
+    for (let i = 0; i < profKeys.length; i++) {
+        let specProfSched = TASSchedule[profKeys[i]];
+
+        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+            let dailySpecProfSched = specProfSched[SCHOOL_DAYS[j]];
+
+            let constraints = TASRequests[profKeys[i]]
+                ? TASRequests[profKeys[i]][SCHOOL_DAYS[j]]?.restrictions
+                    ? TASRequests[profKeys[i]][SCHOOL_DAYS[j]].restrictions
+                    : []
+                : [];
+            let restrictionType = TASRequests[profKeys[i]]
+                ? TASRequests[profKeys[i]][SCHOOL_DAYS[j]]?.restrictionType
+                    ? TASRequests[profKeys[i]][SCHOOL_DAYS[j]].restrictionType
+                    : 'soft'
+                : 'soft';
+
+            for (let k = 0; k < dailySpecProfSched.length; k++) {
+                let schedBlock = dailySpecProfSched[k];
+
+                for (let m = 0; m < constraints.length; m++) {
+                    if (
+                        (parseInt(schedBlock.timeBlock.start) >=
+                            parseInt(constraints[m].start) &&
+                            parseInt(schedBlock.timeBlock.start) <
+                                parseInt(constraints[m].end)) ||
+                        (parseInt(schedBlock.timeBlock.end) >
+                            parseInt(constraints[m].start) &&
+                            parseInt(schedBlock.timeBlock.end) <=
+                                parseInt(constraints[m].end)) ||
+                        (parseInt(schedBlock.timeBlock.start) <=
+                            parseInt(constraints[m].start) &&
+                            parseInt(schedBlock.timeBlock.end) >=
+                                parseInt(constraints[m].end)) ||
+                        (parseInt(schedBlock.timeBlock.start) >=
+                            parseInt(constraints[m].start) &&
+                            parseInt(schedBlock.timeBlock.end) <=
+                                parseInt(constraints[m].end))
+                    ) {
+                        if (restrictionType === 'hard') {
+                            violationCount++;
+                            violations.push({
+                                type: 'TAS request not followed',
+                                section: schedBlock.section,
+                                tas: profKeys[i],
+                                day: SCHOOL_DAYS[j],
+                                course: schedBlock.course,
+                                time: schedBlock.timeBlock.start
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return {
+        violationCount,
+        violations
+    };
+};
+
+const evaluateRoomProximity = (classSchedule: any) => {
+    let violationCount = 0;
+    let violations: any = [];
+
+    let departmentKeys = Object.keys(classSchedule);
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = classSchedule[departmentKeys[i]];
+
+        let yearKeys = Object.keys(departmentSched);
+        for (let j = 0; j < yearKeys.length; j++) {
+            let yearSched = departmentSched[yearKeys[j]];
+
+            let classKeys = Object.keys(yearSched);
+            for (let k = 0; k < classKeys.length; k++) {
+                let classSched = yearSched[classKeys[k]];
+
+                for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                    let daySched = classSched[SCHOOL_DAYS[m]];
+
+                    if (!daySched) {
+                        continue;
+                    }
+
+                    for (let l = 0; l < daySched.length - 1; l++) {
+                        let schedBlock = daySched[l];
+                        let nextSchedBlock = daySched[l + 1];
+
+                        // pwede kasi mag null
+                        if (schedBlock.room == null || nextSchedBlock.room == null){
+                            continue;
+                        }
+
+                        if (schedBlock.room.room_id === 'PE ROOM') {
+                            continue;
+                        }
+
+                        let firstRoomFloor = Math.floor(
+                            parseInt(schedBlock.room.room_id.slice(2)) / 100
+                        );
+                        let secondRoomFloor = Math.floor(
+                            parseInt(nextSchedBlock.room.room_id.slice(2)) / 100
+                        );
+
+                        if (Math.abs(firstRoomFloor - secondRoomFloor) > 1) {
+                            violationCount++;
+                            violations.push({
+                                type: 'Room proximity ideal not followed',
+                                section: classKeys[k],
+                                day: SCHOOL_DAYS[m],
+                                courses: [
+                                    schedBlock.course.subjectCode,
+                                    nextSchedBlock.course.subjectCode
+                                ],
+                                time: [
+                                    schedBlock.timeBlock,
+                                    nextSchedBlock.timeBlock
+                                ],
+                                rooms: [
+                                    schedBlock.room.room_id,
+                                    nextSchedBlock.room.room_id
+                                ]
+                            });
+                        }
                     }
                 }
             }
@@ -519,6 +1007,85 @@ export const evaluateV3 = async ({
                     violations
                 });
                 score -= violationCount * MEDIUM_CONSTRAINT_WEIGHT;
+                break;
+
+            case 'classNum':
+                ({ violationCount, violations } =
+                    evaluateClassNumber(schedule));
+                allViolations.push({
+                    violationType: violationType,
+                    violationCount,
+                    violations
+                });
+                score -= violationCount * MEDIUM_CONSTRAINT_WEIGHT;
+                break;
+
+            case 'allowedDays':
+                ({ violationCount, violations } =
+                    await evaluateAllowedDays(schedule));
+                allViolations.push({
+                    violationType: violationType,
+                    violationCount,
+                    violations
+                });
+                score -= violationCount * HARD_CONSTRAINT_WEIGHT;
+                break;
+
+            case 'allowedTime':
+                ({ violationCount, violations } =
+                    await evaluateAllowedTime(schedule));
+                allViolations.push({
+                    violationType: violationType,
+                    violationCount,
+                    violations
+                });
+                score -= violationCount * HARD_CONSTRAINT_WEIGHT;
+                break;
+
+            case 'restDays':
+                ({ violationCount, violations } = evaluateRestDays(
+                    schedule,
+                    'CLASS'
+                ));
+                allViolations.push({
+                    violationType: violationType,
+                    violationCount,
+                    violations
+                });
+                score -= violationCount * MEDIUM_CONSTRAINT_WEIGHT;
+
+                ({ violationCount, violations } = evaluateRestDays(
+                    TASSchedule,
+                    'TAS'
+                ));
+                allViolations.push({
+                    violationType: violationType,
+                    violationCount,
+                    violations
+                });
+                score -= violationCount * MEDIUM_CONSTRAINT_WEIGHT;
+                break;
+
+            case 'tasRequests':
+                ({ violationCount, violations } =
+                    await evaluateTasRequests(TASSchedule));
+                allViolations.push({
+                    violationType: violationType,
+                    violationCount,
+                    violations
+                });
+                score -= violationCount * MEDIUM_CONSTRAINT_WEIGHT;
+                break;
+
+            case 'roomProximity':
+                ({ violationCount, violations } =
+                    await evaluateRoomProximity(schedule));
+                allViolations.push({
+                    violationType: violationType,
+                    violationCount,
+                    violations
+                });
+                score -= violationCount * SOFT_CONSTRAINT_WEIGHT;
                 break;
         }
     }
