@@ -295,7 +295,9 @@ export const runGAV3 = async () => {
             roomSchedule,
             semester: 2
         });
-        return { schedule: classScheduleWithRooms, violations, score };
+
+        // apply violations to top sched para pag irereturn -> pag niget lng siya gagawin
+        // return { schedule: classScheduleWithRooms, violations, score };
 
         // return {
         //     classScheduleWithRooms,
@@ -320,7 +322,8 @@ export const runGAV3 = async () => {
     // max gens is 10
     // pero pwede n mag exit once may score na na 0
 
-    loop0: for (let g = 0; g < 10; g++) {
+    let maxGen = 20;
+    loop0: for (let g = 0; g < maxGen; g++) {
         console.log('crossover num: ', g);
 
         // cross over the population
@@ -467,7 +470,15 @@ export const runGAV3 = async () => {
     // let violations = evaluateV3({schedule: population[0].classScheduleWithRooms, TASSchedule, roomSchedule, semester: 2})
     // return {schedule: population[0].classScheduleWithRooms, violations}
 
-    return { chromosome: population[0].classScheduleWithRooms };
+    // return { chromosome: population[0] };
+
+    // check if 0 0 ba if ndi return error nlng para sabihin mag retry ng gen
+    let retObj = {
+        classSchedule: population[0].classScheduleWithRooms, // with room and tas
+        violations: population[0].violations
+    }
+
+    return retObj;
 };
 
 // eval function sa new structure -> this wont work sa new kasi nga null ung pag check kung may conflict b ro wala

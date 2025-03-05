@@ -6,6 +6,7 @@ import { chromosome } from './data';
 import { generateChromosomeV2 } from './v2/generateV2';
 import { runGAV2 } from './v2/scriptV2';
 import { runGAV3 } from './v3/scriptV3';
+import { applyViolationsToSchedule, getScheduleFromCache } from './utils';
 
 const app = express();
 const port = 3000;
@@ -85,6 +86,42 @@ app.get('/test-ga-v2', async (req, res) => {
 app.get('/test-ga-v3', async (req, res) => {
     let schedules = await runGAV3()
     res.json(schedules)
+})
+
+// dapat general errors din na ndi malalalgay sa sched
+app.get('/generate-schedule', async (req, res) => {
+    let scheduleWithViolations
+
+    // check cache table if may laman
+    // let topSchedule = await getScheduleFromCache();
+
+    // // if meron 
+    // if (topSchedule){
+    //     // select that tapos apply violations
+    //     scheduleWithViolations = applyViolationsToSchedule(topSchedule.classSchedule, topSchedule.violations)
+
+    //     return scheduleWithViolations;
+    // }  
+
+    // return that and remove from cache
+
+    // if wala then
+
+    // run ga
+    // let schedules = await runGAV3()
+    // store all the ones with 0 0 in cache table
+    // except the one na irereturn
+    // select that tapos apply violations - return
+
+    // run ga
+    let topGeneratedSchedule = await runGAV3()
+    scheduleWithViolations = applyViolationsToSchedule(topGeneratedSchedule.classSchedule, topGeneratedSchedule.violations)
+
+    res.json(scheduleWithViolations);
+    // except the one na irereturn
+    // select that tapos apply violations - return
+
+
 })
 
 // app.get('/test-room-real-ba', async (req, res) => {

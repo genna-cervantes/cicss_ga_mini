@@ -911,7 +911,7 @@ const evaluateRoomProximity = (classSchedule: any) => {
     };
 };
 
-const violationTypes = [
+export const violationTypes = [
     'roomType',
     'tasUnits',
     'tasSpecialty',
