@@ -117,7 +117,7 @@ app.get('/generate-schedule', async (req, res) => {
     let topGeneratedSchedule = await runGAV3()
     scheduleWithViolations = applyViolationsToSchedule(topGeneratedSchedule.classSchedule, topGeneratedSchedule.violations)
 
-    res.json(scheduleWithViolations);
+    res.json({scheduleWithViolations, violations: topGeneratedSchedule.violations});
     // except the one na irereturn
     // select that tapos apply violations - return
 

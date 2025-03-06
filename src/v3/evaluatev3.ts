@@ -166,7 +166,7 @@ const evaluateTASSpecialty = async (TASSchedule: any) => {
 
 const evaluateDayLength = (classSchedule: any) => {
     let violationCount = 0;
-    let violations = [];
+    let violations: any = [];
 
     let departmentKeys = Object.keys(classSchedule);
     for (let i = 0; i < departmentKeys.length; i++) {
@@ -187,28 +187,19 @@ const evaluateDayLength = (classSchedule: any) => {
                         continue;
                     }
 
-                    let ascendingSched = daySched.sort(
-                        (schedBlock1: any, schedBlock2: any) => {
-                            return (
-                                parseInt(schedBlock1.timeBlock.start, 10) -
-                                parseInt(schedBlock2.timeBlock.start, 10)
-                            );
-                        }
-                    );
+                    let dailyUnits = 0;
+                    for (let n = 0; n < daySched.length; n++) {
+                        let schedBlock = daySched[n];
+                        dailyUnits += schedBlock.unitsPerClass;
+                    }
 
-                    let dayStart = parseInt(ascendingSched[0].timeBlock.start);
-                    let dayEnd = parseInt(
-                        ascendingSched[ascendingSched.length - 1].timeBlock.end
-                    );
-
-                    if (dayEnd - dayStart > 1000) {
+                    if (dailyUnits > 8) {
                         violationCount++;
                         violations.push({
-                            type: 'Section assigned more than 10 hours in a day',
-                            year: yearKeys[j],
+                            type: 'Section assigned more than 8 hours a day',
                             section: classKeys[k],
                             day: SCHOOL_DAYS[m],
-                            assignedUnits: dayEnd - dayStart
+                            year: yearKeys[j]
                         });
                     }
                 }
@@ -967,7 +958,6 @@ export const evaluateV3 = async ({
                 });
                 score -= violationCount * HARD_CONSTRAINT_WEIGHT;
                 break;
-
 
             case 'tasSpecialty':
                 ({ violationCount, violations } =

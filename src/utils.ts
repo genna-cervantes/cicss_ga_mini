@@ -44,8 +44,7 @@ export const applyViolationsToSchedule = (
                         schedBlock.violations = [];
 
                         for (let n = 0; n < violationTypes.length; n++) {
-                            console.log(violations)
-                            console.log(violationTypes)
+                            
                             let violationTypeArray =
                             // di dapat toh mag uundefined e
                                 violations.find(

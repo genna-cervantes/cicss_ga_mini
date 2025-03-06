@@ -1205,8 +1205,14 @@ const assignTAS = async ({
                                 department: departmentKeys[i],
                                 timeBlock
                             });
-                            TASSchedule[prospectTAS.tas_id]['units'] +=
+
+                            if (course.type === 'lab'){
+                                TASSchedule[prospectTAS.tas_id]['units'] +=
+                                (course.unitsPerClass * 1.5);
+                            }else{
+                                TASSchedule[prospectTAS.tas_id]['units'] +=
                                 course.unitsPerClass;
+                            }
 
                             continue;
                             // no way to unassign nthe previous one e so sa ibang violation nlngn siya mag ano
