@@ -6,7 +6,7 @@ import { chromosome } from './data';
 import { generateChromosomeV2 } from './v2/generateV2';
 import { runGAV2 } from './v2/scriptV2';
 import { runGAV3 } from './v3/scriptV3';
-import { applyViolationsToSchedule, getScheduleFromCache } from './utils';
+import { applyClassViolationsToSchedule, applyTASViolationsToSchedule, getScheduleFromCache, insertToScheduleCache } from './utils';
 
 const app = express();
 const port = 3000;
@@ -88,39 +88,40 @@ app.get('/test-ga-v3', async (req, res) => {
     res.json(schedules)
 })
 
-// dapat general errors din na ndi malalalgay sa sched
+// apply tas violations
 app.get('/generate-schedule', async (req, res) => {
     let scheduleWithViolations
+    let TASScheduleWithViolations
 
     // check cache table if may laman
-    // let topSchedule = await getScheduleFromCache();
+    let topSchedule = await getScheduleFromCache();
 
     // // if meron 
-    // if (topSchedule){
-    //     // select that tapos apply violations
-    //     scheduleWithViolations = applyViolationsToSchedule(topSchedule.classSchedule, topSchedule.violations)
+    if (topSchedule){
+        // select that tapos apply violations
+        scheduleWithViolations = applyClassViolationsToSchedule(topSchedule.classSchedule, topSchedule.violations)
+        TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.TASSchedule, topSchedule.violations)
 
-    //     return scheduleWithViolations;
-    // }  
+        res.json({scheduleWithViolations, violations: topSchedule.violations});
+    }  
 
-    // return that and remove from cache
-
-    // if wala then
-
+    // if wala then    
     // run ga
-    // let schedules = await runGAV3()
-    // store all the ones with 0 0 in cache table
+    let generatedSchedules: any = await runGAV3()
+    
+    for (let i = 1; i < generatedSchedules.length; i++){
+        // store all the ones with 0 0 in cache table
+        let chromosome = generatedSchedules[i];
+        await insertToScheduleCache(chromosome);
+    }
+    
     // except the one na irereturn
-    // select that tapos apply violations - return
+    let topGeneratedSchedule: any = generatedSchedules[0]
 
-    // run ga
-    let topGeneratedSchedule = await runGAV3()
-    scheduleWithViolations = applyViolationsToSchedule(topGeneratedSchedule.classSchedule, topGeneratedSchedule.violations)
-
+    scheduleWithViolations = applyClassViolationsToSchedule(topGeneratedSchedule.classSchedule, topGeneratedSchedule.violations)
+    TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.TASSchedule, topGeneratedSchedule.violations)
     res.json({scheduleWithViolations, violations: topGeneratedSchedule.violations});
-    // except the one na irereturn
-    // select that tapos apply violations - return
-
+    // res.json(topGeneratedSchedule)
 
 })
 

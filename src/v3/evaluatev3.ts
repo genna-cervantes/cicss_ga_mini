@@ -164,6 +164,7 @@ const evaluateTASSpecialty = async (TASSchedule: any) => {
     };
 };
 
+// meron din for tas
 const evaluateDayLength = (classSchedule: any) => {
     let violationCount = 0;
     let violations: any = [];
@@ -306,7 +307,7 @@ const evaluateClassLength = (schedule: any, type: string) => {
                         violationCount++;
                         violations.push({
                             type: 'TAS assigned more than 3 consecutive hours of class',
-                            tas: profKeys[i],
+                            TAS: profKeys[i],
                             day: SCHOOL_DAYS[j],
                             courses: [ascendingSched[l].course.subject_code],
                             time: ascendingSched[l].timeBlock.start
@@ -728,7 +729,7 @@ const evaluateRestDays = (schedule: any, type: string) => {
                 violationCount++;
                 violations.push({
                     type: 'Rest days less than ideal',
-                    tasId: profKeys[i]
+                    TAS: profKeys[i]
                 });
             }
         }
@@ -1054,7 +1055,7 @@ export const evaluateV3 = async ({
                     'CLASS'
                 ));
                 allViolations.push({
-                    violationType: violationType,
+                    violationType: `${violationType}(CLASS)`,
                     violationCount,
                     violations
                 });
@@ -1065,7 +1066,7 @@ export const evaluateV3 = async ({
                     'TAS'
                 ));
                 allViolations.push({
-                    violationType: violationType,
+                    violationType: `${violationType}(TAS)`,
                     violationCount,
                     violations
                 });

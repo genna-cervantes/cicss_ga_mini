@@ -71,8 +71,10 @@ client
 
 export const runGAV3 = async () => {
     let population: {
+        classScheduleRaw: any;
         classSchedule: any;
-        classScheduleWithRooms: any;
+        TASSchedule: any;
+        roomSchedule: any;
         roomConflicts: number;
         TASConflicts: number;
         score: number;
@@ -307,8 +309,10 @@ export const runGAV3 = async () => {
 
         console.log('pushing to population');
         population.push({
-            classSchedule,
-            classScheduleWithRooms,
+            classScheduleRaw: classSchedule,
+            classSchedule: classScheduleWithRooms,
+            roomSchedule,
+            TASSchedule,
             roomConflicts,
             TASConflicts,
             score,
@@ -322,16 +326,16 @@ export const runGAV3 = async () => {
     // max gens is 10
     // pero pwede n mag exit once may score na na 0
 
-    let maxGen = 20;
+    let maxGen = 15;
     loop0: for (let g = 0; g < maxGen; g++) {
         console.log('crossover num: ', g);
 
         // cross over the population
         let half = population.length / 2;
         for (let i = 0; i < half; i++) {
-            let chromosomeA = structuredClone(population[i].classSchedule);
+            let chromosomeA = structuredClone(population[i].classScheduleRaw);
             let chromosomeB = structuredClone(
-                population[half + i].classSchedule
+                population[half + i].classScheduleRaw
             );
 
             // loop thru the sched
@@ -398,8 +402,10 @@ export const runGAV3 = async () => {
             });
 
             population.push({
-                classSchedule: chromosomeA,
-                classScheduleWithRooms: chromosomeAClassScheduleWithRooms,
+                classScheduleRaw: chromosomeA,
+                classSchedule: chromosomeAClassScheduleWithRooms,
+                roomSchedule,
+                TASSchedule,
                 roomConflicts: chromosomeARoomConflicts,
                 TASConflicts: chromosomeATASConflicts,
                 score,
@@ -437,8 +443,10 @@ export const runGAV3 = async () => {
             });
 
             population.push({
-                classSchedule: chromosomeB,
-                classScheduleWithRooms: chromosomeBClassScheduleWithRooms,
+                classScheduleRaw: chromosomeB,
+                classSchedule: chromosomeBClassScheduleWithRooms,
+                roomSchedule,
+                TASSchedule,
                 roomConflicts: chromosomeBRoomConflicts,
                 TASConflicts: chromosomeBTASConflicts,
                 score: scoreB,
@@ -451,19 +459,38 @@ export const runGAV3 = async () => {
         }
 
         population = getTop50(population);
-        if (
-            population[0].roomConflicts <= 0 &&
-            population[0].TASConflicts <= 0 &&
-            population.length >= 50
-        ) {
-            console.log('broke out early', g);
-            break loop0;
-        }
+        // if (
+        //     population[0].roomConflicts <= 0 &&
+        //     population[0].TASConflicts <= 0 &&
+        //     population.length >= 50
+        // ) {
+        //     console.log('broke out early', g);
+        //     break loop0;
+        // }
     }
 
     population = getTop50(population);
-    console.log(population);
-    console.log(population[0]);
+
+    // RETURN 
+    let retObj = [];
+
+    for (let i = 0; i < population.length; i++){
+        let chromosome = population[i];
+        if (chromosome.roomConflicts === 0 && chromosome.TASConflicts === 0){
+            retObj.push(chromosome)
+        }
+    }
+
+    if (retObj.length <= 0){
+        return {
+            error: 'please retry with genesrating no plausible schedule generated'
+        }
+    }
+
+    // console.log(population);
+    // console.log(population[0]);
+
+    return retObj;
 
     // evaluateV3({chromosome: population[0].classScheduleWithRooms, semester: 2})
 
@@ -473,12 +500,7 @@ export const runGAV3 = async () => {
     // return { chromosome: population[0] };
 
     // check if 0 0 ba if ndi return error nlng para sabihin mag retry ng gen
-    let retObj = {
-        classSchedule: population[0].classScheduleWithRooms, // with room and tas
-        violations: population[0].violations
-    }
 
-    return retObj;
 };
 
 // eval function sa new structure -> this wont work sa new kasi nga null ung pag check kung may conflict b ro wala
