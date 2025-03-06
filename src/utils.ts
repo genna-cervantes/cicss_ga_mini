@@ -31,8 +31,8 @@ const generateRandomString = (length: number = 8): string => {
 };
 
 export const insertToScheduleCache = async (chromosome: any) => {
-    const id = `PF${generateRandomString(8)}`;
-    const query = `INSERT INTO generated_schedule_cache (generated_schedule_cache_id, classSchedule, TASSchedule, roomSchedule, violations, score) VALUES (
+    const id = `CH${generateRandomString(8)}`;
+    const query = `INSERT INTO generated_schedule_cache (generated_schedule_cache_id, class_schedule, tas_schedule, room_schedule, violations, score) VALUES (
         $1, $2, $3, $4, $5, $6
     )`;
     const res = await client.query(query, [
@@ -90,7 +90,7 @@ export const applyTASViolationsToSchedule = (
                     let violationTypeArray =
                         // di dapat toh mag uundefined e
                         violations.find(
-                            (v: any) => v.violationType === violationTypes[n]
+                            (v: any) => v.violationType === TASViolationTypes[n]
                         )?.violations ?? [];
 
                     for (let p = 0; p < violationTypeArray.length; p++) {
@@ -133,6 +133,8 @@ export const applyClassViolationsToSchedule = (
             for (let k = 0; k < classKeys.length; k++) {
                 let classSched = yearSched[classKeys[k]];
 
+                classSched.violations = [];
+
                 for (let m = 0; m < SCHOOL_DAYS.length; m++) {
                     let daySched = classSched[SCHOOL_DAYS[m]];
 
@@ -149,7 +151,7 @@ export const applyClassViolationsToSchedule = (
                                 // di dapat toh mag uundefined e
                                 violations.find(
                                     (v: any) =>
-                                        v.violationType === violationTypes[n]
+                                        v.violationType === classViolationTypes[n]
                                 )?.violations ?? [];
 
                             for (
@@ -170,13 +172,7 @@ export const applyClassViolationsToSchedule = (
                                         );
                                     }
                                 } else {
-                                    classSched.violations =
-                                        schedBlock.violations
-                                            ? [
-                                                  ...schedBlock.violatoins,
-                                                  specViolation
-                                              ]
-                                            : [specViolation];
+                                    classSched.violations.push(specViolation)
                                 }
                             }
                         }

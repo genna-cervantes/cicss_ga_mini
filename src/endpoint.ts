@@ -99,10 +99,11 @@ app.get('/generate-schedule', async (req, res) => {
     // // if meron 
     if (topSchedule){
         // select that tapos apply violations
-        scheduleWithViolations = applyClassViolationsToSchedule(topSchedule.classSchedule, topSchedule.violations)
-        TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.TASSchedule, topSchedule.violations)
+        scheduleWithViolations = applyClassViolationsToSchedule(topSchedule.class_schedule, topSchedule.violations)
+        TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.tas_schedule, topSchedule.violations)
 
         res.json({scheduleWithViolations, violations: topSchedule.violations});
+        return;
     }  
 
     // if wala then    
