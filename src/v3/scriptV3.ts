@@ -326,7 +326,7 @@ export const runGAV3 = async () => {
     // max gens is 10
     // pero pwede n mag exit once may score na na 0
 
-    let maxGen = 15;
+    let maxGen = 10;
     loop0: for (let g = 0; g < maxGen; g++) {
         console.log('crossover num: ', g);
 
@@ -1204,7 +1204,7 @@ const assignTAS = async ({
                             ]);
                             const prospectTAS = res.rows[0];
 
-                            schedBlock.tas = prospectTAS;
+                            schedBlock.tas = {tas_id: prospectTAS.tas_id, tas_name: prospectTAS.name};
 
                             if (!TASSchedule?.[prospectTAS.tas_id]) {
                                 TASSchedule[prospectTAS.tas_id] = {

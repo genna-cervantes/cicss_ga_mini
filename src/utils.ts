@@ -55,9 +55,15 @@ export const getClassScheduleBySection = async (
     department: string
 ) => {
     // get active schedule sa db tapos get only the ssection
+
+    const query = "SELECT class_schedule->'$1'->'$2'->'$3' FROM schedules;"
+    const res = await client.query(query, [department, year, section]);
+    const data = res.rows[0]
+
+    return data;
 };
 
-const minimizeClassSchedule = (schedule: any) => {
+export const minimizeClassSchedule = (schedule: any) => {
     let miniSchedule = structuredClone(schedule);
 
     let departmentKeys = Object.keys(miniSchedule);
