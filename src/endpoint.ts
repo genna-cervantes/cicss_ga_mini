@@ -6,7 +6,7 @@ import { chromosome } from './data';
 import { generateChromosomeV2 } from './v2/generateV2';
 import { runGAV2 } from './v2/scriptV2';
 import { runGAV3 } from './v3/scriptV3';
-import { applyClassViolationsToSchedule, applyTASViolationsToSchedule, getClassScheduleBySection, getScheduleFromCache, insertToScheduleCache, minimizeClassSchedule } from './utils';
+import { applyClassViolationsToSchedule, applyTASViolationsToSchedule, getClassScheduleBySection, getScheduleFromCache, insertToSchedule, insertToScheduleCache, minimizeClassSchedule } from './utils';
 
 const app = express();
 const port = 3000;
@@ -88,18 +88,21 @@ app.get('/test-ga-v3', async (req, res) => {
     res.json(schedules)
 })
 
-app.get('schedule/class/:department/:year/:section', async (req, res) => {
+app.get('/schedule/class/:department/:year/:section', async (req, res) => {
+
+    console.log('endpoint hit')
     const section = req.params.section;
     const year = req.params.year;
     const department = req.params.department;
 
-    const schedule = getClassScheduleBySection(parseInt(year), section, department);
+    const {schedule, violations} = await getClassScheduleBySection(year, section, department);
+    let scheduleWithViolations = applyClassViolationsToSchedule(schedule, violations ?? [])
+
+    res.json(scheduleWithViolations)
 })
 
 // apply tas violations
 app.get('/generate-schedule', async (req, res) => {
-
-    console.log('endpoitn hit')
 
     let scheduleWithViolations
     let TASScheduleWithViolations
@@ -113,7 +116,13 @@ app.get('/generate-schedule', async (req, res) => {
         scheduleWithViolations = applyClassViolationsToSchedule(topSchedule.class_schedule, topSchedule.violations)
         TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.tas_schedule, topSchedule.violations)
 
-        res.json({scheduleWithViolations, violations: topSchedule.violations});
+        // insert that to schedules array tapos tanggalin ung previous na andon
+        insertToSchedule({classSchedule: topSchedule.class_schedule, TASSchedule: topSchedule.tas_schedule, roomSchedule: topSchedule.room_schedule, violations: topSchedule.violations})
+
+        // res.json({scheduleWithViolations, violations: topSchedule.violations});
+        // const schedule = await getClassScheduleBySection('1', 'CSA', 'CS');
+        // res.json(schedule)
+        res.json(true)
         return; 
     }  
 
@@ -136,9 +145,16 @@ app.get('/generate-schedule', async (req, res) => {
     scheduleWithViolations = applyClassViolationsToSchedule(miniClassSchedule, topGeneratedSchedule.violations)
     TASScheduleWithViolations = applyTASViolationsToSchedule(topGeneratedSchedule.TASSchedule, topGeneratedSchedule.violations)
 
+    // console.log(topGeneratedSchedule.violations)
+    // console.log(topGeneratedSchedule)
     // insert that to schedules array tapos tanggalin ung previous na andon
+    insertToSchedule({classSchedule: miniClassSchedule, TASSchedule: topGeneratedSchedule.TASSchedule, roomSchedule: topGeneratedSchedule.roomSchedule, violations: topGeneratedSchedule.violations})
+
     // return lng ung first which is for example 1CSA // bali call the other endpoinr
-    res.json({scheduleWithViolations, violations: topGeneratedSchedule.violations, TASSchedule: TASScheduleWithViolations});
+    // const schedule = await getClassScheduleBySection('1', 'CSA', 'CS');
+    // res.json(schedule)
+    // res.json({scheduleWithViolations, violations: topGeneratedSchedule.violations, TASSchedule: TASScheduleWithViolations});
+    res.json(true);
     // res.json(topGeneratedSchedule)
 
 })

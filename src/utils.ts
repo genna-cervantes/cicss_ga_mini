@@ -1,4 +1,5 @@
 import { SCHOOL_DAYS } from './constants';
+import { chromosome } from './data';
 import { client } from './v3/scriptV3';
 
 export const getScheduleFromCache = async () => {
@@ -30,13 +31,12 @@ const generateRandomString = (length: number = 8): string => {
 };
 
 export const insertToScheduleCache = async (chromosome: any) => {
-
-    let miniClassSchedule = minimizeClassSchedule(chromosome.classSchedule)
+    let miniClassSchedule = minimizeClassSchedule(chromosome.classSchedule);
 
     const id = `CH${generateRandomString(8)}`;
     const query = `INSERT INTO generated_schedule_cache (generated_schedule_cache_id, class_schedule, tas_schedule, room_schedule, violations, score) VALUES (
         $1, $2, $3, $4, $5, $6
-    )`;
+        )`;
     const res = await client.query(query, [
         id,
         miniClassSchedule,
@@ -49,18 +49,55 @@ export const insertToScheduleCache = async (chromosome: any) => {
     return res.rowCount;
 };
 
+export const insertToSchedule = async ({
+    classSchedule,
+    TASSchedule,
+    roomSchedule,
+    violations
+}: {
+    classSchedule: any;
+    TASSchedule: any;
+    roomSchedule: any;
+    violations: any;
+}) => {
+    const queryDelete = 'DELETE FROM schedules';
+    const resDelete = await client.query(queryDelete);
+    const dataDelete = resDelete.rowCount;
+
+    const id = `CH${generateRandomString(8)}`;
+
+    const query = `INSERT INTO schedules (schedule_id, class_schedule, tas_schedule, room_schedule, violations) VALUES ($1, $2, $3, $4, $5);`;
+    const res = await client.query(query, [
+        id,
+        classSchedule,
+        TASSchedule,
+        roomSchedule,
+        violations
+    ]);
+    const data = res.rowCount;
+
+    return data;
+};
+
 export const getClassScheduleBySection = async (
-    year: number,
+    year: string,
     section: string,
     department: string
 ) => {
     // get active schedule sa db tapos get only the ssection
 
-    const query = "SELECT class_schedule->'$1'->'$2'->'$3' FROM schedules;"
+    const query =
+        'SELECT class_schedule->$1->$2->$3 AS schedule, violations FROM schedules;';
     const res = await client.query(query, [department, year, section]);
-    const data = res.rows[0]
+    const schedule = res.rows[0].schedule;
+    const violations = res.rows[0].violations;
 
-    return data;
+    console.log('violations', violations)
+
+    return {
+        schedule,
+        violations
+    };
 };
 
 export const minimizeClassSchedule = (schedule: any) => {
@@ -185,66 +222,59 @@ export const applyClassViolationsToSchedule = (
     violations: any
 ) => {
     console.log('applying class violations');
-    let departmentKeys = Object.keys(classSchedule);
-    for (let i = 0; i < departmentKeys.length; i++) {
-        let departmentSched = classSchedule[departmentKeys[i]];
+    console.log('violations apply', violations)
+    // let departmentKeys = Object.keys(classSchedule);
+    // for (let i = 0; i < departmentKeys.length; i++) {
+    //     let departmentSched = classSchedule[departmentKeys[i]];
 
-        let yearKeys = Object.keys(departmentSched);
-        for (let j = 0; j < yearKeys.length; j++) {
-            let yearSched = departmentSched[yearKeys[j]];
+    //     let yearKeys = Object.keys(departmentSched);
+    //     for (let j = 0; j < yearKeys.length; j++) {
+    //         let yearSched = departmentSched[yearKeys[j]];
 
-            let classKeys = Object.keys(yearSched);
-            for (let k = 0; k < classKeys.length; k++) {
-                let classSched = yearSched[classKeys[k]];
+    //         let classKeys = Object.keys(yearSched);
+    //         for (let k = 0; k < classKeys.length; k++) {
+    //             let classSched = yearSched[classKeys[k]];
 
-                classSched.violations = [];
+    //             console.log('class sched', classSchedule);
+    //             classSched.violations = [];
 
-                for (let m = 0; m < SCHOOL_DAYS.length; m++) {
-                    let daySched = classSched[SCHOOL_DAYS[m]];
+    classSchedule.violations = [];
+    for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+        let daySched = classSchedule[SCHOOL_DAYS[m]];
 
-                    if (!daySched) {
-                        continue;
-                    }
 
-                    for (let l = 0; l < daySched.length - 1; l++) {
-                        let schedBlock = daySched[l];
-                        schedBlock.violations = [];
+        if (!daySched) {
+            continue;
+        }
 
-                        for (let n = 0; n < classViolationTypes.length; n++) {
-                            let violationTypeArray =
-                                // di dapat toh mag uundefined e
-                                violations.find(
-                                    (v: any) =>
-                                        v.violationType ===
-                                        classViolationTypes[n]
-                                )?.violations ?? [];
+        for (let l = 0; l < daySched.length - 1; l++) {
+            let schedBlock = daySched[l];
+            schedBlock.violations = [];
 
-                            for (
-                                let p = 0;
-                                p < violationTypeArray.length;
-                                p++
-                            ) {
-                                let specViolation = violationTypeArray[p];
-                                if (specViolation.schedBlockId) {
-                                    if (
-                                        schedBlock.id ===
-                                        specViolation.schedBlockId
-                                    ) {
-                                        // let { schedBlockId, ...rest } =
-                                        //     specViolation;
-                                        schedBlock.violations.push(
-                                            specViolation
-                                        );
-                                    }
-                                } else {
-                                    classSched.violations.push(specViolation);
-                                }
-                            }
+            for (let n = 0; n < classViolationTypes.length; n++) {
+                let violationTypeArray =
+                    // di dapat toh mag uundefined e
+                    violations.find(
+                        (v: any) => v.violationType === classViolationTypes[n]
+                    )?.violations ?? [];
+
+                for (let p = 0; p < violationTypeArray.length; p++) {
+                    let specViolation = violationTypeArray[p];
+                    if (specViolation.schedBlockId) {
+                        if (schedBlock.id === specViolation.schedBlockId) {
+                            // let { schedBlockId, ...rest } =
+                            //     specViolation;
+                            schedBlock.violations.push(specViolation);
                         }
+                    } else {
+                        classSchedule.violations.push(specViolation);
                     }
                 }
             }
         }
     }
+    //         }
+    //     }
+    // }
     return classSchedule;
 };
