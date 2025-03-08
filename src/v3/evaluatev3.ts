@@ -165,44 +165,74 @@ const evaluateTASSpecialty = async (TASSchedule: any) => {
 };
 
 // meron din for tas
-const evaluateDayLength = (classSchedule: any) => {
+const evaluateDayLength = (schedule: any, type: string) => {
     let violationCount = 0;
     let violations: any = [];
 
-    let departmentKeys = Object.keys(classSchedule);
-    for (let i = 0; i < departmentKeys.length; i++) {
-        let departmentSched = classSchedule[departmentKeys[i]];
+    if (type === 'CLASS') {
+        let departmentKeys = Object.keys(schedule);
+        for (let i = 0; i < departmentKeys.length; i++) {
+            let departmentSched = schedule[departmentKeys[i]];
 
-        let yearKeys = Object.keys(departmentSched);
-        for (let j = 0; j < yearKeys.length; j++) {
-            let yearSched = departmentSched[yearKeys[j]];
+            let yearKeys = Object.keys(departmentSched);
+            for (let j = 0; j < yearKeys.length; j++) {
+                let yearSched = departmentSched[yearKeys[j]];
 
-            let classKeys = Object.keys(yearSched);
-            for (let k = 0; k < classKeys.length; k++) {
-                let classSched = yearSched[classKeys[k]];
+                let classKeys = Object.keys(yearSched);
+                for (let k = 0; k < classKeys.length; k++) {
+                    let classSched = yearSched[classKeys[k]];
 
-                for (let m = 0; m < SCHOOL_DAYS.length; m++) {
-                    let daySched = classSched[SCHOOL_DAYS[m]];
+                    for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                        let daySched = classSched[SCHOOL_DAYS[m]];
 
-                    if ((daySched?.length ?? 0) <= 0) {
-                        continue;
+                        if ((daySched?.length ?? 0) <= 0) {
+                            continue;
+                        }
+
+                        let dailyUnits = 0;
+                        for (let n = 0; n < daySched.length; n++) {
+                            let schedBlock = daySched[n];
+                            dailyUnits += schedBlock.unitsPerClass;
+                        }
+
+                        if (dailyUnits > 8) {
+                            violationCount++;
+                            violations.push({
+                                type: 'Section assigned more than 8 hours a day',
+                                section: classKeys[k],
+                                day: SCHOOL_DAYS[m],
+                                year: yearKeys[j]
+                            });
+                        }
                     }
+                }
+            }
+        }
+    } else if (type === 'TAS') {
+        let profKeys = Object.keys(schedule);
+        for (let i = 0; i < profKeys.length; i++) {
+            // loop thru all the assigned sa kanya -
+            let specProfSched = schedule[profKeys[i]];
+            for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+                let dailySpecProfSched = specProfSched[SCHOOL_DAYS[j]];
 
-                    let dailyUnits = 0;
-                    for (let n = 0; n < daySched.length; n++) {
-                        let schedBlock = daySched[n];
-                        dailyUnits += schedBlock.unitsPerClass;
-                    }
+                if ((dailySpecProfSched?.length ?? 0) <= 0) {
+                    continue;
+                }
 
-                    if (dailyUnits > 8) {
-                        violationCount++;
-                        violations.push({
-                            type: 'Section assigned more than 8 hours a day',
-                            section: classKeys[k],
-                            day: SCHOOL_DAYS[m],
-                            year: yearKeys[j]
-                        });
-                    }
+                let dailyUnits = 0;
+                for (let n = 0; n < dailySpecProfSched.length; n++) {
+                    let schedBlock = dailySpecProfSched[n];
+                    dailyUnits += schedBlock.unitsPerClass;
+                }
+
+                if (dailyUnits > 8) {
+                    violationCount++;
+                    violations.push({
+                        type: 'TAS assigned more than 8 hours a day',
+                        tas: profKeys[i],
+                        day: SCHOOL_DAYS[j]
+                    });
                 }
             }
         }
@@ -972,9 +1002,23 @@ export const evaluateV3 = async ({
                 break;
 
             case 'dayLength':
-                ({ violationCount, violations } = evaluateDayLength(schedule));
+                ({ violationCount, violations } = evaluateDayLength(
+                    schedule,
+                    'CLASS'
+                ));
                 allViolations.push({
-                    violationType,
+                    violationType: `${violationType}(CLASS)`,
+                    violationCount,
+                    violations
+                });
+                score -= violationCount * SOFT_CONSTRAINT_WEIGHT;
+
+                ({ violationCount, violations } = evaluateDayLength(
+                    schedule,
+                    'TAS'
+                ));
+                allViolations.push({
+                    violationType: `${violationType}(TAS)`,
                     violationCount,
                     violations
                 });

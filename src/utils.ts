@@ -1,5 +1,4 @@
 import { SCHOOL_DAYS } from './constants';
-import { violationTypes } from './v3/evaluatev3';
 import { client } from './v3/scriptV3';
 
 export const getScheduleFromCache = async () => {
@@ -52,13 +51,14 @@ let TASViolationTypes = [
     'tasUnits',
     'classLength(TAS)',
     'restDays(TAS)',
+    'dayLength(TAS)',
     'tasRequests'
 ];
 
 let classViolationTypes = [
     'roomType',
     'tasSpecialty',
-    'dayLength',
+    'dayLength(CLASS)',
     'classLength(CLASS)',
     'gened',
     'classNum',
@@ -98,7 +98,7 @@ export const applyTASViolationsToSchedule = (
 
                         if (
                             !['tasRequests', 'tasSpecialty'].includes(
-                                violationTypes[n]
+                                TASViolationTypes[n]
                             )
                         ) {
                             if (profKeys === specViolation.schedBlockId) {
