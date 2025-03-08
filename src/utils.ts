@@ -30,13 +30,16 @@ const generateRandomString = (length: number = 8): string => {
 };
 
 export const insertToScheduleCache = async (chromosome: any) => {
+
+    let miniClassSchedule = minimizeClassSchedule(chromosome.classSchedule)
+
     const id = `CH${generateRandomString(8)}`;
     const query = `INSERT INTO generated_schedule_cache (generated_schedule_cache_id, class_schedule, tas_schedule, room_schedule, violations, score) VALUES (
         $1, $2, $3, $4, $5, $6
     )`;
     const res = await client.query(query, [
         id,
-        chromosome.classSchedule,
+        miniClassSchedule,
         chromosome.TASSchedule,
         chromosome.roomSchedule,
         chromosome.violations,
@@ -44,6 +47,59 @@ export const insertToScheduleCache = async (chromosome: any) => {
     ]);
 
     return res.rowCount;
+};
+
+export const getClassScheduleBySection = async (
+    year: number,
+    section: string,
+    department: string
+) => {
+    // get active schedule sa db tapos get only the ssection
+};
+
+const minimizeClassSchedule = (schedule: any) => {
+    let miniSchedule = structuredClone(schedule);
+
+    let departmentKeys = Object.keys(miniSchedule);
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = miniSchedule[departmentKeys[i]];
+
+        let yearKeys = Object.keys(departmentSched);
+        for (let j = 0; j < yearKeys.length; j++) {
+            let yearSched = departmentSched[yearKeys[j]];
+
+            let classKeys = Object.keys(yearSched);
+            for (let k = 0; k < classKeys.length; k++) {
+                let classSched = yearSched[classKeys[k]];
+
+                for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                    let daySched = classSched[SCHOOL_DAYS[m]];
+
+                    if (!daySched) {
+                        continue;
+                    }
+
+                    for (let l = 0; l < daySched.length; l++) {
+                        let schedBlock = daySched[l];
+
+                        let {
+                            specificRoomAssignment,
+                            totalUnits,
+                            restrictions,
+                            unitsPerClass,
+                            ...minifiedCourse
+                        } = schedBlock.course;
+                        let { room_id, ...rest } = schedBlock.room;
+
+                        schedBlock.course = minifiedCourse;
+                        schedBlock.room = { roomId: room_id };
+                    }
+                }
+            }
+        }
+    }
+
+    return miniSchedule;
 };
 
 let TASViolationTypes = [
@@ -72,6 +128,7 @@ export const applyTASViolationsToSchedule = (
     TASSchedule: any,
     violations: any
 ) => {
+    console.log('applying tas violations');
     let profKeys = Object.keys(TASSchedule);
     for (let i = 0; i < profKeys.length; i++) {
         let specProfSched = TASSchedule[profKeys[i]];
@@ -121,6 +178,7 @@ export const applyClassViolationsToSchedule = (
     classSchedule: any,
     violations: any
 ) => {
+    console.log('applying class violations');
     let departmentKeys = Object.keys(classSchedule);
     for (let i = 0; i < departmentKeys.length; i++) {
         let departmentSched = classSchedule[departmentKeys[i]];
@@ -151,7 +209,8 @@ export const applyClassViolationsToSchedule = (
                                 // di dapat toh mag uundefined e
                                 violations.find(
                                     (v: any) =>
-                                        v.violationType === classViolationTypes[n]
+                                        v.violationType ===
+                                        classViolationTypes[n]
                                 )?.violations ?? [];
 
                             for (
@@ -172,7 +231,7 @@ export const applyClassViolationsToSchedule = (
                                         );
                                     }
                                 } else {
-                                    classSched.violations.push(specViolation)
+                                    classSched.violations.push(specViolation);
                                 }
                             }
                         }

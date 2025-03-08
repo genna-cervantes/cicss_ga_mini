@@ -6,7 +6,7 @@ import { chromosome } from './data';
 import { generateChromosomeV2 } from './v2/generateV2';
 import { runGAV2 } from './v2/scriptV2';
 import { runGAV3 } from './v3/scriptV3';
-import { applyClassViolationsToSchedule, applyTASViolationsToSchedule, getScheduleFromCache, insertToScheduleCache } from './utils';
+import { applyClassViolationsToSchedule, applyTASViolationsToSchedule, getClassScheduleBySection, getScheduleFromCache, insertToScheduleCache } from './utils';
 
 const app = express();
 const port = 3000;
@@ -88,8 +88,19 @@ app.get('/test-ga-v3', async (req, res) => {
     res.json(schedules)
 })
 
+app.get('schedule/class/:department/:year/:section', async (req, res) => {
+    const section = req.params.section;
+    const year = req.params.year;
+    const department = req.params.department;
+
+    const schedule = getClassScheduleBySection(parseInt(year), section, department);
+})
+
 // apply tas violations
 app.get('/generate-schedule', async (req, res) => {
+
+    console.log('endpoitn hit')
+
     let scheduleWithViolations
     let TASScheduleWithViolations
 
@@ -103,7 +114,7 @@ app.get('/generate-schedule', async (req, res) => {
         TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.tas_schedule, topSchedule.violations)
 
         res.json({scheduleWithViolations, violations: topSchedule.violations});
-        return;
+        return; 
     }  
 
     // if wala then    
@@ -121,7 +132,10 @@ app.get('/generate-schedule', async (req, res) => {
 
     scheduleWithViolations = applyClassViolationsToSchedule(topGeneratedSchedule.classSchedule, topGeneratedSchedule.violations)
     TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.TASSchedule, topGeneratedSchedule.violations)
-    res.json({scheduleWithViolations, violations: topGeneratedSchedule.violations});
+
+    // return lng ung first which is for example 1CSA // bali call the other endpoinr
+
+    res.json({scheduleWithViolations, violations: topGeneratedSchedule.violations, TASSchedule: TASScheduleWithViolations});
     // res.json(topGeneratedSchedule)
 
 })
