@@ -104,8 +104,8 @@ app.get('/schedule/class/:department/:year/:section', async (req, res) => {
 // apply tas violations
 app.get('/generate-schedule', async (req, res) => {
 
-    let scheduleWithViolations
-    let TASScheduleWithViolations
+    // let scheduleWithViolations
+    // let TASScheduleWithViolations
 
     // check cache table if may laman
     let topSchedule = await getScheduleFromCache();
@@ -113,8 +113,8 @@ app.get('/generate-schedule', async (req, res) => {
     // // if meron 
     if (topSchedule){
         // select that tapos apply violations
-        scheduleWithViolations = applyClassViolationsToSchedule(topSchedule.class_schedule, topSchedule.violations)
-        TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.tas_schedule, topSchedule.violations)
+        // scheduleWithViolations = applyClassViolationsToSchedule(topSchedule.class_schedule, topSchedule.violations)
+        // TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.tas_schedule, topSchedule.violations)
 
         // insert that to schedules array tapos tanggalin ung previous na andon
         insertToSchedule({classSchedule: topSchedule.class_schedule, TASSchedule: topSchedule.tas_schedule, roomSchedule: topSchedule.room_schedule, violations: topSchedule.violations})
@@ -142,8 +142,8 @@ app.get('/generate-schedule', async (req, res) => {
     // minimize that one too
     let miniClassSchedule = minimizeClassSchedule(topGeneratedSchedule.classSchedule)
 
-    scheduleWithViolations = applyClassViolationsToSchedule(miniClassSchedule, topGeneratedSchedule.violations)
-    TASScheduleWithViolations = applyTASViolationsToSchedule(topGeneratedSchedule.TASSchedule, topGeneratedSchedule.violations)
+    // scheduleWithViolations = applyClassViolationsToSchedule(miniClassSchedule, topGeneratedSchedule.violations)
+    // TASScheduleWithViolations = applyTASViolationsToSchedule(topGeneratedSchedule.TASSchedule, topGeneratedSchedule.violations)
 
     // console.log(topGeneratedSchedule.violations)
     // console.log(topGeneratedSchedule)
