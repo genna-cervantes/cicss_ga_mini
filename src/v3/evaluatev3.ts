@@ -7,7 +7,7 @@ import {
 } from '../constants';
 import { chromosome } from '../data';
 
-const evaluateRoomTypeAssignment = (classSchedule: any) => {
+const evaluateRoomTypeAssignment = (classSchedule: any, strucuturedViolations: any) => {
     let violationCount = 0;
     let violations = [];
 
@@ -50,9 +50,7 @@ const evaluateRoomTypeAssignment = (classSchedule: any) => {
                                     'CSELEC'
                                 )
                             ) {
-                                violationCount++;
-
-                                violations.push({
+                                let specViolation = {
                                     schedBlockId: schedBlock.id,
                                     year: yearKeys[j],
                                     course: schedBlock.course.subjectCode,
@@ -65,7 +63,26 @@ const evaluateRoomTypeAssignment = (classSchedule: any) => {
                                         time: schedBlock.timeBlock
                                     },
                                     room: schedBlock.room.room_id
-                                });
+                                }
+
+                                violationCount++;
+
+                                if (!strucuturedViolations[departmentKeys[i]]){
+                                    strucuturedViolations[departmentKeys[i]] = {
+                                        1: {},
+                                        2: {},
+                                        3: {},
+                                        4: {}
+                                    }
+                                }
+
+                                if (!strucuturedViolations[departmentKeys[i]][yearKeys[j]][classKeys[k]]){
+                                    strucuturedViolations[departmentKeys[i]][yearKeys[j]][classKeys[k]] = []
+                                }
+
+                                strucuturedViolations[departmentKeys[i]][yearKeys[j]][classKeys[k]].push(specViolation)
+
+                                violations.push(specViolation);
                             }
                         }
                     }
@@ -111,7 +128,7 @@ const evaluateTASUnits = async (TASSchedule: any) => {
     };
 };
 
-const evaluateTASSpecialty = async (TASSchedule: any) => {
+const evaluateTASSpecialty = async (TASSchedule: any, strucuturedViolations: any) => {
     let violations: any = [];
     let violationCount = 0;
 
@@ -139,7 +156,11 @@ const evaluateTASSpecialty = async (TASSchedule: any) => {
                                 v.course === schedBlock.course
                         )
                     ) {
+
                         violationCount++;
+
+                        
+
                         violations.push({
                             schedBlockId: schedBlock.id,
                             type: 'TAS assignment not specialty',
@@ -960,6 +981,7 @@ export const evaluateV3 = async ({
     semester: number;
 }) => {
     let score = 100;
+    let structuredViolations = {}
     let allViolations = [];
 
     for (let i = 0; i < violationTypes.length; i++) {
@@ -969,7 +991,7 @@ export const evaluateV3 = async ({
         switch (violationType) {
             case 'roomType':
                 ({ violationCount, violations } =
-                    evaluateRoomTypeAssignment(schedule));
+                    evaluateRoomTypeAssignment(schedule, structuredViolations));
                 allViolations.push({
                     violationType,
                     violationCount,
@@ -992,7 +1014,7 @@ export const evaluateV3 = async ({
 
             case 'tasSpecialty':
                 ({ violationCount, violations } =
-                    await evaluateTASSpecialty(TASSchedule));
+                    await evaluateTASSpecialty(TASSchedule, structuredViolations));
                 allViolations.push({
                     violationType,
                     violationCount,
@@ -1143,6 +1165,7 @@ export const evaluateV3 = async ({
 
     return {
         score,
-        allViolations
+        allViolations,
+        structuredViolations
     };
 };

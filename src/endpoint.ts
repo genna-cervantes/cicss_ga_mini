@@ -7,9 +7,12 @@ import { generateChromosomeV2 } from './v2/generateV2';
 import { runGAV2 } from './v2/scriptV2';
 import { runGAV3 } from './v3/scriptV3';
 import { applyClassViolationsToSchedule, applyTASViolationsToSchedule, getClassScheduleBySection, getScheduleFromCache, insertToSchedule, insertToScheduleCache, minimizeClassSchedule } from './utils';
+import cors from 'cors'
 
 const app = express();
 const port = 3000;
+
+app.use(cors({origin: 'http://localhost:5173'}))
 
 app.get('/', (req, res) => {
     res.json({ auth: true });
@@ -90,19 +93,32 @@ app.get('/test-ga-v3', async (req, res) => {
 
 app.get('/schedule/class/:department/:year/:section', async (req, res) => {
 
+    // pag wala
+
     console.log('endpoint hit')
     const section = req.params.section;
     const year = req.params.year;
     const department = req.params.department;
 
     const {schedule, violations} = await getClassScheduleBySection(year, section, department);
-    let scheduleWithViolations = applyClassViolationsToSchedule(schedule, violations ?? [])
+    if (schedule == null){
+        res.json({'message': 'call the generate function again'})
+        return;
+    }
+
+    console.log('violations')
+    console.log(violations)
+
+    let scheduleWithViolations = applyClassViolationsToSchedule(department, year, section, schedule, violations ?? [])
 
     res.json(scheduleWithViolations)
 })
 
 // apply tas violations
 app.get('/generate-schedule', async (req, res) => {
+
+
+    console.log('generate endpoint hit')
 
     // let scheduleWithViolations
     // let TASScheduleWithViolations
@@ -129,26 +145,31 @@ app.get('/generate-schedule', async (req, res) => {
     // if wala then    
     // run ga
     let generatedSchedules: any = await runGAV3()
+
+    console.log('structured violations')
+    console.log(generatedSchedules[0].structuredViolations)
     
     for (let i = 1; i < generatedSchedules.length; i++){
         // store all the ones with 0 0 in cache table
         let chromosome = generatedSchedules[i];
         await insertToScheduleCache(chromosome);
+        // pag hiwalayin ung violations
     }
     
     // except the one na irereturn
     let topGeneratedSchedule: any = generatedSchedules[0]
 
-    // minimize that one too
+    // // minimize that one too
     let miniClassSchedule = minimizeClassSchedule(topGeneratedSchedule.classSchedule)
 
-    // scheduleWithViolations = applyClassViolationsToSchedule(miniClassSchedule, topGeneratedSchedule.violations)
-    // TASScheduleWithViolations = applyTASViolationsToSchedule(topGeneratedSchedule.TASSchedule, topGeneratedSchedule.violations)
+    // // scheduleWithViolations = applyClassViolationsToSchedule(miniClassSchedule, topGeneratedSchedule.violations)
+    // // TASScheduleWithViolations = applyTASViolationsToSchedule(topGeneratedSchedule.TASSchedule, topGeneratedSchedule.violations)
 
-    // console.log(topGeneratedSchedule.violations)
-    // console.log(topGeneratedSchedule)
-    // insert that to schedules array tapos tanggalin ung previous na andon
-    insertToSchedule({classSchedule: miniClassSchedule, TASSchedule: topGeneratedSchedule.TASSchedule, roomSchedule: topGeneratedSchedule.roomSchedule, violations: topGeneratedSchedule.violations})
+    // // console.log(topGeneratedSchedule.violations)
+    // // console.log(topGeneratedSchedule)
+    // // insert that to schedules array tapos tanggalin ung previous na andon
+    // // pag hiwalayin ung violations
+    insertToSchedule({classSchedule: miniClassSchedule, TASSchedule: topGeneratedSchedule.TASSchedule, roomSchedule: topGeneratedSchedule.roomSchedule, violations: topGeneratedSchedule.structuredViolations})
 
     // return lng ung first which is for example 1CSA // bali call the other endpoinr
     // const schedule = await getClassScheduleBySection('1', 'CSA', 'CS');

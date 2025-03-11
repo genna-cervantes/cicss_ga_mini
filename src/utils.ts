@@ -42,7 +42,7 @@ export const insertToScheduleCache = async (chromosome: any) => {
         miniClassSchedule,
         chromosome.TASSchedule,
         chromosome.roomSchedule,
-        chromosome.violations,
+        chromosome.structuredViolations,
         chromosome.score
     ]);
 
@@ -92,7 +92,11 @@ export const getClassScheduleBySection = async (
     const schedule = res.rows[0].schedule;
     const violations = res.rows[0].violations;
 
-    console.log('violations', violations)
+    console.log('violations', violations);
+
+    if (schedule == null) {
+        console.log('WTF');
+    }
 
     return {
         schedule,
@@ -217,12 +221,18 @@ export const applyTASViolationsToSchedule = (
     return TASSchedule;
 };
 
+// separate violations to class (schedblock / general) / tas
+
 export const applyClassViolationsToSchedule = (
+    department: string,
+    year: string,
+    section: string,
     classSchedule: any,
     violations: any
 ) => {
-    console.log('applying class violations');
-    console.log('violations apply', violations)
+    // console.log('applying class violations');
+    // console.log('violations apply', violations);
+    // console.log('class schedule', classSchedule);
     // let departmentKeys = Object.keys(classSchedule);
     // for (let i = 0; i < departmentKeys.length; i++) {
     //     let departmentSched = classSchedule[departmentKeys[i]];
@@ -238,10 +248,12 @@ export const applyClassViolationsToSchedule = (
     //             console.log('class sched', classSchedule);
     //             classSched.violations = [];
 
+    let specViolations = violations[department][year][section] ?? [];
+    console.log('violations new', specViolations)
+
     classSchedule.violations = [];
     for (let m = 0; m < SCHOOL_DAYS.length; m++) {
         let daySched = classSchedule[SCHOOL_DAYS[m]];
-
 
         if (!daySched) {
             continue;
@@ -251,26 +263,45 @@ export const applyClassViolationsToSchedule = (
             let schedBlock = daySched[l];
             schedBlock.violations = [];
 
-            for (let n = 0; n < classViolationTypes.length; n++) {
-                let violationTypeArray =
-                    // di dapat toh mag uundefined e
-                    violations.find(
-                        (v: any) => v.violationType === classViolationTypes[n]
-                    )?.violations ?? [];
+            for (let p = 0; p < specViolations.length; p++) {
+                let specViolation = specViolations[p];
 
-                for (let p = 0; p < violationTypeArray.length; p++) {
-                    let specViolation = violationTypeArray[p];
-                    if (specViolation.schedBlockId) {
-                        if (schedBlock.id === specViolation.schedBlockId) {
-                            // let { schedBlockId, ...rest } =
-                            //     specViolation;
-                            schedBlock.violations.push(specViolation);
-                        }
-                    } else {
-                        classSchedule.violations.push(specViolation);
+                console.log('spec viol', specViolation)
+
+                if (specViolation.schedBlockId) {
+                    
+                    if (schedBlock.id === specViolation.schedBlockId) {
+                        console.log('dito')
+                        // let { schedBlockId, ...rest } =
+                        //     specViolation;
+                        schedBlock.violations.push(specViolation);
                     }
+                } else {
+                    console.log('dito 2')
+                    classSchedule.violations.push(specViolation);
                 }
             }
+
+            // for (let n = 0; n < classViolationTypes.length; n++) {
+            //     // let violationTypeArray =
+            //     //     // di dapat toh mag uundefined e
+            //     //     violations.find(
+            //     //         (v: any) => v.violationType === classViolationTypes[n]
+            //     //     )?.violations ?? [];
+
+            //     for (let p = 0; p < violationTypeArray.length; p++) {
+            //         let specViolation = violationTypeArray[p];
+            //         if (specViolation.schedBlockId) {
+            //             if (schedBlock.id === specViolation.schedBlockId) {
+            //                 // let { schedBlockId, ...rest } =
+            //                 //     specViolation;
+            //                 schedBlock.violations.push(specViolation);
+            //             }
+            //         } else {
+            //             classSchedule.violations.push(specViolation);
+            //         }
+            //     }
+            // }
         }
     }
     //         }
