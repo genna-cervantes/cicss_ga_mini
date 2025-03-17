@@ -7,7 +7,7 @@ import {
 } from '../constants';
 import { chromosome } from '../data';
 
-const evaluateRoomTypeAssignment = (classSchedule: any, strucuturedViolations: any) => {
+const evaluateRoomTypeAssignment = (classSchedule: any, structuredClassViolations: any, structuredTASViolations: any) => {
     let violationCount = 0;
     let violations = [];
 
@@ -67,20 +67,35 @@ const evaluateRoomTypeAssignment = (classSchedule: any, strucuturedViolations: a
 
                                 violationCount++;
 
-                                if (!strucuturedViolations[departmentKeys[i]]){
-                                    strucuturedViolations[departmentKeys[i]] = {
+                                // class violations
+                                if (!structuredClassViolations[departmentKeys[i]]){
+                                    structuredClassViolations[departmentKeys[i]] = {
                                         1: {},
                                         2: {},
                                         3: {},
                                         4: {}
                                     }
                                 }
+                                if (!structuredClassViolations[departmentKeys[i]][yearKeys[j]][classKeys[k]]){
+                                    structuredClassViolations[departmentKeys[i]][yearKeys[j]][classKeys[k]] = {
+                                        perSchedBlock: [],
+                                        perSection: []
+                                    }
+                                }
+                                structuredClassViolations[departmentKeys[i]][yearKeys[j]][classKeys[k]]['perSchedBlock'].push(specViolation)
 
-                                if (!strucuturedViolations[departmentKeys[i]][yearKeys[j]][classKeys[k]]){
-                                    strucuturedViolations[departmentKeys[i]][yearKeys[j]][classKeys[k]] = []
+                                // tas violations
+                                if (schedBlock.tas.tas_id == ''){
+                                    continue;
                                 }
 
-                                strucuturedViolations[departmentKeys[i]][yearKeys[j]][classKeys[k]].push(specViolation)
+                                if (!structuredTASViolations[schedBlock.tas.tas_id]){
+                                    structuredTASViolations[schedBlock.tas.tas_id] = {
+                                        perSchedBlock: [],
+                                        perTAS: []
+                                    }
+                                }
+                                structuredTASViolations[schedBlock.tas.tas_id]['perSchedBlock'].push(specViolation)
 
                                 violations.push(specViolation);
                             }
@@ -981,7 +996,8 @@ export const evaluateV3 = async ({
     semester: number;
 }) => {
     let score = 100;
-    let structuredViolations = {}
+    let structuredClassViolations = {}
+    let structuredTASViolations = {}
     let allViolations = [];
 
     for (let i = 0; i < violationTypes.length; i++) {
@@ -991,7 +1007,7 @@ export const evaluateV3 = async ({
         switch (violationType) {
             case 'roomType':
                 ({ violationCount, violations } =
-                    evaluateRoomTypeAssignment(schedule, structuredViolations));
+                    evaluateRoomTypeAssignment(schedule, structuredClassViolations, structuredTASViolations));
                 allViolations.push({
                     violationType,
                     violationCount,
@@ -1014,7 +1030,7 @@ export const evaluateV3 = async ({
 
             case 'tasSpecialty':
                 ({ violationCount, violations } =
-                    await evaluateTASSpecialty(TASSchedule, structuredViolations));
+                    await evaluateTASSpecialty(TASSchedule, structuredClassViolations));
                 allViolations.push({
                     violationType,
                     violationCount,
@@ -1166,6 +1182,7 @@ export const evaluateV3 = async ({
     return {
         score,
         allViolations,
-        structuredViolations
+        structuredClassViolations,
+        structuredTASViolations
     };
 };

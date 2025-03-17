@@ -79,7 +79,8 @@ export const runGAV3 = async () => {
         TASConflicts: number;
         score: number;
         violations: any;
-        structuredViolations: any;
+        structuredClassViolations: any;
+        structuredTASViolations: any;
     }[] = [];
 
     for (let i = 0; i < 10; i++) {
@@ -292,7 +293,7 @@ export const runGAV3 = async () => {
 
         // evaluate everything else
         console.log('evaluating');
-        let { score, allViolations: violations, structuredViolations } = await evaluateV3({
+        let { score, allViolations: violations, structuredClassViolations, structuredTASViolations } = await evaluateV3({
             schedule: classScheduleWithRooms,
             TASSchedule,
             roomSchedule,
@@ -318,7 +319,8 @@ export const runGAV3 = async () => {
             TASConflicts,
             score,
             violations,
-            structuredViolations
+            structuredClassViolations,
+            structuredTASViolations
         });
     }
 
@@ -396,7 +398,7 @@ export const runGAV3 = async () => {
                 chromosomeAClassScheduleWithRooms
             );
 
-            let { score, allViolations: violations, structuredViolations } = await evaluateV3({
+            let { score, allViolations: violations, structuredClassViolations, structuredTASViolations } = await evaluateV3({
                 schedule: chromosomeAClassScheduleWithRooms,
                 TASSchedule,
                 roomSchedule,
@@ -412,7 +414,8 @@ export const runGAV3 = async () => {
                 TASConflicts: chromosomeATASConflicts,
                 score,
                 violations,
-                structuredViolations
+                structuredClassViolations,
+                structuredTASViolations
             });
 
             console.log('room conflict a', chromosomeARoomConflicts);
@@ -438,7 +441,7 @@ export const runGAV3 = async () => {
                 chromosomeBClassScheduleWithRooms
             );
 
-            let { score: scoreB, allViolations: violationsB, structuredViolations: structuredViolationsB } = await evaluateV3({
+            let { score: scoreB, allViolations: violationsB, structuredClassViolations: structuredClassViolationsB, structuredTASViolations: structuredTASViolationsB } = await evaluateV3({
                 schedule: chromosomeBClassScheduleWithRooms,
                 TASSchedule,
                 roomSchedule,
@@ -454,7 +457,8 @@ export const runGAV3 = async () => {
                 TASConflicts: chromosomeBTASConflicts,
                 score: scoreB,
                 violations: violationsB,
-                structuredViolations: structuredViolationsB
+                structuredClassViolations: structuredClassViolationsB,
+                structuredTASViolations: structuredTASViolationsB
             });
 
             console.log('room conflict b', chromosomeBRoomConflicts);

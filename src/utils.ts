@@ -34,15 +34,16 @@ export const insertToScheduleCache = async (chromosome: any) => {
     let miniClassSchedule = minimizeClassSchedule(chromosome.classSchedule);
 
     const id = `CH${generateRandomString(8)}`;
-    const query = `INSERT INTO generated_schedule_cache (generated_schedule_cache_id, class_schedule, tas_schedule, room_schedule, violations, score) VALUES (
-        $1, $2, $3, $4, $5, $6
+    const query = `INSERT INTO generated_schedule_cache (generated_schedule_cache_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations, score) VALUES (
+        $1, $2, $3, $4, $5, $6, $7
         )`;
     const res = await client.query(query, [
         id,
         miniClassSchedule,
         chromosome.TASSchedule,
         chromosome.roomSchedule,
-        chromosome.structuredViolations,
+        chromosome.structuredClassViolations,
+        chromosome.structuredTASViolations,
         chromosome.score
     ]);
 
@@ -53,12 +54,14 @@ export const insertToSchedule = async ({
     classSchedule,
     TASSchedule,
     roomSchedule,
-    violations
+    classViolations,
+    tasViolations
 }: {
     classSchedule: any;
     TASSchedule: any;
     roomSchedule: any;
-    violations: any;
+    classViolations: any;
+    tasViolations: any
 }) => {
     const queryDelete = 'DELETE FROM schedules';
     const resDelete = await client.query(queryDelete);
@@ -66,13 +69,14 @@ export const insertToSchedule = async ({
 
     const id = `CH${generateRandomString(8)}`;
 
-    const query = `INSERT INTO schedules (schedule_id, class_schedule, tas_schedule, room_schedule, violations) VALUES ($1, $2, $3, $4, $5);`;
+    const query = `INSERT INTO schedules (schedule_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations) VALUES ($1, $2, $3, $4, $5);`;
     const res = await client.query(query, [
         id,
         classSchedule,
         TASSchedule,
         roomSchedule,
-        violations
+        classViolations,
+        tasViolations
     ]);
     const data = res.rowCount;
 
@@ -248,64 +252,55 @@ export const applyClassViolationsToSchedule = (
     //             console.log('class sched', classSchedule);
     //             classSched.violations = [];
 
-    let specViolations = violations[department][year][section] ?? [];
-    console.log('violations new', specViolations)
+    // per schedule
+    let specSchedBlockViolations =
+        violations[department][year][section]['perSchedBlock'] ?? [];
+
+    let specClassViolations =
+        violations[department][year][section]['perSection'] ?? [];
+    console.log('violations new', specSchedBlockViolations);
+
+    // per section
 
     classSchedule.violations = [];
     for (let m = 0; m < SCHOOL_DAYS.length; m++) {
         let daySched = classSchedule[SCHOOL_DAYS[m]];
 
+        console.log(SCHOOL_DAYS[m]);
+
         if (!daySched) {
             continue;
         }
 
-        for (let l = 0; l < daySched.length - 1; l++) {
+        for (let l = 0; l < daySched.length; l++) {
             let schedBlock = daySched[l];
             schedBlock.violations = [];
 
-            for (let p = 0; p < specViolations.length; p++) {
-                let specViolation = specViolations[p];
+            console.log(schedBlock.id);
 
-                console.log('spec viol', specViolation)
+            for (let p = 0; p < specSchedBlockViolations.length; p++) {
+                let specViolation = specSchedBlockViolations[p];
+
+                console.log('spec viol', specViolation);
 
                 if (specViolation.schedBlockId) {
-                    
                     if (schedBlock.id === specViolation.schedBlockId) {
-                        console.log('dito')
+                        console.log('dito');
                         // let { schedBlockId, ...rest } =
                         //     specViolation;
                         schedBlock.violations.push(specViolation);
                     }
-                } else {
-                    console.log('dito 2')
-                    classSchedule.violations.push(specViolation);
                 }
             }
-
-            // for (let n = 0; n < classViolationTypes.length; n++) {
-            //     // let violationTypeArray =
-            //     //     // di dapat toh mag uundefined e
-            //     //     violations.find(
-            //     //         (v: any) => v.violationType === classViolationTypes[n]
-            //     //     )?.violations ?? [];
-
-            //     for (let p = 0; p < violationTypeArray.length; p++) {
-            //         let specViolation = violationTypeArray[p];
-            //         if (specViolation.schedBlockId) {
-            //             if (schedBlock.id === specViolation.schedBlockId) {
-            //                 // let { schedBlockId, ...rest } =
-            //                 //     specViolation;
-            //                 schedBlock.violations.push(specViolation);
-            //             }
-            //         } else {
-            //             classSchedule.violations.push(specViolation);
-            //         }
-            //     }
-            // }
         }
+        //         }
+        //     }
+        // }
+        return classSchedule;
     }
-    //         }
-    //     }
-    // }
-    return classSchedule;
+
+    for (let i = 0; i < specClassViolations.length; i++){
+        let specViolation = specClassViolations[i]
+        classSchedule.violations.push(specViolation)
+    }
 };

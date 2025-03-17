@@ -133,7 +133,7 @@ app.get('/generate-schedule', async (req, res) => {
         // TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.tas_schedule, topSchedule.violations)
 
         // insert that to schedules array tapos tanggalin ung previous na andon
-        insertToSchedule({classSchedule: topSchedule.class_schedule, TASSchedule: topSchedule.tas_schedule, roomSchedule: topSchedule.room_schedule, violations: topSchedule.violations})
+        insertToSchedule({classSchedule: topSchedule.class_schedule, TASSchedule: topSchedule.tas_schedule, roomSchedule: topSchedule.room_schedule, classViolations: topSchedule.class_violations, tasViolations: topSchedule.tas_violations})
 
         // res.json({scheduleWithViolations, violations: topSchedule.violations});
         // const schedule = await getClassScheduleBySection('1', 'CSA', 'CS');
@@ -147,7 +147,7 @@ app.get('/generate-schedule', async (req, res) => {
     let generatedSchedules: any = await runGAV3()
 
     console.log('structured violations')
-    console.log(generatedSchedules[0].structuredViolations)
+    // console.log(generatedSchedules[0].structuredViolations)
     
     for (let i = 1; i < generatedSchedules.length; i++){
         // store all the ones with 0 0 in cache table
@@ -169,7 +169,7 @@ app.get('/generate-schedule', async (req, res) => {
     // // console.log(topGeneratedSchedule)
     // // insert that to schedules array tapos tanggalin ung previous na andon
     // // pag hiwalayin ung violations
-    insertToSchedule({classSchedule: miniClassSchedule, TASSchedule: topGeneratedSchedule.TASSchedule, roomSchedule: topGeneratedSchedule.roomSchedule, violations: topGeneratedSchedule.structuredViolations})
+    insertToSchedule({classSchedule: miniClassSchedule, TASSchedule: topGeneratedSchedule.TASSchedule, roomSchedule: topGeneratedSchedule.roomSchedule, classViolations: topGeneratedSchedule.structuredClassViolations, tasViolations: topGeneratedSchedule.structuredTASViolations})
 
     // return lng ung first which is for example 1CSA // bali call the other endpoinr
     // const schedule = await getClassScheduleBySection('1', 'CSA', 'CS');
