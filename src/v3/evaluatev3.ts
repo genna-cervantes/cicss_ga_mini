@@ -723,7 +723,7 @@ const evaluateGenedConstraints = async (classSchedule: any, structuredClassViola
     };
 };
 
-export const evaluateClassNumber = (classSchedule: any) => {
+export const evaluateClassNumber = (classSchedule: any, structuredClassViolations: any) => {
     let violationCount = 0;
     let violations: any = [];
 
@@ -747,15 +747,53 @@ export const evaluateClassNumber = (classSchedule: any) => {
                     }
 
                     if (daySched.length === 1) {
-                        violationCount++;
-                        violations.push({
+
+                        let specViolation = {
                             schedBlockId: daySched[0].id,
-                            type: 'Class assinged only 1 class in 1 day',
-                            section: classKeys[k],
                             year: yearKeys[j],
-                            day: SCHOOL_DAYS[k],
-                            courses: [daySched[0].course.subjectCode]
-                        });
+                            course: daySched[0].course.subjectCode,
+                            section: classKeys[k],
+                            type: 'class number assignment',
+                            description:
+                                'Class assinged only 1 class in 1 day'
+                        };
+
+                        violationCount++;
+
+                        // class violations
+                        if (
+                            !structuredClassViolations[
+                                departmentKeys[i]
+                            ]
+                        ) {
+                            structuredClassViolations[
+                                departmentKeys[i]
+                            ] = {
+                                1: {},
+                                2: {},
+                                3: {},
+                                4: {}
+                            };
+                        }
+                        if (
+                            !structuredClassViolations[
+                                departmentKeys[i]
+                            ][yearKeys[j]][classKeys[k]]
+                        ) {
+                            structuredClassViolations[
+                                departmentKeys[i]
+                            ][yearKeys[j]][classKeys[k]] = {
+                                perSchedBlock: [],
+                                perSection: []
+                            };
+                        }
+                        structuredClassViolations[departmentKeys[i]][
+                            yearKeys[j]
+                        ][classKeys[k]]['perSchedBlock'].push(
+                            specViolation
+                        );
+
+                        violations.push(specViolation);
                     }
                 }
             }
@@ -768,7 +806,7 @@ export const evaluateClassNumber = (classSchedule: any) => {
     };
 };
 
-const evaluateAllowedDays = async (classSchedule: any) => {
+const evaluateAllowedDays = async (classSchedule: any, structuredClassViolations: any) => {
     let violationCount = 0;
     let violations = [];
 
@@ -838,14 +876,55 @@ const evaluateAllowedDays = async (classSchedule: any) => {
                                 SCHOOL_DAYS[m]
                             )
                         ) {
-                            violationCount++;
-                            violations.push({
-                                type: 'Course(s) assigned to restricted day',
+
+                            let specViolation = {
+                                schedBlockId: daySched[0].id,
                                 year: yearKeys[j],
+                                course: daySched[0].course.subjectCode,
                                 section: classKeys[k],
-                                day: SCHOOL_DAYS[m]
-                            });
-                            continue loop1; // one time lng need
+                                type: 'allowed days assignment',
+                                description:
+                                    'Course(s) assigned to restricted day'
+                            };
+    
+                            violationCount++;
+    
+                            // class violations
+                            if (
+                                !structuredClassViolations[
+                                    departmentKeys[i]
+                                ]
+                            ) {
+                                structuredClassViolations[
+                                    departmentKeys[i]
+                                ] = {
+                                    1: {},
+                                    2: {},
+                                    3: {},
+                                    4: {}
+                                };
+                            }
+                            if (
+                                !structuredClassViolations[
+                                    departmentKeys[i]
+                                ][yearKeys[j]][classKeys[k]]
+                            ) {
+                                structuredClassViolations[
+                                    departmentKeys[i]
+                                ][yearKeys[j]][classKeys[k]] = {
+                                    perSchedBlock: [],
+                                    perSection: []
+                                };
+                            }
+                            structuredClassViolations[departmentKeys[i]][
+                                yearKeys[j]
+                            ][classKeys[k]]['perSchedBlock'].push(
+                                specViolation
+                            );
+    
+                            violations.push(specViolation);
+
+                            // continue loop1; // one time lng need
                         }
                     }
                 }
@@ -1366,7 +1445,7 @@ export const evaluateV3 = async ({
 
             case 'classNum':
                 ({ violationCount, violations } =
-                    evaluateClassNumber(schedule));
+                    evaluateClassNumber(schedule, structuredClassViolations));
                 allViolations.push({
                     violationType: violationType,
                     violationCount,
@@ -1377,7 +1456,7 @@ export const evaluateV3 = async ({
 
             case 'allowedDays':
                 ({ violationCount, violations } =
-                    await evaluateAllowedDays(schedule));
+                    await evaluateAllowedDays(schedule, structuredClassViolations));
                 allViolations.push({
                     violationType: violationType,
                     violationCount,
