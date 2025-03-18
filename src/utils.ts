@@ -69,7 +69,7 @@ export const insertToSchedule = async ({
 
     const id = `CH${generateRandomString(8)}`;
 
-    const query = `INSERT INTO schedules (schedule_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations) VALUES ($1, $2, $3, $4, $5);`;
+    const query = `INSERT INTO schedules (schedule_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations) VALUES ($1, $2, $3, $4, $5, $6);`;
     const res = await client.query(query, [
         id,
         classSchedule,
@@ -91,10 +91,10 @@ export const getClassScheduleBySection = async (
     // get active schedule sa db tapos get only the ssection
 
     const query =
-        'SELECT class_schedule->$1->$2->$3 AS schedule, violations FROM schedules;';
+        'SELECT class_schedule->$1->$2->$3 AS schedule, class_violations, tas_violations FROM schedules;';
     const res = await client.query(query, [department, year, section]);
     const schedule = res.rows[0].schedule;
-    const violations = res.rows[0].violations;
+    const violations = res.rows[0].class_violations;
 
     console.log('violations', violations);
 
@@ -234,33 +234,15 @@ export const applyClassViolationsToSchedule = (
     classSchedule: any,
     violations: any
 ) => {
-    // console.log('applying class violations');
-    // console.log('violations apply', violations);
-    // console.log('class schedule', classSchedule);
-    // let departmentKeys = Object.keys(classSchedule);
-    // for (let i = 0; i < departmentKeys.length; i++) {
-    //     let departmentSched = classSchedule[departmentKeys[i]];
-
-    //     let yearKeys = Object.keys(departmentSched);
-    //     for (let j = 0; j < yearKeys.length; j++) {
-    //         let yearSched = departmentSched[yearKeys[j]];
-
-    //         let classKeys = Object.keys(yearSched);
-    //         for (let k = 0; k < classKeys.length; k++) {
-    //             let classSched = yearSched[classKeys[k]];
-
-    //             console.log('class sched', classSchedule);
-    //             classSched.violations = [];
 
     // per schedule
     let specSchedBlockViolations =
-        violations[department][year][section]['perSchedBlock'] ?? [];
-
-    let specClassViolations =
-        violations[department][year][section]['perSection'] ?? [];
-    console.log('violations new', specSchedBlockViolations);
+        violations[department][year][section] ? violations[department][year][section]['perSchedBlock'] : [];
 
     // per section
+    let specClassViolations =
+        violations[department][year][section] ? violations[department][year][section]['perSection'] : [];
+    console.log('violations new', specSchedBlockViolations);
 
     classSchedule.violations = [];
     for (let m = 0; m < SCHOOL_DAYS.length; m++) {
@@ -276,8 +258,6 @@ export const applyClassViolationsToSchedule = (
             let schedBlock = daySched[l];
             schedBlock.violations = [];
 
-            console.log(schedBlock.id);
-
             for (let p = 0; p < specSchedBlockViolations.length; p++) {
                 let specViolation = specSchedBlockViolations[p];
 
@@ -285,22 +265,20 @@ export const applyClassViolationsToSchedule = (
 
                 if (specViolation.schedBlockId) {
                     if (schedBlock.id === specViolation.schedBlockId) {
-                        console.log('dito');
-                        // let { schedBlockId, ...rest } =
-                        //     specViolation;
+                        
                         schedBlock.violations.push(specViolation);
                     }
                 }
             }
         }
-        //         }
-        //     }
-        // }
-        return classSchedule;
+        
     }
 
+    // per section
     for (let i = 0; i < specClassViolations.length; i++){
         let specViolation = specClassViolations[i]
         classSchedule.violations.push(specViolation)
     }
+
+    return classSchedule
 };

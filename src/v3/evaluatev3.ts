@@ -85,7 +85,8 @@ const evaluateRoomTypeAssignment = (classSchedule: any, structuredClassViolation
                                 structuredClassViolations[departmentKeys[i]][yearKeys[j]][classKeys[k]]['perSchedBlock'].push(specViolation)
 
                                 // tas violations
-                                if (schedBlock.tas.tas_id == ''){
+
+                                if (schedBlock.tas.tas_id == 'GENED_PROF'){
                                     continue;
                                 }
 
@@ -112,7 +113,9 @@ const evaluateRoomTypeAssignment = (classSchedule: any, structuredClassViolation
     };
 };
 
-const evaluateTASUnits = async (TASSchedule: any) => {
+
+// for prof
+const evaluateTASUnits = async (TASSchedule: any, structuredTASViolations: any) => {
     let violations: any = [];
     let violationCount = 0;
 
@@ -127,13 +130,29 @@ const evaluateTASUnits = async (TASSchedule: any) => {
         const maxUnits = res.rows[0].units;
 
         if (units > maxUnits) {
+            let specViolation = {
+                tas: profKeys[i],
+                type: 'tas units assignment',
+                description:
+                    'tas assigned too many units'
+            }
+
             violationCount++;
-            violations.push({
-                type: 'TAS assignment over max units',
-                TAS: profKeys[i],
-                assignedUnits: units,
-                maxUnits: maxUnits
-            });
+
+            // tas violations
+            if (profKeys[i] === 'GENED_PROF'){
+                continue;
+            }
+
+            if (!structuredTASViolations[profKeys[i]]){
+                structuredTASViolations[profKeys[i]] = {
+                    perSchedBlock: [],
+                    perTAS: []
+                }
+            }
+            structuredTASViolations[profKeys[i]]['perTAS'].push(specViolation)
+
+            violations.push(specViolation);
         }
     }
 
@@ -1019,7 +1038,7 @@ export const evaluateV3 = async ({
             // not tied to a single course
             case 'tasUnits':
                 ({ violationCount, violations } =
-                    await evaluateTASUnits(TASSchedule));
+                    await evaluateTASUnits(TASSchedule, structuredTASViolations));
                 allViolations.push({
                     violationType,
                     violationCount,
