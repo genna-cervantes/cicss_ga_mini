@@ -610,7 +610,7 @@ const evaluateClassLength = (
     };
 };
 
-const evaluateGenedConstraints = async (classSchedule: any) => {
+const evaluateGenedConstraints = async (classSchedule: any, structuredClassViolations: any) => {
     let violationCount = 0;
     let violations = [];
 
@@ -662,15 +662,52 @@ const evaluateGenedConstraints = async (classSchedule: any) => {
                                 parseInt(schedBlock.timeBlock.end) <
                                     parseInt(constraints[n].end)
                             ) {
-                                violationCount++;
-                                violations.push({
+                                let specViolation = {
                                     schedBlockId: schedBlock.id,
-                                    type: 'Gened course constraint not followed',
+                                    year: yearKeys[j],
+                                    course: schedBlock.course.subjectCode,
                                     section: classKeys[k],
-                                    day: SCHOOL_DAYS[m],
-                                    courses: [schedBlock.course.subjectCode],
-                                    time: schedBlock.timeBlock.start
-                                });
+                                    type: 'gened class assignment',
+                                    description:
+                                        'Gened course constraint not followed'
+                                };
+
+                                violationCount++;
+
+                                // class violations
+                                if (
+                                    !structuredClassViolations[
+                                        departmentKeys[i]
+                                    ]
+                                ) {
+                                    structuredClassViolations[
+                                        departmentKeys[i]
+                                    ] = {
+                                        1: {},
+                                        2: {},
+                                        3: {},
+                                        4: {}
+                                    };
+                                }
+                                if (
+                                    !structuredClassViolations[
+                                        departmentKeys[i]
+                                    ][yearKeys[j]][classKeys[k]]
+                                ) {
+                                    structuredClassViolations[
+                                        departmentKeys[i]
+                                    ][yearKeys[j]][classKeys[k]] = {
+                                        perSchedBlock: [],
+                                        perSection: []
+                                    };
+                                }
+                                structuredClassViolations[departmentKeys[i]][
+                                    yearKeys[j]
+                                ][classKeys[k]]['perSchedBlock'].push(
+                                    specViolation
+                                );
+
+                                violations.push(specViolation);
                             }
                         }
                         // check if within ung timeslot neto don sa constraint ng
@@ -1318,7 +1355,7 @@ export const evaluateV3 = async ({
 
             case 'gened':
                 ({ violationCount, violations } =
-                    await evaluateGenedConstraints(schedule));
+                    await evaluateGenedConstraints(schedule, structuredClassViolations));
                 allViolations.push({
                     violationType: violationType,
                     violationCount,
