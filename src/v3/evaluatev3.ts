@@ -7,7 +7,11 @@ import {
 } from '../constants';
 import { chromosome } from '../data';
 
-const evaluateRoomTypeAssignment = (classSchedule: any, structuredClassViolations: any, structuredTASViolations: any) => {
+const evaluateRoomTypeAssignment = (
+    classSchedule: any,
+    structuredClassViolations: any,
+    structuredTASViolations: any
+) => {
     let violationCount = 0;
     let violations = [];
 
@@ -63,40 +67,64 @@ const evaluateRoomTypeAssignment = (classSchedule: any, structuredClassViolation
                                         time: schedBlock.timeBlock
                                     },
                                     room: schedBlock.room.room_id
-                                }
+                                };
 
                                 violationCount++;
 
                                 // class violations
-                                if (!structuredClassViolations[departmentKeys[i]]){
-                                    structuredClassViolations[departmentKeys[i]] = {
+                                if (
+                                    !structuredClassViolations[
+                                        departmentKeys[i]
+                                    ]
+                                ) {
+                                    structuredClassViolations[
+                                        departmentKeys[i]
+                                    ] = {
                                         1: {},
                                         2: {},
                                         3: {},
                                         4: {}
-                                    }
+                                    };
                                 }
-                                if (!structuredClassViolations[departmentKeys[i]][yearKeys[j]][classKeys[k]]){
-                                    structuredClassViolations[departmentKeys[i]][yearKeys[j]][classKeys[k]] = {
+                                if (
+                                    !structuredClassViolations[
+                                        departmentKeys[i]
+                                    ][yearKeys[j]][classKeys[k]]
+                                ) {
+                                    structuredClassViolations[
+                                        departmentKeys[i]
+                                    ][yearKeys[j]][classKeys[k]] = {
                                         perSchedBlock: [],
                                         perSection: []
-                                    }
+                                    };
                                 }
-                                structuredClassViolations[departmentKeys[i]][yearKeys[j]][classKeys[k]]['perSchedBlock'].push(specViolation)
+                                structuredClassViolations[departmentKeys[i]][
+                                    yearKeys[j]
+                                ][classKeys[k]]['perSchedBlock'].push(
+                                    specViolation
+                                );
 
                                 // tas violations
 
-                                if (schedBlock.tas.tas_id == 'GENED_PROF'){
+                                if (schedBlock.tas.tas_id == 'GENED_PROF') {
                                     continue;
                                 }
 
-                                if (!structuredTASViolations[schedBlock.tas.tas_id]){
-                                    structuredTASViolations[schedBlock.tas.tas_id] = {
+                                if (
+                                    !structuredTASViolations[
+                                        schedBlock.tas.tas_id
+                                    ]
+                                ) {
+                                    structuredTASViolations[
+                                        schedBlock.tas.tas_id
+                                    ] = {
                                         perSchedBlock: [],
                                         perTAS: []
-                                    }
+                                    };
                                 }
-                                structuredTASViolations[schedBlock.tas.tas_id]['perSchedBlock'].push(specViolation)
+                                structuredTASViolations[schedBlock.tas.tas_id][
+                                    'perSchedBlock'
+                                ].push(specViolation);
 
                                 violations.push(specViolation);
                             }
@@ -113,9 +141,11 @@ const evaluateRoomTypeAssignment = (classSchedule: any, structuredClassViolation
     };
 };
 
-
 // for prof
-const evaluateTASUnits = async (TASSchedule: any, structuredTASViolations: any) => {
+const evaluateTASUnits = async (
+    TASSchedule: any,
+    structuredTASViolations: any
+) => {
     let violations: any = [];
     let violationCount = 0;
 
@@ -133,24 +163,23 @@ const evaluateTASUnits = async (TASSchedule: any, structuredTASViolations: any) 
             let specViolation = {
                 tas: profKeys[i],
                 type: 'tas units assignment',
-                description:
-                    'tas assigned too many units'
-            }
+                description: 'tas assigned too many units'
+            };
 
             violationCount++;
 
             // tas violations
-            if (profKeys[i] === 'GENED_PROF'){
+            if (profKeys[i] === 'GENED_PROF') {
                 continue;
             }
 
-            if (!structuredTASViolations[profKeys[i]]){
+            if (!structuredTASViolations[profKeys[i]]) {
                 structuredTASViolations[profKeys[i]] = {
                     perSchedBlock: [],
                     perTAS: []
-                }
+                };
             }
-            structuredTASViolations[profKeys[i]]['perTAS'].push(specViolation)
+            structuredTASViolations[profKeys[i]]['perTAS'].push(specViolation);
 
             violations.push(specViolation);
         }
@@ -162,7 +191,11 @@ const evaluateTASUnits = async (TASSchedule: any, structuredTASViolations: any) 
     };
 };
 
-const evaluateTASSpecialty = async (TASSchedule: any, structuredClassViolations: any, structuredTASViolations: any) => {
+const evaluateTASSpecialty = async (
+    TASSchedule: any,
+    structuredClassViolations: any,
+    structuredTASViolations: any
+) => {
     let violations: any = [];
     let violationCount = 0;
 
@@ -190,52 +223,62 @@ const evaluateTASSpecialty = async (TASSchedule: any, structuredClassViolations:
                                 v.course === schedBlock.course
                         )
                     ) {
-
                         let specViolation = {
                             schedBlockId: schedBlock.id,
                             year: schedBlock.year,
                             course: schedBlock.course,
                             section: schedBlock.section,
                             type: 'tas specialty assignment',
-                            description:
-                                'TAS assignment not specialty',
+                            description: 'TAS assignment not specialty',
                             time: {
                                 day: SCHOOL_DAYS[j],
                                 time: schedBlock.timeBlock.start
-                            },
-                        }
+                            }
+                        };
 
                         violationCount++;
 
                         // class violations
-                        if (!structuredClassViolations[schedBlock.department]){
+                        if (!structuredClassViolations[schedBlock.department]) {
                             structuredClassViolations[schedBlock.department] = {
                                 1: {},
                                 2: {},
                                 3: {},
                                 4: {}
-                            }
+                            };
                         }
-                        if (!structuredClassViolations[schedBlock.department][schedBlock.year][schedBlock.section]){
-                            structuredClassViolations[schedBlock.department][schedBlock.year][schedBlock.section] = {
+                        if (
+                            !structuredClassViolations[schedBlock.department][
+                                schedBlock.year
+                            ][schedBlock.section]
+                        ) {
+                            structuredClassViolations[schedBlock.department][
+                                schedBlock.year
+                            ][schedBlock.section] = {
                                 perSchedBlock: [],
                                 perSection: []
-                            }
+                            };
                         }
-                        structuredClassViolations[schedBlock.department][schedBlock.year][schedBlock.section]['perSchedBlock'].push(specViolation)
+                        structuredClassViolations[schedBlock.department][
+                            schedBlock.year
+                        ][schedBlock.section]['perSchedBlock'].push(
+                            specViolation
+                        );
 
                         // tas violations
-                        if (profKeys[i] == 'GENED_PROF'){
+                        if (profKeys[i] == 'GENED_PROF') {
                             continue;
                         }
 
-                        if (!structuredTASViolations[profKeys[i]]){
+                        if (!structuredTASViolations[profKeys[i]]) {
                             structuredTASViolations[profKeys[i]] = {
                                 perSchedBlock: [],
                                 perTAS: []
-                            }
+                            };
                         }
-                        structuredTASViolations[profKeys[i]]['perSchedBlock'].push(specViolation)
+                        structuredTASViolations[profKeys[i]][
+                            'perSchedBlock'
+                        ].push(specViolation);
 
                         violations.push(specViolation);
                     }
@@ -251,7 +294,12 @@ const evaluateTASSpecialty = async (TASSchedule: any, structuredClassViolations:
 };
 
 // meron din for tas
-const evaluateDayLength = (schedule: any, type: string) => {
+const evaluateDayLength = (
+    schedule: any,
+    type: string,
+    structuredClassViolations: any,
+    structuredTASViolations: any
+) => {
     let violationCount = 0;
     let violations: any = [];
 
@@ -282,13 +330,42 @@ const evaluateDayLength = (schedule: any, type: string) => {
                         }
 
                         if (dailyUnits > 8) {
-                            violationCount++;
-                            violations.push({
-                                type: 'Section assigned more than 8 hours a day',
+                            let specViolation = {
+                                year: yearKeys[j],
                                 section: classKeys[k],
-                                day: SCHOOL_DAYS[m],
-                                year: yearKeys[j]
-                            });
+                                type: 'day length assignment',
+                                description:
+                                    'Section assigned more than 8 hours a day'
+                            };
+
+                            violationCount++;
+
+                            // class violations
+                            if (!structuredClassViolations[departmentKeys[i]]) {
+                                structuredClassViolations[departmentKeys[i]] = {
+                                    1: {},
+                                    2: {},
+                                    3: {},
+                                    4: {}
+                                };
+                            }
+                            if (
+                                !structuredClassViolations[departmentKeys[i]][
+                                    yearKeys[j]
+                                ][classKeys[k]]
+                            ) {
+                                structuredClassViolations[departmentKeys[i]][
+                                    yearKeys[j]
+                                ][classKeys[k]] = {
+                                    perSchedBlock: [],
+                                    perSection: []
+                                };
+                            }
+                            structuredClassViolations[departmentKeys[i]][
+                                yearKeys[j]
+                            ][classKeys[k]]['perSection'].push(specViolation);
+
+                            violations.push(specViolation);
                         }
                     }
                 }
@@ -313,12 +390,29 @@ const evaluateDayLength = (schedule: any, type: string) => {
                 }
 
                 if (dailyUnits > 8) {
-                    violationCount++;
-                    violations.push({
-                        type: 'TAS assigned more than 8 hours a day',
+                    let specViolation = {
                         tas: profKeys[i],
-                        day: SCHOOL_DAYS[j]
-                    });
+                        type: 'day length assignment',
+                        description: 'TAS assigned more than 8 hours a day'
+                    };
+
+                    violationCount++;
+
+                    if (profKeys[i] == 'GENED_PROF') {
+                        continue;
+                    }
+
+                    if (!structuredTASViolations[profKeys[i]]) {
+                        structuredTASViolations[profKeys[i]] = {
+                            perSchedBlock: [],
+                            perTAS: []
+                        };
+                    }
+
+                    structuredTASViolations[profKeys[i]]['perTAS'].push(
+                        specViolation
+                    );
+                    violations.push(specViolation);
                 }
             }
         }
@@ -330,7 +424,12 @@ const evaluateDayLength = (schedule: any, type: string) => {
     };
 };
 
-const evaluateClassLength = (schedule: any, type: string) => {
+const evaluateClassLength = (
+    schedule: any,
+    type: string,
+    structuredClassViolations: any,
+    structuredTASViolations: any
+) => {
     let violationCount = 0;
     let violations: any = [];
 
@@ -371,17 +470,55 @@ const evaluateClassLength = (schedule: any, type: string) => {
                                 hours += ascendingSched[l].course.units * 3;
                             }
 
+                            let schedBlock = ascendingSched[l];
+
                             if (hours > 3) {
-                                violationCount++;
-                                violations.push({
-                                    type: 'Section assigned more than 3 consecutive hours of class',
+                                let specViolation = {
+                                    schedBlockId: schedBlock.id,
+                                    year: yearKeys[j],
+                                    course: schedBlock.course.subjectCode,
                                     section: classKeys[k],
-                                    day: SCHOOL_DAYS[m],
-                                    courses: [
-                                        ascendingSched[l].course.subject_code
-                                    ],
-                                    time: ascendingSched[l].timeBlock.start
-                                });
+                                    type: 'class length assignment',
+                                    description:
+                                        'Section assigned more than 3 consecutive hours of class'
+                                };
+
+                                violationCount++;
+
+                                // class violations
+                                if (
+                                    !structuredClassViolations[
+                                        departmentKeys[i]
+                                    ]
+                                ) {
+                                    structuredClassViolations[
+                                        departmentKeys[i]
+                                    ] = {
+                                        1: {},
+                                        2: {},
+                                        3: {},
+                                        4: {}
+                                    };
+                                }
+                                if (
+                                    !structuredClassViolations[
+                                        departmentKeys[i]
+                                    ][yearKeys[j]][classKeys[k]]
+                                ) {
+                                    structuredClassViolations[
+                                        departmentKeys[i]
+                                    ][yearKeys[j]][classKeys[k]] = {
+                                        perSchedBlock: [],
+                                        perSection: []
+                                    };
+                                }
+                                structuredClassViolations[departmentKeys[i]][
+                                    yearKeys[j]
+                                ][classKeys[k]]['perSchedBlock'].push(
+                                    specViolation
+                                );
+
+                                violations.push(specViolation);
                             }
 
                             if (
@@ -419,6 +556,8 @@ const evaluateClassLength = (schedule: any, type: string) => {
                         hours += ascendingSched[l].course.units * 3;
                     }
 
+                    let schedBlock = ascendingSched[l];
+
                     if (hours > 3) {
                         violationCount++;
                         violations.push({
@@ -428,6 +567,30 @@ const evaluateClassLength = (schedule: any, type: string) => {
                             courses: [ascendingSched[l].course.subject_code],
                             time: ascendingSched[l].timeBlock.start
                         });
+
+                        // tas violations
+
+                        let specViolation = {
+                            schedBlockId: schedBlock.id,
+                            tas: profKeys[i],
+                            type: 'class length assignment',
+                            description:
+                                'TAS assigned more than 3 consecutive hours of class'
+                        };
+
+                        if (schedBlock.tas.tas_id == 'GENED_PROF') {
+                            continue;
+                        }
+
+                        if (!structuredTASViolations[profKeys[i]]) {
+                            structuredTASViolations[profKeys[i]] = {
+                                perSchedBlock: [],
+                                perTAS: []
+                            };
+                        }
+                        structuredTASViolations[profKeys[i]][
+                            'perSchedBlock'
+                        ].push(specViolation);
                     }
 
                     if (
@@ -1046,8 +1209,8 @@ export const evaluateV3 = async ({
     semester: number;
 }) => {
     let score = 100;
-    let structuredClassViolations = {}
-    let structuredTASViolations = {}
+    let structuredClassViolations = {};
+    let structuredTASViolations = {};
     let allViolations = [];
 
     for (let i = 0; i < violationTypes.length; i++) {
@@ -1056,8 +1219,11 @@ export const evaluateV3 = async ({
 
         switch (violationType) {
             case 'roomType':
-                ({ violationCount, violations } =
-                    evaluateRoomTypeAssignment(schedule, structuredClassViolations, structuredTASViolations));
+                ({ violationCount, violations } = evaluateRoomTypeAssignment(
+                    schedule,
+                    structuredClassViolations,
+                    structuredTASViolations
+                ));
                 allViolations.push({
                     violationType,
                     violationCount,
@@ -1068,8 +1234,10 @@ export const evaluateV3 = async ({
 
             // not tied to a single course
             case 'tasUnits':
-                ({ violationCount, violations } =
-                    await evaluateTASUnits(TASSchedule, structuredTASViolations));
+                ({ violationCount, violations } = await evaluateTASUnits(
+                    TASSchedule,
+                    structuredTASViolations
+                ));
                 allViolations.push({
                     violationType,
                     violationCount,
@@ -1079,8 +1247,11 @@ export const evaluateV3 = async ({
                 break;
 
             case 'tasSpecialty':
-                ({ violationCount, violations } =
-                    await evaluateTASSpecialty(TASSchedule, structuredClassViolations, structuredTASViolations));
+                ({ violationCount, violations } = await evaluateTASSpecialty(
+                    TASSchedule,
+                    structuredClassViolations,
+                    structuredTASViolations
+                ));
                 allViolations.push({
                     violationType,
                     violationCount,
@@ -1092,7 +1263,9 @@ export const evaluateV3 = async ({
             case 'dayLength':
                 ({ violationCount, violations } = evaluateDayLength(
                     schedule,
-                    'CLASS'
+                    'CLASS',
+                    structuredClassViolations,
+                    structuredTASViolations
                 ));
                 allViolations.push({
                     violationType: `${violationType}(CLASS)`,
@@ -1103,7 +1276,9 @@ export const evaluateV3 = async ({
 
                 ({ violationCount, violations } = evaluateDayLength(
                     schedule,
-                    'TAS'
+                    'TAS',
+                    structuredClassViolations,
+                    structuredTASViolations
                 ));
                 allViolations.push({
                     violationType: `${violationType}(TAS)`,
@@ -1116,7 +1291,9 @@ export const evaluateV3 = async ({
             case 'classLength':
                 ({ violationCount, violations } = evaluateClassLength(
                     schedule,
-                    'class'
+                    'class',
+                    structuredClassViolations,
+                    structuredTASViolations
                 ));
                 allViolations.push({
                     violationType: `${violationType}(CLASS)`,
@@ -1127,7 +1304,9 @@ export const evaluateV3 = async ({
 
                 ({ violationCount, violations } = evaluateClassLength(
                     TASSchedule,
-                    'tas'
+                    'tas',
+                    structuredClassViolations,
+                    structuredTASViolations
                 ));
                 allViolations.push({
                     violationType: `${violationType}(TAS)`,
