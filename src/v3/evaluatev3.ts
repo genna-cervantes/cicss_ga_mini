@@ -162,7 +162,7 @@ const evaluateTASUnits = async (TASSchedule: any, structuredTASViolations: any) 
     };
 };
 
-const evaluateTASSpecialty = async (TASSchedule: any, strucuturedViolations: any) => {
+const evaluateTASSpecialty = async (TASSchedule: any, structuredClassViolations: any, structuredTASViolations: any) => {
     let violations: any = [];
     let violationCount = 0;
 
@@ -191,22 +191,53 @@ const evaluateTASSpecialty = async (TASSchedule: any, strucuturedViolations: any
                         )
                     ) {
 
-                        violationCount++;
-
-                        
-
-                        violations.push({
+                        let specViolation = {
                             schedBlockId: schedBlock.id,
-                            type: 'TAS assignment not specialty',
-                            TAS: profKeys[i],
+                            year: schedBlock.year,
                             course: schedBlock.course,
+                            section: schedBlock.section,
+                            type: 'tas specialty assignment',
+                            description:
+                                'TAS assignment not specialty',
                             time: {
                                 day: SCHOOL_DAYS[j],
                                 time: schedBlock.timeBlock.start
                             },
-                            sections: schedBlock.section,
-                            year: schedBlock.year
-                        });
+                        }
+
+                        violationCount++;
+
+                        // class violations
+                        if (!structuredClassViolations[schedBlock.department]){
+                            structuredClassViolations[schedBlock.department] = {
+                                1: {},
+                                2: {},
+                                3: {},
+                                4: {}
+                            }
+                        }
+                        if (!structuredClassViolations[schedBlock.department][schedBlock.year][schedBlock.section]){
+                            structuredClassViolations[schedBlock.department][schedBlock.year][schedBlock.section] = {
+                                perSchedBlock: [],
+                                perSection: []
+                            }
+                        }
+                        structuredClassViolations[schedBlock.department][schedBlock.year][schedBlock.section]['perSchedBlock'].push(specViolation)
+
+                        // tas violations
+                        if (profKeys[i] == 'GENED_PROF'){
+                            continue;
+                        }
+
+                        if (!structuredTASViolations[profKeys[i]]){
+                            structuredTASViolations[profKeys[i]] = {
+                                perSchedBlock: [],
+                                perTAS: []
+                            }
+                        }
+                        structuredTASViolations[profKeys[i]]['perSchedBlock'].push(specViolation)
+
+                        violations.push(specViolation);
                     }
                 }
             }
@@ -1049,7 +1080,7 @@ export const evaluateV3 = async ({
 
             case 'tasSpecialty':
                 ({ violationCount, violations } =
-                    await evaluateTASSpecialty(TASSchedule, structuredClassViolations));
+                    await evaluateTASSpecialty(TASSchedule, structuredClassViolations, structuredTASViolations));
                 allViolations.push({
                     violationType,
                     violationCount,
