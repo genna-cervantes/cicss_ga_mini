@@ -1137,7 +1137,7 @@ const evaluateAllowedTime = async (classSchedule: any, structuredClassViolations
     };
 };
 
-const evaluateRestDays = (schedule: any, type: string) => {
+const evaluateRestDays = (schedule: any, type: string, structuredClassViolations: any, structuredTASViolations: any) => {
     let violationCount = 0;
     let violations: any = [];
 
@@ -1169,12 +1169,50 @@ const evaluateRestDays = (schedule: any, type: string) => {
                     }
 
                     if (restDays < 2) {
-                        violationCount++;
-                        violations.push({
-                            type: 'Rest days less than ideal',
+                        let specViolation = {
                             year: yearKeys[j],
-                            section: classKeys[k]
-                        });
+                            section: classKeys[k],
+                            type: 'rest days assignment',
+                            description:
+                                'Rest days less than ideal'
+                        };
+
+                        violationCount++;
+
+                        // class violations
+                        if (
+                            !structuredClassViolations[
+                                departmentKeys[i]
+                            ]
+                        ) {
+                            structuredClassViolations[
+                                departmentKeys[i]
+                            ] = {
+                                1: {},
+                                2: {},
+                                3: {},
+                                4: {}
+                            };
+                        }
+                        if (
+                            !structuredClassViolations[
+                                departmentKeys[i]
+                            ][yearKeys[j]][classKeys[k]]
+                        ) {
+                            structuredClassViolations[
+                                departmentKeys[i]
+                            ][yearKeys[j]][classKeys[k]] = {
+                                perSchedBlock: [],
+                                perSection: []
+                            };
+                        }
+                        structuredClassViolations[departmentKeys[i]][
+                            yearKeys[j]
+                        ][classKeys[k]]['perSection'].push(
+                            specViolation
+                        );
+
+                        violations.push(specViolation);                        
                     }
                 }
             }
@@ -1198,11 +1236,28 @@ const evaluateRestDays = (schedule: any, type: string) => {
             }
 
             if (restDays < 2) {
-                violationCount++;
-                violations.push({
-                    type: 'Rest days less than ideal',
-                    TAS: profKeys[i]
-                });
+                // tas violations
+
+                let specViolation = {
+                    tas: profKeys[i],
+                    type: 'class length assignment',
+                    description:
+                        'TAS assigned more than 3 consecutive hours of class'
+                };
+
+                if (profKeys[i] == 'GENED_PROF') {
+                    continue;
+                }
+
+                if (!structuredTASViolations[profKeys[i]]) {
+                    structuredTASViolations[profKeys[i]] = {
+                        perSchedBlock: [],
+                        perTAS: []
+                    };
+                }
+                structuredTASViolations[profKeys[i]][
+                    'perTAS'
+                ].push(specViolation);
             }
         }
     }
@@ -1556,7 +1611,9 @@ export const evaluateV3 = async ({
             case 'restDays':
                 ({ violationCount, violations } = evaluateRestDays(
                     schedule,
-                    'CLASS'
+                    'CLASS',
+                    structuredClassViolations,
+                    structuredTASViolations
                 ));
                 allViolations.push({
                     violationType: `${violationType}(CLASS)`,
@@ -1567,7 +1624,9 @@ export const evaluateV3 = async ({
 
                 ({ violationCount, violations } = evaluateRestDays(
                     TASSchedule,
-                    'TAS'
+                    'TAS',
+                    structuredClassViolations,
+                    structuredTASViolations
                 ));
                 allViolations.push({
                     violationType: `${violationType}(TAS)`,
