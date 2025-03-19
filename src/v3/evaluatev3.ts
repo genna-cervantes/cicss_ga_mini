@@ -1174,7 +1174,7 @@ const evaluateRestDays = (schedule: any, type: string, structuredClassViolations
                             section: classKeys[k],
                             type: 'rest days assignment',
                             description:
-                                'Rest days less than ideal'
+                                'Section assigned rest days less than ideal'
                         };
 
                         violationCount++;
@@ -1240,9 +1240,9 @@ const evaluateRestDays = (schedule: any, type: string, structuredClassViolations
 
                 let specViolation = {
                     tas: profKeys[i],
-                    type: 'class length assignment',
+                    type: 'rest days assignment',
                     description:
-                        'TAS assigned more than 3 consecutive hours of class'
+                        'TAS assigned less than ideal rest days'
                 };
 
                 if (profKeys[i] == 'GENED_PROF') {
@@ -1268,9 +1268,9 @@ const evaluateRestDays = (schedule: any, type: string, structuredClassViolations
     };
 };
 
-const evaluateTasRequests = async (TASSchedule: any) => {
+const evaluateTasRequests = async (TASSchedule: any, structuredTASViolations: any) => {
     let violationCount = 0;
-    let violations = [];
+    let violations: any = [];
 
     const TASRequests: any = {};
 
@@ -1327,16 +1327,37 @@ const evaluateTasRequests = async (TASSchedule: any) => {
                                 parseInt(constraints[m].end))
                     ) {
                         if (restrictionType === 'hard') {
-                            violationCount++;
-                            violations.push({
-                                schedBlockId: schedBlock.id,
-                                type: 'TAS request not followed',
-                                section: schedBlock.section,
+                            // violationCount++;
+                            // violations.push({
+                            //     schedBlockId: schedBlock.id,
+                            //     type: 'TAS request not followed',
+                            //     section: schedBlock.section,
+                            //     tas: profKeys[i],
+                            //     day: SCHOOL_DAYS[j],
+                            //     course: schedBlock.course,
+                            //     time: schedBlock.timeBlock.start
+                            // });
+
+                            let specViolation = {
                                 tas: profKeys[i],
-                                day: SCHOOL_DAYS[j],
-                                course: schedBlock.course,
-                                time: schedBlock.timeBlock.start
-                            });
+                                type: 'tas requests assignment',
+                                description:
+                                    'Violated hard TAS request'
+                            };
+            
+                            if (profKeys[i] == 'GENED_PROF') {
+                                continue;
+                            }
+            
+                            if (!structuredTASViolations[profKeys[i]]) {
+                                structuredTASViolations[profKeys[i]] = {
+                                    perSchedBlock: [],
+                                    perTAS: []
+                                };
+                            }
+                            structuredTASViolations[profKeys[i]][
+                                'perSchedBlock'
+                            ].push(specViolation);
                         }
                     }
                 }
@@ -1638,7 +1659,7 @@ export const evaluateV3 = async ({
 
             case 'tasRequests':
                 ({ violationCount, violations } =
-                    await evaluateTasRequests(TASSchedule));
+                    await evaluateTasRequests(TASSchedule, structuredTASViolations));
                 allViolations.push({
                     violationType: violationType,
                     violationCount,
