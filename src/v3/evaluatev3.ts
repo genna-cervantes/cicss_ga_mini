@@ -1327,16 +1327,7 @@ const evaluateTasRequests = async (TASSchedule: any, structuredTASViolations: an
                                 parseInt(constraints[m].end))
                     ) {
                         if (restrictionType === 'hard') {
-                            // violationCount++;
-                            // violations.push({
-                            //     schedBlockId: schedBlock.id,
-                            //     type: 'TAS request not followed',
-                            //     section: schedBlock.section,
-                            //     tas: profKeys[i],
-                            //     day: SCHOOL_DAYS[j],
-                            //     course: schedBlock.course,
-                            //     time: schedBlock.timeBlock.start
-                            // });
+
 
                             let specViolation = {
                                 tas: profKeys[i],
@@ -1358,6 +1349,9 @@ const evaluateTasRequests = async (TASSchedule: any, structuredTASViolations: an
                             structuredTASViolations[profKeys[i]][
                                 'perSchedBlock'
                             ].push(specViolation);
+
+                            violationCount++;
+                            violations.push(specViolation)
                         }
                     }
                 }
@@ -1371,7 +1365,7 @@ const evaluateTasRequests = async (TASSchedule: any, structuredTASViolations: an
     };
 };
 
-const evaluateRoomProximity = (classSchedule: any) => {
+const evaluateRoomProximity = (classSchedule: any, structuredClassViolations: any) => {
     let violationCount = 0;
     let violations: any = [];
 
@@ -1418,6 +1412,7 @@ const evaluateRoomProximity = (classSchedule: any) => {
                         );
 
                         if (Math.abs(firstRoomFloor - secondRoomFloor) > 1) {
+
                             violationCount++;
                             violations.push({
                                 schedBlockId: schedBlock.id,
@@ -1438,6 +1433,53 @@ const evaluateRoomProximity = (classSchedule: any) => {
                                     nextSchedBlock.room.room_id
                                 ]
                             });
+
+                            let specViolation = {
+                                schedBlockId: schedBlock.id,
+                                course: schedBlock.course.subjectCode,
+                                year: yearKeys[j],
+                                section: classKeys[k],
+                                type: 'room proximity assignment',
+                                description:
+                                    'Room is too far apart from previous room'
+                            };
+
+                            violationCount++;
+
+                            // class violations
+                            if (
+                                !structuredClassViolations[
+                                    departmentKeys[i]
+                                ]
+                            ) {
+                                structuredClassViolations[
+                                    departmentKeys[i]
+                                ] = {
+                                    1: {},
+                                    2: {},
+                                    3: {},
+                                    4: {}
+                                };
+                            }
+                            if (
+                                !structuredClassViolations[
+                                    departmentKeys[i]
+                                ][yearKeys[j]][classKeys[k]]
+                            ) {
+                                structuredClassViolations[
+                                    departmentKeys[i]
+                                ][yearKeys[j]][classKeys[k]] = {
+                                    perSchedBlock: [],
+                                    perSection: []
+                                };
+                            }
+                            structuredClassViolations[departmentKeys[i]][
+                                yearKeys[j]
+                            ][classKeys[k]]['perSchedBlock'].push(
+                                specViolation
+                            );
+    
+                            violations.push(specViolation);                        
                         }
                     }
                 }
@@ -1670,7 +1712,7 @@ export const evaluateV3 = async ({
 
             case 'roomProximity':
                 ({ violationCount, violations } =
-                    evaluateRoomProximity(schedule));
+                    evaluateRoomProximity(schedule, structuredClassViolations));
                 allViolations.push({
                     violationType: violationType,
                     violationCount,
