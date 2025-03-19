@@ -987,7 +987,7 @@ const evaluateAllowedDays = async (classSchedule: any, structuredClassViolations
     };
 };
 
-const evaluateAllowedTime = async (classSchedule: any) => {
+const evaluateAllowedTime = async (classSchedule: any, structuredClassViolations: any) => {
     let violationCount = 0;
     let violations = [];
 
@@ -1076,16 +1076,53 @@ const evaluateAllowedTime = async (classSchedule: any) => {
                                 parseInt(schedBlock.timeBlock.end) <
                                     parseInt(constraints[n].end)
                             ) {
-                                violationCount++;
-                                violations.push({
+                                let specViolation = {
                                     schedBlockId: schedBlock.id,
-                                    type: 'Year level time constraint not followed',
                                     year: yearKeys[j],
+                                    course: schedBlock.course.subjectCode,
                                     section: classKeys[k],
-                                    day: SCHOOL_DAYS[m],
-                                    course: schedBlock.course.subject_code,
-                                    time: schedBlock.timeBlock.start
-                                });
+                                    type: 'allowed time assignment',
+                                    description:
+                                        'Course(s) assigned to restricted time'
+                                };
+        
+                                violationCount++;
+        
+                                // class violations
+                                if (
+                                    !structuredClassViolations[
+                                        departmentKeys[i]
+                                    ]
+                                ) {
+                                    structuredClassViolations[
+                                        departmentKeys[i]
+                                    ] = {
+                                        1: {},
+                                        2: {},
+                                        3: {},
+                                        4: {}
+                                    };
+                                }
+                                if (
+                                    !structuredClassViolations[
+                                        departmentKeys[i]
+                                    ][yearKeys[j]][classKeys[k]]
+                                ) {
+                                    structuredClassViolations[
+                                        departmentKeys[i]
+                                    ][yearKeys[j]][classKeys[k]] = {
+                                        perSchedBlock: [],
+                                        perSection: []
+                                    };
+                                }
+                                structuredClassViolations[departmentKeys[i]][
+                                    yearKeys[j]
+                                ][classKeys[k]]['perSchedBlock'].push(
+                                    specViolation
+                                );
+        
+                                violations.push(specViolation);
+    
                             }
                         }
                     }
@@ -1507,7 +1544,7 @@ export const evaluateV3 = async ({
 
             case 'allowedTime':
                 ({ violationCount, violations } =
-                    await evaluateAllowedTime(schedule));
+                    await evaluateAllowedTime(schedule, structuredClassViolations));
                 allViolations.push({
                     violationType: violationType,
                     violationCount,
