@@ -930,12 +930,52 @@ const evaluateAllowedDays = async (classSchedule: any, structuredClassViolations
                 }
 
                 if (assignedDays > specAllowedDays.max_days) {
-                    violationCount++;
-                    violations.push({
-                        type: 'Year level assigned classes on more than the allowed days',
+
+                    let specViolation = {
                         year: yearKeys[j],
-                        section: classKeys[k]
-                    });
+                        section: classKeys[k],
+                        type: 'allowed number of days assignment',
+                        description:
+                            'Course(s) assigned to more than allowed day'
+                    };
+
+                    violationCount++;
+
+                    // class violations
+                    if (
+                        !structuredClassViolations[
+                            departmentKeys[i]
+                        ]
+                    ) {
+                        structuredClassViolations[
+                            departmentKeys[i]
+                        ] = {
+                            1: {},
+                            2: {},
+                            3: {},
+                            4: {}
+                        };
+                    }
+                    if (
+                        !structuredClassViolations[
+                            departmentKeys[i]
+                        ][yearKeys[j]][classKeys[k]]
+                    ) {
+                        structuredClassViolations[
+                            departmentKeys[i]
+                        ][yearKeys[j]][classKeys[k]] = {
+                            perSchedBlock: [],
+                            perSection: []
+                        };
+                    }
+                    structuredClassViolations[departmentKeys[i]][
+                        yearKeys[j]
+                    ][classKeys[k]]['perSection'].push(
+                        specViolation
+                    );
+
+                    violations.push(specViolation);
+
                 }
             }
         }
