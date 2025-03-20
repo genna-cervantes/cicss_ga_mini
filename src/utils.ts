@@ -61,7 +61,7 @@ export const insertToSchedule = async ({
     TASSchedule: any;
     roomSchedule: any;
     classViolations: any;
-    tasViolations: any
+    tasViolations: any;
 }) => {
     const queryDelete = 'DELETE FROM schedules';
     const resDelete = await client.query(queryDelete);
@@ -100,7 +100,24 @@ export const getClassScheduleBySection = async (
     console.log('violations', violations);
 
     if (schedule == null) {
-        
+        console.log('WTF');
+    }
+
+    return {
+        schedule,
+        violations
+    };
+};
+
+export const getTASScheduleByTASId = async (tasId: string) => {
+    const query =
+        'SELECT tas_schedule->$1 as tas_schedule, class_violations, tas_violations FROM schedules;';
+    const res = await client.query(query, [tasId]);
+
+    const schedule = res.rows[0].tas_schedule;
+    const violations = res.rows[0].tas_violations;
+
+    if (schedule == null) {
         console.log('WTF');
     }
 
@@ -178,53 +195,52 @@ let classViolationTypes = [
 ];
 
 export const applyTASViolationsToSchedule = (
-    TASSchedule: any,
+    tasId: string,
+    schedule: any,
     violations: any
 ) => {
     console.log('applying tas violations');
-    let profKeys = Object.keys(TASSchedule);
-    for (let i = 0; i < profKeys.length; i++) {
-        let specProfSched = TASSchedule[profKeys[i]];
 
-        specProfSched.violations = [];
+    schedule.violations = violations?.[tasId] ? violations[tasId]['perTAS'] : [];
+    let perSchedBlockViolations = violations?.[tasId] ? violations[tasId]['perSchedBlock'] : [];
 
-        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
-            let dailySpecProfSched = specProfSched[SCHOOL_DAYS[j]];
+    for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+        let dailySpecProfSched = schedule[SCHOOL_DAYS[j]];
 
-            for (let k = 0; k < dailySpecProfSched.length; k++) {
-                let schedBlock = dailySpecProfSched[k];
+        for (let k = 0; k < dailySpecProfSched.length; k++) {
+            let schedBlock = dailySpecProfSched[k];
 
-                schedBlock.violations = [];
+            schedBlock.violations = [];
 
-                for (let n = 0; n < TASViolationTypes.length; n++) {
-                    let violationTypeArray =
-                        // di dapat toh mag uundefined e
-                        violations.find(
-                            (v: any) => v.violationType === TASViolationTypes[n]
-                        )?.violations ?? [];
+            for (let n = 0; n < TASViolationTypes.length; n++) {
+                let violationTypeArray =
+                    // di dapat toh mag uundefined e
+                    perSchedBlockViolations.find(
+                        (v: any) => v.violationType === TASViolationTypes[n]
+                    )?.violations ?? [];
 
-                    for (let p = 0; p < violationTypeArray.length; p++) {
-                        let specViolation = violationTypeArray[p];
+                for (let p = 0; p < violationTypeArray.length; p++) {
+                    let specViolation = violationTypeArray[p];
 
-                        if (
-                            !['tasRequests', 'tasSpecialty'].includes(
-                                TASViolationTypes[n]
-                            )
-                        ) {
-                            if (profKeys === specViolation.schedBlockId) {
-                                // let { schedBlockId, ...rest } =
-                                //     specViolation;
-                                schedBlock.violations.push(specViolation);
-                            }
-                        } else {
-                            specProfSched.violations.push(specViolation);
+                    if (
+                        !['tasRequests', 'tasSpecialty'].includes(
+                            TASViolationTypes[n]
+                        )
+                    ) {
+                        if (tasId === specViolation.schedBlockId) {
+                            // let { schedBlockId, ...rest } =
+                            //     specViolation;
+                            schedBlock.violations.push(specViolation);
                         }
+                    } else {
+                        schedule.violations.push(specViolation);
                     }
                 }
             }
         }
     }
-    return TASSchedule;
+
+    return schedule;
 };
 
 // separate violations to class (schedblock / general) / tas
@@ -236,14 +252,15 @@ export const applyClassViolationsToSchedule = (
     classSchedule: any,
     violations: any
 ) => {
-
     // per schedule
-    let specSchedBlockViolations =
-        violations[department][year][section] ? violations[department][year][section]['perSchedBlock'] : [];
+    let specSchedBlockViolations = violations[department][year][section]
+        ? violations[department][year][section]['perSchedBlock']
+        : [];
 
     // per section
-    let specClassViolations =
-        violations[department][year][section] ? violations[department][year][section]['perSection'] : [];
+    let specClassViolations = violations[department][year][section]
+        ? violations[department][year][section]['perSection']
+        : [];
     console.log('violations new', specSchedBlockViolations);
 
     classSchedule.violations = [];
@@ -267,32 +284,30 @@ export const applyClassViolationsToSchedule = (
 
                 if (specViolation.schedBlockId) {
                     if (schedBlock.id === specViolation.schedBlockId) {
-                        
                         schedBlock.violations.push(specViolation);
                     }
                 }
             }
         }
-        
     }
 
     // per section
-    for (let i = 0; i < specClassViolations.length; i++){
-        let specViolation = specClassViolations[i]
-        classSchedule.violations.push(specViolation)
+    for (let i = 0; i < specClassViolations.length; i++) {
+        let specViolation = specClassViolations[i];
+        classSchedule.violations.push(specViolation);
     }
 
-    return classSchedule
+    return classSchedule;
 };
 
 export const tranformSections = (rawSections: any) => {
-    let transformedSections: any = {}
+    let transformedSections: any = {};
 
     rawSections.forEach((sec: any) => {
-        if (!transformedSections[sec.section]){
-            transformedSections[sec.section] = sec.specialization
+        if (!transformedSections[sec.section]) {
+            transformedSections[sec.section] = sec.specialization;
         }
-    })
+    });
 
-    return transformedSections
-}
+    return transformedSections;
+};

@@ -11,6 +11,7 @@ import {
     applyTASViolationsToSchedule,
     getClassScheduleBySection,
     getScheduleFromCache,
+    getTASScheduleByTASId,
     insertToSchedule,
     insertToScheduleCache,
     minimizeClassSchedule,
@@ -102,9 +103,7 @@ app.get('/test-ga-v2', async (req, res) => {
 // });
 
 app.get('/schedule/class/:department/:year/:section', async (req, res) => {
-    // pag wala
 
-    console.log('endpoint hit');
     const section = req.params.section;
     const year = req.params.year;
     const department = req.params.department;
@@ -119,9 +118,6 @@ app.get('/schedule/class/:department/:year/:section', async (req, res) => {
         return;
     }
 
-    console.log('violations');
-    console.log(violations);
-
     let scheduleWithViolations = applyClassViolationsToSchedule(
         department,
         year,
@@ -133,32 +129,51 @@ app.get('/schedule/class/:department/:year/:section', async (req, res) => {
     res.json(scheduleWithViolations);
 });
 
+app.get('/schedule/tas/:tasId', async (req, res) => {
+    const tasId = req.params.tasId;
+
+    const {schedule, violations} = await getTASScheduleByTASId(tasId);
+    if (schedule == null) {
+        res.json({ message: 'call the generate function again' });
+        return;
+    }
+
+    let scheduleWithViolations = applyTASViolationsToSchedule(
+        tasId,
+        schedule,
+        violations ?? []
+    )
+
+    res.json(scheduleWithViolations)
+
+})
+
 app.post('/generate-schedule', async (req, res) => {
 
-    // let topSchedule = await getScheduleFromCache();
+    let topSchedule = await getScheduleFromCache();
 
-    // // // if meron
-    // if (topSchedule) {
-    //     console.log('top schedule')
-    //     // select that tapos apply violations
-    //     // scheduleWithViolations = applyClassViolationsToSchedule(topSchedule.class_schedule, topSchedule.violations)
-    //     // TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.tas_schedule, topSchedule.violations)
+    // // if meron
+    if (topSchedule) {
+        console.log('top schedule')
+        // select that tapos apply violations
+        // scheduleWithViolations = applyClassViolationsToSchedule(topSchedule.class_schedule, topSchedule.violations)
+        // TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.tas_schedule, topSchedule.violations)
 
-    //     // insert that to schedules array tapos tanggalin ung previous na andon
-    //     insertToSchedule({
-    //         classSchedule: topSchedule.class_schedule,
-    //         TASSchedule: topSchedule.tas_schedule,
-    //         roomSchedule: topSchedule.room_schedule,
-    //         classViolations: topSchedule.class_violations,
-    //         tasViolations: topSchedule.tas_violations
-    //     });
+        // insert that to schedules array tapos tanggalin ung previous na andon
+        insertToSchedule({
+            classSchedule: topSchedule.class_schedule,
+            TASSchedule: topSchedule.tas_schedule,
+            roomSchedule: topSchedule.room_schedule,
+            classViolations: topSchedule.class_violations,
+            tasViolations: topSchedule.tas_violations
+        });
 
-    //     // res.json({scheduleWithViolations, violations: topSchedule.violations});
-    //     // const schedule = await getClassScheduleBySection('1', 'CSA', 'CS');
-    //     // res.json(schedule)
-    //     res.json(true);
-    //     return;
-    // }
+        // res.json({scheduleWithViolations, violations: topSchedule.violations});
+        // const schedule = await getClassScheduleBySection('1', 'CSA', 'CS');
+        // res.json(schedule)
+        res.json(true);
+        return;
+    }
 
     console.log(req)
     console.log(req.body)
