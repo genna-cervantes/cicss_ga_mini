@@ -8,6 +8,7 @@ import { runGAV2 } from './v2/scriptV2';
 import { runGAV3 } from './v3/scriptV3';
 import {
     applyClassViolationsToSchedule,
+    applyRoomIdsToTASSchedule,
     applyTASViolationsToSchedule,
     getClassScheduleBySection,
     getScheduleFromCache,
@@ -133,16 +134,19 @@ app.get('/schedule/class/:department/:year/:section', async (req, res) => {
 app.get('/schedule/tas/:tasId', async (req, res) => {
     const tasId = req.params.tasId;
 
-    const {schedule, violations} = await getTASScheduleByTASId(tasId);
-    if (schedule == null) {
+    const {TASSchedule, classSchedule, classViolations, TASViolations} = await getTASScheduleByTASId(tasId);
+    if (TASSchedule == null || classSchedule == null) {
         res.json({ message: 'call the generate function again' });
         return;
     }
 
+    let scheduleWithRoomIds = applyRoomIdsToTASSchedule(TASSchedule, classSchedule)
+
     let scheduleWithViolations = applyTASViolationsToSchedule(
         tasId,
-        schedule,
-        violations ?? []
+        scheduleWithRoomIds,
+        classViolations ?? [],
+        TASViolations ?? []
     )
 
     res.json(scheduleWithViolations)
@@ -176,7 +180,6 @@ app.post('/generate-schedule', async (req, res) => {
         return;
     }
 
-    console.log(req)
     console.log(req.body)
 
     let { CSSections, ITSections, ISSections, semester } = req.body;

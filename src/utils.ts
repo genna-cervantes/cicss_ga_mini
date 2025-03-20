@@ -112,22 +112,54 @@ export const getClassScheduleBySection = async (
 };
 
 export const getTASScheduleByTASId = async (tasId: string) => {
+
     const query =
-        'SELECT tas_schedule->$1 as tas_schedule, class_violations, tas_violations FROM schedules;';
+        'SELECT tas_schedule->$1 as tas_schedule, class_schedule, class_violations, tas_violations FROM schedules;';
     const res = await client.query(query, [tasId]);
 
-    const schedule = res.rows[0].tas_schedule;
-    const violations = res.rows[0].tas_violations;
+    const TASSchedule = res.rows[0].tas_schedule;
+    const classSchedule = res.rows[0].class_schedule;
+    const classViolations = res.rows[0].class_violations;
+    const TASViolations = res.rows[0].tas_violations;
 
-    if (schedule == null) {
+    if (TASSchedule == null || classSchedule == null) {
         console.log('WTF');
     }
 
     return {
-        schedule,
-        violations
+        TASSchedule,
+        classSchedule,
+        classViolations,
+        TASViolations
     };
 };
+
+export const applyRoomIdsToTASSchedule = (TASSchedule: any, classSchedule: any) => {
+    let profKeys = Object.keys(TASSchedule)
+    for (let i = 0; i < profKeys.length; i++){
+        let specProfSched = TASSchedule[profKeys[i]];
+
+        for (let j = 0; j < SCHOOL_DAYS.length; j++){
+            let daySched = specProfSched[SCHOOL_DAYS[j]];
+
+            
+            for (let k = 0; k < daySched.length; k++){
+                let schedBlock = daySched[k];
+                
+                let classDaySched = classSchedule[schedBlock.department][schedBlock.year][schedBlock.section]
+
+                for (let l = 0; l < classDaySched.length; l++){
+                    let classSchedBlock = classDaySched[l]
+
+                    if (schedBlock.id === classSchedBlock.id){
+
+                        schedBlock.room = classSchedBlock.room
+                    }
+                }
+            }
+        }
+    }
+}
 
 export const minimizeClassSchedule = (schedule: any) => {
     let miniSchedule = structuredClone(schedule);
@@ -199,12 +231,13 @@ let classViolationTypes = [
 export const applyTASViolationsToSchedule = (
     tasId: string,
     schedule: any,
-    violations: any
+    classViolations: any,
+    TASViolations: any
 ) => {
     console.log('applying tas violations');
 
-    schedule.violations = violations?.[tasId] ? violations[tasId]['perTAS'] : [];
-    let perSchedBlockViolations = violations?.[tasId] ? violations[tasId]['perSchedBlock'] : [];
+    schedule.violations = TASViolations?.[tasId] ? TASViolations[tasId]['perTAS'] : [];
+    let perSchedBlockViolations = TASViolations?.[tasId] ? TASViolations[tasId]['perSchedBlock'] : [];
 
     for (let j = 0; j < SCHOOL_DAYS.length; j++) {
         let dailySpecProfSched = schedule[SCHOOL_DAYS[j]];
