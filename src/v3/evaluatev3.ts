@@ -1238,6 +1238,8 @@ const evaluateRestDays = (schedule: any, type: string, structuredClassViolations
             if (restDays < 2) {
                 // tas violations
 
+                violationCount++;
+
                 let specViolation = {
                     tas: profKeys[i],
                     type: 'rest days assignment',
@@ -1258,6 +1260,8 @@ const evaluateRestDays = (schedule: any, type: string, structuredClassViolations
                 structuredTASViolations[profKeys[i]][
                     'perTAS'
                 ].push(specViolation);
+
+                violations.push(specViolation)
             }
         }
     }
@@ -1328,7 +1332,6 @@ const evaluateTasRequests = async (TASSchedule: any, structuredTASViolations: an
                     ) {
                         if (restrictionType === 'hard') {
 
-
                             let specViolation = {
                                 tas: profKeys[i],
                                 type: 'tas requests assignment',
@@ -1352,7 +1355,7 @@ const evaluateTasRequests = async (TASSchedule: any, structuredTASViolations: an
 
                             violationCount++;
                             violations.push(specViolation)
-                        }
+                        } 
                     }
                 }
             }
@@ -1413,26 +1416,6 @@ const evaluateRoomProximity = (classSchedule: any, structuredClassViolations: an
 
                         if (Math.abs(firstRoomFloor - secondRoomFloor) > 1) {
 
-                            violationCount++;
-                            violations.push({
-                                schedBlockId: schedBlock.id,
-                                type: 'Room proximity ideal not followed',
-                                year: yearKeys[j],
-                                section: classKeys[k],
-                                day: SCHOOL_DAYS[m],
-                                courses: [
-                                    schedBlock.course.subjectCode,
-                                    nextSchedBlock.course.subjectCode
-                                ],
-                                time: [
-                                    schedBlock.timeBlock,
-                                    nextSchedBlock.timeBlock
-                                ],
-                                rooms: [
-                                    schedBlock.room.room_id,
-                                    nextSchedBlock.room.room_id
-                                ]
-                            });
 
                             let specViolation = {
                                 schedBlockId: schedBlock.id,

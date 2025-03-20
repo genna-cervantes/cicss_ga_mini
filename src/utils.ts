@@ -91,14 +91,16 @@ export const getClassScheduleBySection = async (
     // get active schedule sa db tapos get only the ssection
 
     const query =
-        'SELECT class_schedule->$1->$2->$3 AS schedule, class_violations, tas_violations FROM schedules;';
-    const res = await client.query(query, [department, year, section]);
-    const schedule = res.rows[0].schedule;
+        'SELECT class_schedule->$1->$2->$3 as class_schedule, class_violations, tas_violations FROM schedules;';
+    const res = await client.query(query, [department, `${year}`, section]);
+
+    const schedule = res.rows[0].class_schedule;
     const violations = res.rows[0].class_violations;
 
     console.log('violations', violations);
 
     if (schedule == null) {
+        
         console.log('WTF');
     }
 
@@ -282,3 +284,15 @@ export const applyClassViolationsToSchedule = (
 
     return classSchedule
 };
+
+export const tranformSections = (rawSections: any) => {
+    let transformedSections: any = {}
+
+    rawSections.forEach((sec: any) => {
+        if (!transformedSections[sec.section]){
+            transformedSections[sec.section] = sec.specialization
+        }
+    })
+
+    return transformedSections
+}

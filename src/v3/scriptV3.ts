@@ -6,7 +6,7 @@ import { spec } from 'node:test/reporters';
 import { Client } from 'pg';
 import { SCHOOL_DAYS } from '../constants';
 import { evaluateV3 } from './evaluatev3';
-import {v4 as uuidv4} from 'uuid'
+import { v4 as uuidv4 } from 'uuid';
 
 // assign rooms while checking conflict
 //   - add sa room sched tapos don mag check ng conflict
@@ -69,7 +69,35 @@ client
         console.error('Connection error', err.stack);
     });
 
-export const runGAV3 = async () => {
+export const runGAV3 = async ({
+    CSFirstYearSections,
+    CSSecondYearSections,
+    CSThirdYearSections,
+    CSFourthYearSections,
+    ITFirstYearSections,
+    ITSecondYearSections,
+    ITThirdYearSections,
+    ITFourthYearSections,
+    ISFirstYearSections,
+    ISSecondYearSections,
+    ISThirdYearSections,
+    ISFourthYearSections,
+    semester
+}: {
+    CSFirstYearSections: any,
+    CSSecondYearSections: any,
+    CSThirdYearSections: any,
+    CSFourthYearSections: any,
+    ITFirstYearSections: any,
+    ITSecondYearSections: any,
+    ITThirdYearSections: any,
+    ITFourthYearSections: any,
+    ISFirstYearSections: any,
+    ISSecondYearSections: any,
+    ISThirdYearSections: any,
+    ISFourthYearSections: any,
+    semester: number
+}) => {
     let population: {
         classScheduleRaw: any;
         classSchedule: any;
@@ -96,53 +124,32 @@ export const runGAV3 = async () => {
         let schedulesFirst = await generateV3({
             department: 'CS',
             year: 1,
-            semester: 2,
-            sectionSpecializations: {
-                CSA: 'none',
-                CSB: 'none',
-                CSC: 'none',
-                CSD: 'none'
-            }
+            semester,
+            sectionSpecializations: CSFirstYearSections
         });
         classSchedule['CS'][1] = schedulesFirst;
 
         let schedulesSecond = await generateV3({
             department: 'CS',
             year: 2,
-            semester: 2,
-            sectionSpecializations: {
-                CSA: 'none',
-                CSB: 'none',
-                CSC: 'none',
-                CSD: 'none'
-            }
+            semester,
+            sectionSpecializations: CSSecondYearSections
         });
         classSchedule['CS'][2] = schedulesSecond;
 
         let schedulesThird = await generateV3({
             department: 'CS',
             year: 3,
-            semester: 2,
-            sectionSpecializations: {
-                CSA: 'Core CS',
-                CSB: 'Game Development',
-                CSC: 'Data Science',
-                CSD: 'Data Science',
-                CSE: 'Data Science',
-                CSF: 'Data Science'
-            }
+            semester,
+            sectionSpecializations: CSThirdYearSections
         });
         classSchedule['CS'][3] = schedulesThird;
 
         let schedulesFourth = await generateV3({
             department: 'CS',
             year: 4,
-            semester: 2,
-            sectionSpecializations: {
-                CSA: 'Core CS',
-                CSB: 'Game Development',
-                CSC: 'Data Science'
-            }
+            semester,
+            sectionSpecializations: CSFourthYearSections
         });
         classSchedule['CS'][4] = schedulesFourth;
 
@@ -150,67 +157,32 @@ export const runGAV3 = async () => {
         let schedulesFirstIT = await generateV3({
             department: 'IT',
             year: 1,
-            semester: 2,
-            sectionSpecializations: {
-                ITA: 'none',
-                ITB: 'none',
-                ITC: 'none',
-                ITD: 'none',
-                ITE: 'none',
-                ITF: 'none',
-                ITG: 'none',
-                ITH: 'none'
-            }
+            semester,
+            sectionSpecializations: ITFirstYearSections
         });
         classSchedule['IT'][1] = schedulesFirstIT;
 
         let schedulesSecondIT = await generateV3({
             department: 'IT',
             year: 2,
-            semester: 2,
-            sectionSpecializations: {
-                ITA: 'none',
-                ITB: 'none',
-                ITC: 'none',
-                ITD: 'none',
-                ITE: 'none',
-                ITF: 'none',
-                ITG: 'none'
-            }
+            semester,
+            sectionSpecializations: ITSecondYearSections
         });
         classSchedule['IT'][2] = schedulesSecondIT;
 
         let schedulesThirdIT = await generateV3({
             department: 'IT',
             year: 3,
-            semester: 2,
-            sectionSpecializations: {
-                ITA: 'Network and Security',
-                ITB: 'Network and Security',
-                ITC: 'Network and Security',
-                ITD: 'Web and Mobile Dev',
-                ITE: 'Web and Mobile Dev',
-                ITF: 'Web and Mobile Dev',
-                ITG: 'IT Automation',
-                ITH: 'IT Automation',
-                ITI: 'IT Automation'
-            }
+            semester,
+            sectionSpecializations: ITThirdYearSections
         });
         classSchedule['IT'][3] = schedulesThirdIT;
 
         let schedulesFourthIT = await generateV3({
             department: 'IT',
             year: 4,
-            semester: 2,
-            sectionSpecializations: {
-                ITA: 'Network and Security',
-                ITB: 'Network and Security',
-                ITC: 'Network and Security',
-                ITD: 'Web and Mobile Dev',
-                ITE: 'Web and Mobile Dev',
-                ITF: 'Web and Mobile Dev',
-                ITG: 'IT Automation'
-            }
+            semester,
+            sectionSpecializations: ITFourthYearSections
         });
         classSchedule['IT'][4] = schedulesFourthIT;
 
@@ -218,49 +190,32 @@ export const runGAV3 = async () => {
         let schedulesFirstIS = await generateV3({
             department: 'IS',
             year: 1,
-            semester: 2,
-            sectionSpecializations: {
-                ISA: 'none',
-                ISB: 'none',
-                ISC: 'none',
-                ISD: 'none'
-            }
+            semester,
+            sectionSpecializations: ISFirstYearSections
         });
         classSchedule['IS'][1] = schedulesFirstIS;
 
         let schedulesSecondIS = await generateV3({
             department: 'IS',
             year: 2,
-            semester: 2,
-            sectionSpecializations: {
-                ISA: 'none',
-                ISB: 'none',
-                ISC: 'none'
-            }
+            semester,
+            sectionSpecializations: ISSecondYearSections
         });
         classSchedule['IS'][2] = schedulesSecondIS;
 
         let schedulesThirdIS = await generateV3({
             department: 'IS',
             year: 3,
-            semester: 2,
-            sectionSpecializations: {
-                ISA: 'Business Analytics',
-                ISB: 'Business Analytics',
-                ISC: 'Service Management'
-            }
+            semester,
+            sectionSpecializations: ISThirdYearSections
         });
         classSchedule['IS'][3] = schedulesThirdIS;
 
         let schedulesFourthIS = await generateV3({
             department: 'IS',
             year: 4,
-            semester: 2,
-            sectionSpecializations: {
-                ISA: 'Business Analytics',
-                ISB: 'Business Analytics',
-                ISC: 'Service Management'
-            }
+            semester,
+            sectionSpecializations: ISFourthYearSections
         });
         classSchedule['IS'][4] = schedulesFourthIS;
 
@@ -293,7 +248,12 @@ export const runGAV3 = async () => {
 
         // evaluate everything else
         console.log('evaluating');
-        let { score, allViolations: violations, structuredClassViolations, structuredTASViolations } = await evaluateV3({
+        let {
+            score,
+            allViolations: violations,
+            structuredClassViolations,
+            structuredTASViolations
+        } = await evaluateV3({
             schedule: classScheduleWithRooms,
             TASSchedule,
             roomSchedule,
@@ -398,7 +358,12 @@ export const runGAV3 = async () => {
                 chromosomeAClassScheduleWithRooms
             );
 
-            let { score, allViolations: violations, structuredClassViolations, structuredTASViolations } = await evaluateV3({
+            let {
+                score,
+                allViolations: violations,
+                structuredClassViolations,
+                structuredTASViolations
+            } = await evaluateV3({
                 schedule: chromosomeAClassScheduleWithRooms,
                 TASSchedule,
                 roomSchedule,
@@ -420,7 +385,7 @@ export const runGAV3 = async () => {
 
             console.log('room conflict a', chromosomeARoomConflicts);
             console.log('tas conflict a', chromosomeATASConflicts);
-            console.log('score a', score)
+            console.log('score a', score);
 
             let TASScheduleB = {};
             let roomScheduleB = {};
@@ -441,7 +406,12 @@ export const runGAV3 = async () => {
                 chromosomeBClassScheduleWithRooms
             );
 
-            let { score: scoreB, allViolations: violationsB, structuredClassViolations: structuredClassViolationsB, structuredTASViolations: structuredTASViolationsB } = await evaluateV3({
+            let {
+                score: scoreB,
+                allViolations: violationsB,
+                structuredClassViolations: structuredClassViolationsB,
+                structuredTASViolations: structuredTASViolationsB
+            } = await evaluateV3({
                 schedule: chromosomeBClassScheduleWithRooms,
                 TASSchedule,
                 roomSchedule,
@@ -463,7 +433,7 @@ export const runGAV3 = async () => {
 
             console.log('room conflict b', chromosomeBRoomConflicts);
             console.log('tas conflict b', chromosomeATASConflicts);
-            console.log('score b', scoreB)
+            console.log('score b', scoreB);
         }
 
         population = getTop50(population);
@@ -479,20 +449,20 @@ export const runGAV3 = async () => {
 
     population = getTop50(population);
 
-    // RETURN 
+    // RETURN
     let retObj = [];
 
-    for (let i = 0; i < population.length; i++){
+    for (let i = 0; i < population.length; i++) {
         let chromosome = population[i];
-        if (chromosome.roomConflicts === 0 && chromosome.TASConflicts === 0){
-            retObj.push(chromosome)
+        if (chromosome.roomConflicts === 0 && chromosome.TASConflicts === 0) {
+            retObj.push(chromosome);
         }
     }
 
-    if (retObj.length <= 0){
+    if (retObj.length <= 0) {
         return {
             error: 'please retry with genesrating no plausible schedule generated'
-        }
+        };
     }
 
     // console.log(population);
@@ -508,7 +478,6 @@ export const runGAV3 = async () => {
     // return { chromosome: population[0] };
 
     // check if 0 0 ba if ndi return error nlng para sabihin mag retry ng gen
-
 };
 
 // eval function sa new structure -> this wont work sa new kasi nga null ung pag check kung may conflict b ro wala
@@ -644,6 +613,10 @@ const generateV3 = async ({
                 specializations[i]
             ]);
 
+            // console.log(department)
+            // console.log(year)
+            // console.log(specializations)
+            // console.log(res.rows[0])
             const curriculum = res.rows[0].courses;
 
             specializationsAndCurriculum[specializations[i]] = curriculum;
@@ -1212,7 +1185,10 @@ const assignTAS = async ({
                             ]);
                             const prospectTAS = res.rows[0];
 
-                            schedBlock.tas = {tas_id: prospectTAS.tas_id, tas_name: prospectTAS.name};
+                            schedBlock.tas = {
+                                tas_id: prospectTAS.tas_id,
+                                tas_name: prospectTAS.name
+                            };
 
                             if (!TASSchedule?.[prospectTAS.tas_id]) {
                                 TASSchedule[prospectTAS.tas_id] = {
@@ -1236,12 +1212,12 @@ const assignTAS = async ({
                                 timeBlock
                             });
 
-                            if (course.type === 'lab'){
+                            if (course.type === 'lab') {
                                 TASSchedule[prospectTAS.tas_id]['units'] +=
-                                (course.unitsPerClass * 1.5);
-                            }else{
+                                    course.unitsPerClass * 1.5;
+                            } else {
                                 TASSchedule[prospectTAS.tas_id]['units'] +=
-                                course.unitsPerClass;
+                                    course.unitsPerClass;
                             }
 
                             continue;
