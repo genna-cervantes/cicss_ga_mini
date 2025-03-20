@@ -108,7 +108,7 @@ app.get('/schedule/class/:department/:year/:section', async (req, res) => {
     const year = req.params.year;
     const department = req.params.department;
 
-    const { schedule, violations } = await getClassScheduleBySection(
+    const { schedule, classViolations, TASViolations } = await getClassScheduleBySection(
         year,
         section,
         department
@@ -123,7 +123,8 @@ app.get('/schedule/class/:department/:year/:section', async (req, res) => {
         year,
         section,
         schedule,
-        violations ?? []
+        classViolations ?? {},
+        TASViolations ?? {},
     );
 
     res.json(scheduleWithViolations);

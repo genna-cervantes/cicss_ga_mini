@@ -95,9 +95,10 @@ export const getClassScheduleBySection = async (
     const res = await client.query(query, [department, `${year}`, section]);
 
     const schedule = res.rows[0].class_schedule;
-    const violations = res.rows[0].class_violations;
+    const classViolations = res.rows[0].class_violations;
+    const TASViolations = res.rows[0].tas_violations;
 
-    console.log('violations', violations);
+    // console.log('violations', violations);
 
     if (schedule == null) {
         console.log('WTF');
@@ -105,7 +106,8 @@ export const getClassScheduleBySection = async (
 
     return {
         schedule,
-        violations
+        classViolations,
+        TASViolations
     };
 };
 
@@ -250,35 +252,36 @@ export const applyClassViolationsToSchedule = (
     year: string,
     section: string,
     classSchedule: any,
-    violations: any
+    classViolations: any,
+    tasViolations: any
 ) => {
     // per schedule
-    let specSchedBlockViolations = violations[department][year][section]
-        ? violations[department][year][section]['perSchedBlock']
+    let specSchedBlockViolations = classViolations?.[department]?.[year]?.[section]
+        ? classViolations[department][year][section]['perSchedBlock']
         : [];
 
     // per section
-    let specClassViolations = violations[department][year][section]
-        ? violations[department][year][section]['perSection']
+    let specClassViolations = classViolations?.[department]?.[year]?.[section]
+        ? classViolations[department][year][section]['perSection']
         : [];
-    console.log('violations new', specSchedBlockViolations);
+    
 
     classSchedule.violations = [];
-    for (let m = 0; m < SCHOOL_DAYS.length; m++) {
-        let daySched = classSchedule[SCHOOL_DAYS[m]];
+    for (let i = 0; i < SCHOOL_DAYS.length; i++) {
+        let daySched = classSchedule[SCHOOL_DAYS[i]];
 
-        console.log(SCHOOL_DAYS[m]);
+        console.log(SCHOOL_DAYS[i]);
 
         if (!daySched) {
             continue;
         }
 
-        for (let l = 0; l < daySched.length; l++) {
-            let schedBlock = daySched[l];
+        for (let j = 0; j < daySched.length; j++) {
+            let schedBlock = daySched[j];
             schedBlock.violations = [];
 
-            for (let p = 0; p < specSchedBlockViolations.length; p++) {
-                let specViolation = specSchedBlockViolations[p];
+            for (let k = 0; k < specSchedBlockViolations.length; k++) {
+                let specViolation = specSchedBlockViolations[k];
 
                 console.log('spec viol', specViolation);
 
@@ -286,6 +289,20 @@ export const applyClassViolationsToSchedule = (
                     if (schedBlock.id === specViolation.schedBlockId) {
                         schedBlock.violations.push(specViolation);
                     }
+                }
+            }
+
+            // tas violations
+            if (schedBlock.tas.tas_id !== 'GENED PROF'){
+                let specTASViolations = tasViolations?.[schedBlock.tas.tas_id] ? tasViolations?.[schedBlock.tas.tas_id]['perSchedBlock'] : []
+                for (let l = 0; l < specTASViolations.length; l++){
+                    let specViolation = specTASViolations[l]
+
+                    if (specViolation.schedBlockId) {
+                        if (schedBlock.id === specViolation.schedBlockId && !schedBlock.violations.find((viol: any) => viol.id === specViolation.id)) {
+                            schedBlock.violations.push(specViolation);
+                        }
+                    }       
                 }
             }
         }

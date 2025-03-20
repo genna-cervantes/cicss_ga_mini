@@ -6,6 +6,7 @@ import {
     SOFT_CONSTRAINT_WEIGHT
 } from '../constants';
 import { chromosome } from '../data';
+import {v4 as uuidv4} from 'uuid';
 
 const evaluateRoomTypeAssignment = (
     classSchedule: any,
@@ -55,6 +56,7 @@ const evaluateRoomTypeAssignment = (
                                 )
                             ) {
                                 let specViolation = {
+                                    id: uuidv4(),
                                     schedBlockId: schedBlock.id,
                                     year: yearKeys[j],
                                     course: schedBlock.course.subjectCode,
@@ -161,6 +163,7 @@ const evaluateTASUnits = async (
 
         if (units > maxUnits) {
             let specViolation = {
+                id: uuidv4(),
                 tas: profKeys[i],
                 type: 'tas units assignment',
                 description: 'tas assigned too many units'
@@ -224,6 +227,7 @@ const evaluateTASSpecialty = async (
                         )
                     ) {
                         let specViolation = {
+                            id: uuidv4(),
                             schedBlockId: schedBlock.id,
                             year: schedBlock.year,
                             course: schedBlock.course,
@@ -331,6 +335,7 @@ const evaluateDayLength = (
 
                         if (dailyUnits > 8) {
                             let specViolation = {
+                                id: uuidv4(),
                                 year: yearKeys[j],
                                 section: classKeys[k],
                                 type: 'day length assignment',
@@ -391,6 +396,7 @@ const evaluateDayLength = (
 
                 if (dailyUnits > 8) {
                     let specViolation = {
+                        id: uuidv4(),
                         tas: profKeys[i],
                         type: 'day length assignment',
                         description: 'TAS assigned more than 8 hours a day'
@@ -474,6 +480,7 @@ const evaluateClassLength = (
 
                             if (hours > 3) {
                                 let specViolation = {
+                                    id: uuidv4(),
                                     schedBlockId: schedBlock.id,
                                     year: yearKeys[j],
                                     course: schedBlock.course.subjectCode,
@@ -571,6 +578,7 @@ const evaluateClassLength = (
                         // tas violations
 
                         let specViolation = {
+                            id: uuidv4(),
                             schedBlockId: schedBlock.id,
                             tas: profKeys[i],
                             type: 'class length assignment',
@@ -663,6 +671,7 @@ const evaluateGenedConstraints = async (classSchedule: any, structuredClassViola
                                     parseInt(constraints[n].end)
                             ) {
                                 let specViolation = {
+                                    id: uuidv4(),
                                     schedBlockId: schedBlock.id,
                                     year: yearKeys[j],
                                     course: schedBlock.course.subjectCode,
@@ -749,6 +758,7 @@ export const evaluateClassNumber = (classSchedule: any, structuredClassViolation
                     if (daySched.length === 1) {
 
                         let specViolation = {
+                            id: uuidv4(),
                             schedBlockId: daySched[0].id,
                             year: yearKeys[j],
                             course: daySched[0].course.subjectCode,
@@ -878,6 +888,7 @@ const evaluateAllowedDays = async (classSchedule: any, structuredClassViolations
                         ) {
 
                             let specViolation = {
+                                id: uuidv4(),
                                 schedBlockId: daySched[0].id,
                                 year: yearKeys[j],
                                 course: daySched[0].course.subjectCode,
@@ -932,6 +943,7 @@ const evaluateAllowedDays = async (classSchedule: any, structuredClassViolations
                 if (assignedDays > specAllowedDays.max_days) {
 
                     let specViolation = {
+                        id: uuidv4(),
                         year: yearKeys[j],
                         section: classKeys[k],
                         type: 'allowed number of days assignment',
@@ -1077,6 +1089,7 @@ const evaluateAllowedTime = async (classSchedule: any, structuredClassViolations
                                     parseInt(constraints[n].end)
                             ) {
                                 let specViolation = {
+                                    id: uuidv4(),
                                     schedBlockId: schedBlock.id,
                                     year: yearKeys[j],
                                     course: schedBlock.course.subjectCode,
@@ -1170,6 +1183,7 @@ const evaluateRestDays = (schedule: any, type: string, structuredClassViolations
 
                     if (restDays < 2) {
                         let specViolation = {
+                            id: uuidv4(),
                             year: yearKeys[j],
                             section: classKeys[k],
                             type: 'rest days assignment',
@@ -1241,6 +1255,7 @@ const evaluateRestDays = (schedule: any, type: string, structuredClassViolations
                 violationCount++;
 
                 let specViolation = {
+                    id: uuidv4(),
                     tas: profKeys[i],
                     type: 'rest days assignment',
                     description:
@@ -1333,6 +1348,7 @@ const evaluateTasRequests = async (TASSchedule: any, structuredTASViolations: an
                         if (restrictionType === 'hard') {
 
                             let specViolation = {
+                                id: uuidv4(),
                                 tas: profKeys[i],
                                 type: 'tas requests assignment',
                                 description:
@@ -1418,6 +1434,7 @@ const evaluateRoomProximity = (classSchedule: any, structuredClassViolations: an
 
 
                             let specViolation = {
+                                id: uuidv4(),
                                 schedBlockId: schedBlock.id,
                                 course: schedBlock.course.subjectCode,
                                 year: yearKeys[j],
