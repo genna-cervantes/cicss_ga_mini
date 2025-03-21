@@ -10,7 +10,9 @@ import {
     applyClassViolationsToSchedule,
     applyRoomIdsToTASSchedule,
     applyTASViolationsToSchedule,
+    applyViolationsToRoomSchedule,
     getClassScheduleBySection,
+    getRoomScheduleByRoomId,
     getScheduleFromCache,
     getTASScheduleByTASId,
     insertToSchedule,
@@ -115,7 +117,7 @@ app.get('/schedule/class/:department/:year/:section', async (req, res) => {
         department
     );
     if (schedule == null) {
-        res.json({ message: 'call the generate function again' });
+        res.json({ error: true, message: 'call the generate function again' });
         return;
     }
 
@@ -136,9 +138,11 @@ app.get('/schedule/tas/:tasId', async (req, res) => {
 
     const {TASSchedule, classSchedule, classViolations, TASViolations} = await getTASScheduleByTASId(tasId);
     if (TASSchedule == null || classSchedule == null) {
-        res.json({ message: 'call the generate function again' });
+        res.json({ error: true, message: 'call the generate function again' });
         return;
     }
+
+    // console.log(TASSchedule)
 
     let scheduleWithRoomIds = applyRoomIdsToTASSchedule(TASSchedule, classSchedule)
 
@@ -153,6 +157,20 @@ app.get('/schedule/tas/:tasId', async (req, res) => {
 
 })
 
+app.get('/schedule/room/:roomId', async (req, res) => {
+    const roomId = req.params.roomId;
+
+    const {roomSchedule, classViolations, TASViolations} = await getRoomScheduleByRoomId(roomId);
+    if (roomSchedule == null) {
+        res.json({ error: true, message: 'call the generate function again' });
+        return;
+    }
+
+    let scheduleWithViolations = applyViolationsToRoomSchedule(roomId, roomSchedule, classViolations, TASViolations)
+
+    res.json(scheduleWithViolations)
+})
+
 app.post('/generate-schedule', async (req, res) => {
 
     let topSchedule = await getScheduleFromCache();
@@ -165,7 +183,7 @@ app.post('/generate-schedule', async (req, res) => {
         // TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.tas_schedule, topSchedule.violations)
 
         // insert that to schedules array tapos tanggalin ung previous na andon
-        insertToSchedule({
+        await insertToSchedule({
             classSchedule: topSchedule.class_schedule,
             TASSchedule: topSchedule.tas_schedule,
             roomSchedule: topSchedule.room_schedule,
@@ -180,7 +198,7 @@ app.post('/generate-schedule', async (req, res) => {
         return;
     }
 
-    console.log(req.body)
+    // console.log(req.body)
 
     let { CSSections, ITSections, ISSections, semester } = req.body;
 
@@ -217,6 +235,9 @@ app.post('/generate-schedule', async (req, res) => {
         semester
     });
 
+    // console.log(generatedSchedules)
+    // return;
+
     for (let i = 1; i < generatedSchedules.length; i++) {
         let chromosome = generatedSchedules[i];
 
@@ -233,7 +254,7 @@ app.post('/generate-schedule', async (req, res) => {
         topGeneratedSchedule.classSchedule
     );
 
-    insertToSchedule({
+    await insertToSchedule({
         classSchedule: miniClassSchedule,
         TASSchedule: topGeneratedSchedule.TASSchedule,
         roomSchedule: topGeneratedSchedule.roomSchedule,
@@ -241,7 +262,8 @@ app.post('/generate-schedule', async (req, res) => {
         tasViolations: topGeneratedSchedule.structuredTASViolations
     });
 
-    res.json(true);
+    // res.json(true);
+    res.json({classSchedule: generatedSchedules[0].classSchedule, TASSchedule: generatedSchedules[0].TASSchedule});
     return;
 });
 

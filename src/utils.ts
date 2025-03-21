@@ -17,6 +17,8 @@ export const getScheduleFromCache = async () => {
         return topSchedule;
     }
 
+    console.log('null nirereturn ng cache')
+
     return null;
 };
 
@@ -65,7 +67,9 @@ export const insertToSchedule = async ({
 }) => {
     const queryDelete = 'DELETE FROM schedules';
     const resDelete = await client.query(queryDelete);
-    const dataDelete = resDelete.rowCount;
+    const rowCount = resDelete.rowCount
+
+    console.log('deleted', rowCount)
 
     const id = `CH${generateRandomString(8)}`;
 
@@ -94,6 +98,10 @@ export const getClassScheduleBySection = async (
         'SELECT class_schedule->$1->$2->$3 as class_schedule, class_violations, tas_violations FROM schedules;';
     const res = await client.query(query, [department, `${year}`, section]);
 
+    console.log(department)
+    console.log(year)
+    console.log(section)
+
     const schedule = res.rows[0].class_schedule;
     const classViolations = res.rows[0].class_violations;
     const TASViolations = res.rows[0].tas_violations;
@@ -112,7 +120,6 @@ export const getClassScheduleBySection = async (
 };
 
 export const getTASScheduleByTASId = async (tasId: string) => {
-
     const query =
         'SELECT tas_schedule->$1 as tas_schedule, class_schedule, class_violations, tas_violations FROM schedules;';
     const res = await client.query(query, [tasId]);
@@ -134,32 +141,68 @@ export const getTASScheduleByTASId = async (tasId: string) => {
     };
 };
 
-export const applyRoomIdsToTASSchedule = (TASSchedule: any, classSchedule: any) => {
-    let profKeys = Object.keys(TASSchedule)
-    for (let i = 0; i < profKeys.length; i++){
-        let specProfSched = TASSchedule[profKeys[i]];
+export const getRoomScheduleByRoomId = async (roomId: string) => {
+    const query = 'SELECT room_schedule->$1 as room_schedule, class_violations, tas_violations FROM schedules;';
+    const res = await client.query(query, [roomId])
 
-        for (let j = 0; j < SCHOOL_DAYS.length; j++){
-            let daySched = specProfSched[SCHOOL_DAYS[j]];
+    console.log(roomId)
 
+    const roomSchedule = res.rows[0].room_schedule
+    const classViolations = res.rows[0].class_violations;
+    const TASViolations = res.rows[0].tas_violations;
+
+    if (roomSchedule == null) {
+        console.log('WTF');
+    }
+
+    return {
+        roomSchedule,
+        classViolations,
+        TASViolations
+    };
+}
+
+export const applyRoomIdsToTASSchedule = (
+    TASSchedule: any,
+    classSchedule: any
+) => {
+    console.log('applying room ids')
+    for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+        let daySched = TASSchedule[SCHOOL_DAYS[j]];
+        
+        loop1:
+        for (let k = 0; k < daySched.length; k++) {
+            let schedBlock = daySched[k];
             
-            for (let k = 0; k < daySched.length; k++){
-                let schedBlock = daySched[k];
+            console.log(schedBlock)
+            let specClassSched =
+                classSchedule[schedBlock.department][schedBlock.year][
+                    schedBlock.section
+                ];
+
+
+            for (let m = 0; m < SCHOOL_DAYS.length; m++){
+
+                // console.log(specClassSched)
+                let classDaySched = specClassSched[SCHOOL_DAYS[m]] ?? []
                 
-                let classDaySched = classSchedule[schedBlock.department][schedBlock.year][schedBlock.section]
+                console.log(classDaySched)
 
-                for (let l = 0; l < classDaySched.length; l++){
-                    let classSchedBlock = classDaySched[l]
-
-                    if (schedBlock.id === classSchedBlock.id){
-
-                        schedBlock.room = classSchedBlock.room
+                for (let l = 0; l < classDaySched.length; l++) {
+                    let classSchedBlock = classDaySched[l];
+    
+                    if (schedBlock.id === classSchedBlock.id) {
+                        console.log('same')
+                        schedBlock.room = classSchedBlock.room;
+                        continue loop1;
                     }
                 }
             }
         }
     }
-}
+
+    return TASSchedule;
+};
 
 export const minimizeClassSchedule = (schedule: any) => {
     let miniSchedule = structuredClone(schedule);
@@ -228,6 +271,90 @@ let classViolationTypes = [
     'roomProximity'
 ];
 
+export const applyViolationsToRoomSchedule = (roomId: string, roomSchedule: any, classViolations: any, TASViolations: any) => {
+    console.log('applying to room violations');
+
+    for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+        let dailyRoomSchedule = roomSchedule[SCHOOL_DAYS[j]];
+
+        for (let k = 0; k < dailyRoomSchedule.length; k++) {
+            let schedBlock = dailyRoomSchedule[k];
+            let tasId = schedBlock.tas.tas_id;
+
+            schedBlock.violations = [];
+            let department = schedBlock.department;
+            let section = schedBlock.section;
+            let year = schedBlock.year;
+
+            let perSchedBlockViolations = TASViolations?.[tasId]
+            ? TASViolations[tasId]['perSchedBlock']
+            : [];
+
+            let specSchedBlockViolations = classViolations?.[department]?.[year]?.[
+                section
+            ]
+            ? classViolations[department][year][section]['perSchedBlock']
+            : [];
+
+            console.log('roomid', roomId)
+            if (year === '1' && department === 'CS' && section === 'CSB'){
+                console.log('class viol', specSchedBlockViolations)
+            }
+
+            // for (let n = 0; n < TASViolationTypes.length; n++) {
+            //     let violationTypeArray =
+            //         // di dapat toh mag uundefined e
+            //         perSchedBlockViolations.find(
+            //             (v: any) => v.violationType === TASViolationTypes[n]
+            //         )?.violations ?? [];
+
+            //     for (let p = 0; p < violationTypeArray.length; p++) {
+            //         let specViolation = violationTypeArray[p];
+
+            //         if (
+            //             !['tasRequests', 'tasSpecialty'].includes(
+            //                 TASViolationTypes[n]
+            //             )
+            //         ) {
+            //             if (tasId === specViolation.schedBlockId) {
+            //                 // let { schedBlockId, ...rest } =
+            //                 //     specViolation;
+            //                 schedBlock.violations.push(specViolation);
+            //             }
+            //         }
+            //     }
+            // }
+            for (let k = 0; k < specSchedBlockViolations.length; k++) {
+                let specViolation = specSchedBlockViolations[k];
+
+                if (specViolation.schedBlockId) {
+
+                    if ((specViolation.room == null) || (specViolation.room !== schedBlock.room.room_id)){
+                        console.log('di raw pwede')
+                        console.log(schedBlock)
+                        console.log(specViolation)
+
+                        console.log(specViolation.room?.room_id)
+                        console.log(schedBlock.room)
+                        continue;
+                    }
+
+                    console.log('match viol', specViolation)
+                    console.log(schedBlock)
+                    console.log(specViolation.room)
+
+                    if (schedBlock.id === specViolation.schedBlockId && !schedBlock.violations.includes(specViolation.schedBlockId)) {
+                        schedBlock.violations.push(specViolation);
+                    }
+                }
+            }
+
+        }
+    }
+
+    return roomSchedule;
+}
+
 export const applyTASViolationsToSchedule = (
     tasId: string,
     schedule: any,
@@ -236,8 +363,12 @@ export const applyTASViolationsToSchedule = (
 ) => {
     console.log('applying tas violations');
 
-    schedule.violations = TASViolations?.[tasId] ? TASViolations[tasId]['perTAS'] : [];
-    let perSchedBlockViolations = TASViolations?.[tasId] ? TASViolations[tasId]['perSchedBlock'] : [];
+    schedule.violations = TASViolations?.[tasId]
+        ? TASViolations[tasId]['perTAS']
+        : [];
+    let perSchedBlockViolations = TASViolations?.[tasId]
+        ? TASViolations[tasId]['perSchedBlock']
+        : [];
 
     for (let j = 0; j < SCHOOL_DAYS.length; j++) {
         let dailySpecProfSched = schedule[SCHOOL_DAYS[j]];
@@ -289,7 +420,9 @@ export const applyClassViolationsToSchedule = (
     tasViolations: any
 ) => {
     // per schedule
-    let specSchedBlockViolations = classViolations?.[department]?.[year]?.[section]
+    let specSchedBlockViolations = classViolations?.[department]?.[year]?.[
+        section
+    ]
         ? classViolations[department][year][section]['perSchedBlock']
         : [];
 
@@ -297,9 +430,8 @@ export const applyClassViolationsToSchedule = (
     let specClassViolations = classViolations?.[department]?.[year]?.[section]
         ? classViolations[department][year][section]['perSection']
         : [];
-    
 
-    classSchedule.violations = [];
+    classSchedule.violations = specClassViolations;
     for (let i = 0; i < SCHOOL_DAYS.length; i++) {
         let daySched = classSchedule[SCHOOL_DAYS[i]];
 
@@ -326,26 +458,33 @@ export const applyClassViolationsToSchedule = (
             }
 
             // tas violations
-            if (schedBlock.tas.tas_id !== 'GENED PROF'){
-                let specTASViolations = tasViolations?.[schedBlock.tas.tas_id] ? tasViolations?.[schedBlock.tas.tas_id]['perSchedBlock'] : []
-                for (let l = 0; l < specTASViolations.length; l++){
-                    let specViolation = specTASViolations[l]
+            if (schedBlock.tas.tas_id !== 'GENED PROF') {
+                let specTASViolations = tasViolations?.[schedBlock.tas.tas_id]
+                    ? tasViolations?.[schedBlock.tas.tas_id]['perSchedBlock']
+                    : [];
+                for (let l = 0; l < specTASViolations.length; l++) {
+                    let specViolation = specTASViolations[l];
 
                     if (specViolation.schedBlockId) {
-                        if (schedBlock.id === specViolation.schedBlockId && !schedBlock.violations.find((viol: any) => viol.id === specViolation.id)) {
+                        if (
+                            schedBlock.id === specViolation.schedBlockId &&
+                            !schedBlock.violations.find(
+                                (viol: any) => viol.id === specViolation.id
+                            )
+                        ) {
                             schedBlock.violations.push(specViolation);
                         }
-                    }       
+                    }
                 }
             }
         }
     }
 
     // per section
-    for (let i = 0; i < specClassViolations.length; i++) {
-        let specViolation = specClassViolations[i];
-        classSchedule.violations.push(specViolation);
-    }
+    // for (let i = 0; i < specClassViolations.length; i++) {
+    //     let specViolation = specClassViolations[i];
+    //     classSchedule.violations.push(specViolation);
+    // }
 
     return classSchedule;
 };

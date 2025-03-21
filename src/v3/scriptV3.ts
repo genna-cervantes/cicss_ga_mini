@@ -229,13 +229,6 @@ export const runGAV3 = async ({
 
         let TASConflicts = evaluateTASAssignment(scheduleWithTASAssignment);
 
-        // ung sa restrictions nila dapat masunod din
-        // return {
-        //     scheduleWithTASAssignment,
-        //     TASSchedule,
-        //     TASConflicts
-        // }
-
         console.log('assigning rooms');
         let roomSchedule = {};
 
@@ -282,6 +275,11 @@ export const runGAV3 = async ({
             structuredClassViolations,
             structuredTASViolations
         });
+
+        // return {
+        //     classSchedule: population[0].classSchedule,
+        //     TASSchedule: population[0].TASSchedule
+        // };
     }
 
     // console.log('top 50')
@@ -290,7 +288,7 @@ export const runGAV3 = async ({
     // max gens is 10
     // pero pwede n mag exit once may score na na 0
 
-    let maxGen = 10;
+    let maxGen = 5;
     loop0: for (let g = 0; g < maxGen; g++) {
         console.log('crossover num: ', g);
 
@@ -413,16 +411,16 @@ export const runGAV3 = async ({
                 structuredTASViolations: structuredTASViolationsB
             } = await evaluateV3({
                 schedule: chromosomeBClassScheduleWithRooms,
-                TASSchedule,
-                roomSchedule,
+                TASSchedule: TASScheduleB,
+                roomSchedule: roomSchedule,
                 semester: 2
             });
 
             population.push({
                 classScheduleRaw: chromosomeB,
                 classSchedule: chromosomeBClassScheduleWithRooms,
-                roomSchedule,
-                TASSchedule,
+                roomSchedule: roomScheduleB,
+                TASSchedule: TASScheduleB,
                 roomConflicts: chromosomeBRoomConflicts,
                 TASConflicts: chromosomeBTASConflicts,
                 score: scoreB,
@@ -496,6 +494,7 @@ const getTop50 = (population: any) => {
     return top50;
 };
 
+// may mali 
 const evaluateTASAssignment = (classSchedule: any) => {
     let conflicts = 0;
 
@@ -1177,11 +1176,13 @@ const assignTAS = async ({
                             continue;
                         }
 
-                        if (tasTracker[course.subjectCode]) {
+                        let strippedCourseCode = (course.subjectCode.endsWith('-LC') || course.subjectCode.endsWith('-LB') ? course.subjectCode.slice(0, course.subjectCode.length - 3) : course.subjectCode)
+
+                        if (tasTracker[strippedCourseCode]) {
                             const query =
                                 'SELECT * FROM teaching_academic_staff WHERE tas_id = $1;';
                             const res = await client.query(query, [
-                                tasTracker[course.subjectCode]
+                                tasTracker[strippedCourseCode]
                             ]);
                             const prospectTAS = res.rows[0];
 
@@ -1253,13 +1254,13 @@ const assignTAS = async ({
                                 course: course.subjectCode,
                                 section: classKeys[k],
                                 department: departmentKeys[i],
-                                year: yearKeys[i],
+                                year: yearKeys[j],
                                 timeBlock
                             });
                             TASSchedule[tas.tas_id]['units'] +=
                                 course.unitsPerClass;
 
-                            tasTracker[course.subjectCode] = tas.tas_id;
+                            tasTracker[strippedCourseCode] = tas.tas_id;
                         }
                     }
                 }
@@ -1563,8 +1564,14 @@ const assignRooms = async ({
                                 };
                             }
                             roomSchedule[room.room_id][SCHOOL_DAYS[m]].push({
+                                id: schedBlock.id,
+                                tas: schedBlock.tas,
+                                room,
                                 course: course.subjectCode,
-                                timeBlock
+                                timeBlock,
+                                section: classKeys[k],
+                                year: yearKeys[j],
+                                department: departmentKeys[i]
                             });
                         }
                     }

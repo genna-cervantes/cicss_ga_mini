@@ -65,7 +65,7 @@ const evaluateRoomTypeAssignment = (
                                     description:
                                         'lec course assigned to lab and vice versa',
                                     time: {
-                                        day: SCHOOL_DAYS[k],
+                                        day: SCHOOL_DAYS[m],
                                         time: schedBlock.timeBlock
                                     },
                                     room: schedBlock.room.room_id
@@ -676,6 +676,7 @@ const evaluateGenedConstraints = async (classSchedule: any, structuredClassViola
                                     year: yearKeys[j],
                                     course: schedBlock.course.subjectCode,
                                     section: classKeys[k],
+                                    room: schedBlock.room,
                                     type: 'gened class assignment',
                                     description:
                                         'Gened course constraint not followed'
@@ -893,6 +894,7 @@ const evaluateAllowedDays = async (classSchedule: any, structuredClassViolations
                                 year: yearKeys[j],
                                 course: daySched[0].course.subjectCode,
                                 section: classKeys[k],
+                                room: daySched[0].room,
                                 type: 'allowed days assignment',
                                 description:
                                     'Course(s) assigned to restricted day'
@@ -1094,6 +1096,7 @@ const evaluateAllowedTime = async (classSchedule: any, structuredClassViolations
                                     year: yearKeys[j],
                                     course: schedBlock.course.subjectCode,
                                     section: classKeys[k],
+                                    room: schedBlock.room,
                                     type: 'allowed time assignment',
                                     description:
                                         'Course(s) assigned to restricted time'
@@ -1439,6 +1442,7 @@ const evaluateRoomProximity = (classSchedule: any, structuredClassViolations: an
                                 course: schedBlock.course.subjectCode,
                                 year: yearKeys[j],
                                 section: classKeys[k],
+                                room: schedBlock.room,
                                 type: 'room proximity assignment',
                                 description:
                                     'Room is too far apart from previous room'
