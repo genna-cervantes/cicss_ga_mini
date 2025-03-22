@@ -165,7 +165,7 @@ const evaluateTASUnits = async (
             let specViolation = {
                 id: uuidv4(),
                 tas: profKeys[i],
-                type: 'tas units assignment',
+                type: 'tasUnits',
                 description: 'tas assigned too many units'
             };
 
@@ -232,7 +232,7 @@ const evaluateTASSpecialty = async (
                             year: schedBlock.year,
                             course: schedBlock.course,
                             section: schedBlock.section,
-                            type: 'tas specialty assignment',
+                            type: 'tasSpecialty',
                             description: 'TAS assignment not specialty',
                             time: {
                                 day: SCHOOL_DAYS[j],
@@ -398,7 +398,7 @@ const evaluateDayLength = (
                     let specViolation = {
                         id: uuidv4(),
                         tas: profKeys[i],
-                        type: 'day length assignment',
+                        type: 'dayLength(TAS)',
                         description: 'TAS assigned more than 8 hours a day'
                     };
 
@@ -581,7 +581,7 @@ const evaluateClassLength = (
                             id: uuidv4(),
                             schedBlockId: schedBlock.id,
                             tas: profKeys[i],
-                            type: 'class length assignment',
+                            type: 'classLength(TAS)',
                             description:
                                 'TAS assigned more than 3 consecutive hours of class'
                         };
@@ -1260,7 +1260,7 @@ const evaluateRestDays = (schedule: any, type: string, structuredClassViolations
                 let specViolation = {
                     id: uuidv4(),
                     tas: profKeys[i],
-                    type: 'rest days assignment',
+                    type: 'restDays(TAS)',
                     description:
                         'TAS assigned less than ideal rest days'
                 };
@@ -1353,7 +1353,7 @@ const evaluateTasRequests = async (TASSchedule: any, structuredTASViolations: an
                             let specViolation = {
                                 id: uuidv4(),
                                 tas: profKeys[i],
-                                type: 'tas requests assignment',
+                                type: 'tasRequests',
                                 description:
                                     'Violated hard TAS request'
                             };

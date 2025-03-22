@@ -344,7 +344,7 @@ export const applyViolationsToRoomSchedule = (roomId: string, roomSchedule: any,
                     console.log(specViolation.room)
 
                     if (schedBlock.id === specViolation.schedBlockId && !schedBlock.violations.includes(specViolation.schedBlockId)) {
-                        schedBlock.violations.push(specViolation);
+                        schedBlock  .violations.push(specViolation);
                     }
                 }
             }
@@ -370,6 +370,8 @@ export const applyTASViolationsToSchedule = (
         ? TASViolations[tasId]['perSchedBlock']
         : [];
 
+    console.log('sched block viol', perSchedBlockViolations)
+
     for (let j = 0; j < SCHOOL_DAYS.length; j++) {
         let dailySpecProfSched = schedule[SCHOOL_DAYS[j]];
 
@@ -381,21 +383,24 @@ export const applyTASViolationsToSchedule = (
             for (let n = 0; n < TASViolationTypes.length; n++) {
                 let violationTypeArray =
                     // di dapat toh mag uundefined e
-                    perSchedBlockViolations.find(
-                        (v: any) => v.violationType === TASViolationTypes[n]
-                    )?.violations ?? [];
+                    perSchedBlockViolations.filter(
+                        (v: any) => v.type === TASViolationTypes[n]
+                    ) ?? [];
+
+                console.log('type')
+                console.log(perSchedBlockViolations)
+                console.log(TASViolationTypes[n])
+                console.log(violationTypeArray)
 
                 for (let p = 0; p < violationTypeArray.length; p++) {
                     let specViolation = violationTypeArray[p];
 
                     if (
-                        !['tasRequests', 'tasSpecialty'].includes(
+                        ['tasRequests', 'tasSpecialty'].includes(
                             TASViolationTypes[n]
                         )
-                    ) {
-                        if (tasId === specViolation.schedBlockId) {
-                            // let { schedBlockId, ...rest } =
-                            //     specViolation;
+                    ) {    
+                        if (schedBlock.id === specViolation.schedBlockId){
                             schedBlock.violations.push(specViolation);
                         }
                     } else {
