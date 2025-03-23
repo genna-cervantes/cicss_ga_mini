@@ -108,7 +108,7 @@ const evaluateRoomTypeAssignment = (
 
                                 // tas violations
 
-                                if (schedBlock.tas.tas_id == 'GENED_PROF') {
+                                if (!schedBlock.tas || schedBlock.tas.tas_id == 'GENED_PROF') {
                                     continue;
                                 }
 
@@ -586,7 +586,7 @@ const evaluateClassLength = (
                                 'TAS assigned more than 3 consecutive hours of class'
                         };
 
-                        if (schedBlock.tas.tas_id == 'GENED_PROF') {
+                        if (!schedBlock.tas || schedBlock.tas.tas_id == 'GENED_PROF') {
                             continue;
                         }
 

@@ -5,7 +5,7 @@ import { evaluate, evaluateFast } from './v2/evaluate';
 import { chromosome } from './data';
 import { generateChromosomeV2 } from './v2/generateV2';
 import { runGAV2 } from './v2/scriptV2';
-import { runGAV3 } from './v3/scriptV3';
+import { getAvailableProfsSpecificDay, getBetterCourses, runGAV3 } from './v3/scriptV3';
 import {
     applyClassViolationsToSchedule,
     applyRoomIdsToTASSchedule,
@@ -235,8 +235,16 @@ app.post('/generate-schedule', async (req, res) => {
         semester
     });
 
+    res.json(generatedSchedules)
+    return;
+
     // console.log(generatedSchedules)
     // return;
+
+    if (generatedSchedules.error){
+        res.json(generatedSchedules.error)
+        return;
+    }
 
     for (let i = 1; i < generatedSchedules.length; i++) {
         let chromosome = generatedSchedules[i];
@@ -266,6 +274,14 @@ app.post('/generate-schedule', async (req, res) => {
     res.json({classSchedule: generatedSchedules[0].classSchedule, TASSchedule: generatedSchedules[0].TASSchedule});
     return;
 });
+
+app.get('/test-something', async (req, res) => {
+    let ref = await getAvailableProfsSpecificDay('T', 'CS')
+    console.log(ref)
+    // res.json({ref: ref})
+
+    getBetterCourses(ref)
+})
 
 // apply tas violations
 // app.get('/generate-schedule', async (req, res) => {
