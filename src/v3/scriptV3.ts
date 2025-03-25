@@ -111,9 +111,9 @@ export const runGAV3 = async ({
         structuredTASViolations: any;
     }[] = [];
 
-    let initialPopulation = 40;
+    console.log('generating population');
+    let initialPopulation = 100;
     for (let i = 0; i < initialPopulation; i++) {
-        console.log('generating population');
 
         // GENERATE CS
         console.log('generating chromosome: ', i);
@@ -223,12 +223,12 @@ export const runGAV3 = async ({
         // check if mas okay mauna ung room or mauna ung tas
         console.log('assigning tas');
         let TASSchedule = {};
+        // try{
         let scheduleWithTASAssignment = await assignTAS({
             isRandom: false,
             classSchedules: classSchedule,
             TASSchedule
         });
-
         let TASConflicts = evaluateTASAssignment(scheduleWithTASAssignment);
 
         console.log('assigning rooms');
@@ -282,21 +282,38 @@ export const runGAV3 = async ({
         //     classSchedule: population[0].classSchedule,
         //     TASSchedule: population[0].TASSchedule
         // };
+        // }catch(err){
+        //     console.log('uy errror')
+        //     continue;
+        // }
     }
 
     // console.log('top 50')
-    // population = getTop50(population);
+    population = getTop50(population);
 
     // max gens is 10
     // pero pwede n mag exit once may score na na 0
 
-    let maxGen = 40;
+    let maxGen = 100;
     loop0: for (let g = 0; g < maxGen; g++) {
         console.log('crossover num: ', g);
+
+        let sameCounter = 0;
+        loop1:
+        for (let c = 0; c < population.length; c++) {
+            if (population[c].TASConflicts === population[c + 1].TASConflicts) {
+                sameCounter++;
+            }
+            if (sameCounter === 5){
+                break loop1;
+            }
+        }
 
         // cross over the population
         let half = population.length / 2;
         for (let i = 0; i < half; i++) {
+            // console.log(population[i])
+            // console.log(population[half + i])
             let chromosomeA = structuredClone(population[i].classScheduleRaw);
             let chromosomeB = structuredClone(
                 population[half + i].classScheduleRaw
@@ -343,7 +360,7 @@ export const runGAV3 = async ({
             // add rooms
             console.log('adding new chromosome a');
             let chromosomeAClassScheduleWithTAS = await assignTAS({
-                isRandom: false,
+                isRandom: sameCounter === 5,
                 classSchedules: chromosomeA,
                 TASSchedule
             });
@@ -392,7 +409,7 @@ export const runGAV3 = async ({
             let roomScheduleB = {};
             console.log('adding new chromosome b');
             let chromosomeBClassScheduleWithTAS = await assignTAS({
-                isRandom: false,
+                isRandom: sameCounter === 5,
                 classSchedules: chromosomeB,
                 TASSchedule: TASScheduleB
             });
@@ -416,7 +433,7 @@ export const runGAV3 = async ({
             } = await evaluateV3({
                 schedule: chromosomeBClassScheduleWithRooms,
                 TASSchedule: TASScheduleB,
-                roomSchedule: roomSchedule,
+                roomSchedule: roomScheduleB,
                 semester: 2
             });
 
@@ -438,60 +455,64 @@ export const runGAV3 = async ({
             console.log('score b', scoreB);
         }
 
-        // walang nag babago sa top dito kaya 
+        // walang nag babago sa top dito kaya
         // IF SAME UNG NAGIGING NUM OF CONFLICT/ SCORE GAWING RANDOM UNG PAG ASSIGN NG TAS
         population = getTop50(population);
 
         // mutate
         console.log('mutating');
-        let maxMutations = 5;
+        let maxMutations = 4;
         for (let i = 0; i < maxMutations; i++) {
             // tas mutation
-            let chromosomeC1 = structuredClone(population[i].classScheduleRaw);
-            let TASScheduleC1 = {}
-            let roomScheduleC1 = {}
-
-            let chromosomeC1ClassScheduleWithTAS = await assignTAS({
+            let chromosomeRan = population[i].classScheduleRaw
+            let TASScheduleRan = {};
+            let roomScheduleRan = {};
+            console.log('adding new chromosome b');
+            let chromosomeRanClassScheduleWithTAS = await assignTAS({
                 isRandom: true,
-                classSchedules: chromosomeC1,
-                TASSchedule: TASScheduleC1
+                classSchedules: chromosomeRan,
+                TASSchedule: TASScheduleRan
             });
-            let chromosomeC1TASConflicts = evaluateTASAssignment(
-                chromosomeC1ClassScheduleWithTAS
+            let chromosomeRanTASConflicts = evaluateTASAssignment(
+                chromosomeRanClassScheduleWithTAS
             );
 
-            let chromosomeC1ClassScheduleWithRooms = await assignRooms({
-                classSchedules: chromosomeC1ClassScheduleWithTAS,
-                roomSchedule: roomScheduleC1
+            let chromosomeRanClassScheduleWithRooms = await assignRooms({
+                classSchedules: chromosomeRanClassScheduleWithTAS,
+                roomSchedule: roomScheduleRan
             });
-            let chromosomeC1RoomConflicts = evaluateRoomAssignment(
-                chromosomeC1ClassScheduleWithRooms
+            let chromosomeRanRoomConflicts = evaluateRoomAssignment(
+                chromosomeRanClassScheduleWithRooms
             );
 
             let {
-                score: scoreC1,
-                allViolations: violationsC1,
-                structuredClassViolations: structuredClassViolationsC1,
-                structuredTASViolations: structuredTASViolationsC1
+                score: scoreRan,
+                allViolations: violationsRan,
+                structuredClassViolations: structuredClassViolationsRan,
+                structuredTASViolations: structuredTASViolationsRan
             } = await evaluateV3({
-                schedule: chromosomeC1ClassScheduleWithRooms,
-                TASSchedule: TASScheduleC1,
-                roomSchedule: roomScheduleC1,
+                schedule: chromosomeRanClassScheduleWithRooms,
+                TASSchedule: TASScheduleRan,
+                roomSchedule: roomScheduleRan,
                 semester: 2
             });
 
             population.push({
-                classScheduleRaw: chromosomeC1,
-                classSchedule: chromosomeC1ClassScheduleWithRooms,
-                roomSchedule: roomScheduleC1,
-                TASSchedule: TASScheduleC1,
-                roomConflicts: chromosomeC1RoomConflicts,
-                TASConflicts: chromosomeC1TASConflicts,
-                score: scoreC1,
-                violations: violationsC1,
-                structuredClassViolations: structuredClassViolationsC1,
-                structuredTASViolations: structuredTASViolationsC1
+                classScheduleRaw: chromosomeRan,
+                classSchedule: chromosomeRanClassScheduleWithRooms,
+                roomSchedule: roomScheduleRan,
+                TASSchedule: TASScheduleRan,
+                roomConflicts: chromosomeRanRoomConflicts,
+                TASConflicts: chromosomeRanTASConflicts,
+                score: scoreRan,
+                violations: violationsRan,
+                structuredClassViolations: structuredClassViolationsRan,
+                structuredTASViolations: structuredTASViolationsRan
             });
+
+            console.log('room conflict b', chromosomeRanRoomConflicts);
+            console.log('tas conflict b', chromosomeRanTASConflicts);
+            console.log('score b', scoreRan);
 
             // crossover mutation
             let chromosomeC = structuredClone(population[i].classScheduleRaw);
@@ -507,7 +528,7 @@ export const runGAV3 = async ({
 
                     for (let m = 0; m < classKeys.length; m++) {
                         let classSched = yearSched[classKeys[m]];
-                        let schoolDays = Object.keys(classSched)
+                        let schoolDays = Object.keys(classSched);
                         // console.log('before', classSched)
 
                         let crossoverPointA = Math.floor(
@@ -518,15 +539,14 @@ export const runGAV3 = async ({
                         );
 
                         let switchVar = classSched[schoolDays[crossoverPointA]];
-                        classSched[schoolDays[crossoverPointA]] = classSched[schoolDays[crossoverPointB]];
+                        classSched[schoolDays[crossoverPointA]] =
+                            classSched[schoolDays[crossoverPointB]];
                         classSched[schoolDays[crossoverPointB]] = switchVar;
 
                         // console.log('cross a', schoolDays[crossoverPointA])
                         // console.log('cross b', schoolDays[crossoverPointB])
 
-
                         // console.log('after', classSched)
-                        
                     }
                 }
             }
@@ -534,7 +554,7 @@ export const runGAV3 = async ({
             let TASScheduleC = {};
             let roomScheduleC = {};
             let chromosomeCClassScheduleWithTAS = await assignTAS({
-                isRandom: false,
+                isRandom: sameCounter === 5,
                 classSchedules: chromosomeC,
                 TASSchedule: TASScheduleC
             });
@@ -603,8 +623,8 @@ export const runGAV3 = async ({
     }
 
     if (retObj.length <= 0) {
-        console.log(population[0].classSchedule);
-        return population[0].classSchedule;
+        // console.log(population[0].classSchedule);
+        // return population[0].classSchedule;
         return {
             error: 'please retry with genesrating no plausible schedule generated'
         };
@@ -638,7 +658,7 @@ const getTop50 = (population: any) => {
                 a.roomConflicts - b.roomConflicts ||
                 a.score - b.score
         )
-        .slice(0, 20);
+        .slice(0, 50);
     return top50;
 };
 
@@ -814,9 +834,9 @@ const generateV3 = async ({
             let skip;
             if (year == 2 || year == 3) {
                 let jProb = Math.random();
-                if (jProb <= 0.1) {
+                if (jProb <= 0.2) {
                     start = 0;
-                } else if (jProb <= 0.2) {
+                } else if (jProb <= 0.3) {
                     start = 1;
                 } else if (jProb <= 0.7) {
                     start = 2;
@@ -841,7 +861,8 @@ const generateV3 = async ({
             loop2: for (let k = start; k < availableDays.length; ) {
                 // try random skip based on probability
                 let skipProb = Math.random();
-                if (skipProb >= 0.5 && year !== 4) {
+                if (skipProb >= 0.9 && year !== 4) {
+                    k++;
                     continue loop2;
                 }
 
@@ -1029,7 +1050,7 @@ const generateV3 = async ({
                     let betterCourseProb = Math.random();
 
                     if (
-                        betterCourseProb > 0.2 &&
+                        betterCourseProb > 0.1 &&
                         intersectionBetterCourseAndCurriculum.length > 0
                     ) {
                         // console.log('better course')
@@ -1055,12 +1076,19 @@ const generateV3 = async ({
                                 )
                             ];
                     } else {
-                        randomCourse =
-                            specCurriculum[
-                                Math.floor(
-                                    Math.random() * specCurriculum.length
-                                )
-                            ];
+                        let randomProb = Math.random();
+
+                        if (randomProb > 0.2) {
+                            k++;
+                            continue loop2;
+                        } else {
+                            randomCourse =
+                                specCurriculum[
+                                    Math.floor(
+                                        Math.random() * specCurriculum.length
+                                    )
+                                ];
+                        }
                     }
 
                     // console.log('getting random course: ', randomCourse);
@@ -1159,8 +1187,11 @@ const generateV3 = async ({
                     }
 
                     // check if pwede ba ung course na toh at this time if not tuloy lng
+                    // console.log(courseDetails)
                     let restrictions =
                         courseDetails.restrictions[availableDays[k]];
+                    // console.log(availableDays)
+                    // console.log(k)
                     for (let n = 0; n < restrictions.length; n++) {
                         // console.log('checking with restrictions');
                         if (
@@ -1320,6 +1351,12 @@ const generateV3 = async ({
                     continue loop4;
                 }
             }
+            if (schedules[section] == undefined) {
+                schedules[section] = {};
+                j = 0;
+                continue loop4;
+            }
+
             sections.splice(j, 1);
             returnObj[section] = schedules[section];
 
@@ -1412,7 +1449,7 @@ const assignTAS = async ({
     classSchedules,
     TASSchedule
 }: {
-    isRandom: boolean,
+    isRandom: boolean;
     classSchedules: any;
     TASSchedule: any;
 }) => {
@@ -1434,7 +1471,12 @@ const assignTAS = async ({
                 let tasTracker: any = {};
 
                 for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                    // console.log(yearSched);
                     let daySched = classSched[SCHOOL_DAYS[m]];
+
+                    if (!daySched) {
+                        continue;
+                    }
 
                     // if may assigned na na prof for -LC/-LB before
 
@@ -1571,12 +1613,12 @@ const assignTAS = async ({
 };
 
 const shuffleArray = <T>(array: T[]): T[] => {
-  let shuffled = [...array]; // Copy to avoid mutating the original array
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; // Swap elements
-  }
-  return shuffled;
+    let shuffled = [...array]; // Copy to avoid mutating the original array
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; // Swap elements
+    }
+    return shuffled;
 };
 
 const findTASForCourse = async ({
@@ -1588,7 +1630,7 @@ const findTASForCourse = async ({
     timeBlock,
     schoolDay
 }: {
-    isRandom: boolean,
+    isRandom: boolean;
     course: string;
     classUnits: number;
     TASSchedule: any;
@@ -1602,7 +1644,7 @@ const findTASForCourse = async ({
     const res = await client.query(query, [course, department]);
     let availableTAS = res.rows;
 
-    if (isRandom) availableTAS = shuffleArray(availableTAS)
+    if (isRandom) availableTAS = shuffleArray(availableTAS);
 
     loop0: for (let i = 0; i < availableTAS.length; i++) {
         let prospectTAS = availableTAS[i];
@@ -1641,7 +1683,7 @@ const findTASForCourse = async ({
     const res1 = await client.query(query1, [course, department]);
     let availableTAS1 = res1.rows;
 
-    if (isRandom) availableTAS1 = shuffleArray(availableTAS1)
+    if (isRandom) availableTAS1 = shuffleArray(availableTAS1);
 
     loop1: for (let i = 0; i < availableTAS1.length; i++) {
         let prospectTAS = availableTAS1[i];
@@ -1679,7 +1721,7 @@ const findTASForCourse = async ({
     const res2 = await client.query(query2, [course, department]);
     let availableTAS2 = res2.rows;
 
-    if (isRandom) availableTAS2 = shuffleArray(availableTAS2)
+    if (isRandom) availableTAS2 = shuffleArray(availableTAS2);
 
     loop2: for (let i = 0; i < availableTAS2.length; i++) {
         let prospectTAS = availableTAS2[i];
@@ -1717,7 +1759,7 @@ const findTASForCourse = async ({
     const res3 = await client.query(query3, [course, department]);
     let availableTAS3 = res3.rows;
 
-    if (isRandom) availableTAS3 = shuffleArray(availableTAS3)
+    if (isRandom) availableTAS3 = shuffleArray(availableTAS3);
 
     loop3: for (let i = 0; i < availableTAS3.length; i++) {
         let prospectTAS = availableTAS3[i];
@@ -2257,6 +2299,7 @@ const getRequiredCourses = async (curriculum: any) => {
         }
 
         // get the course
+        // console.log(course)
         const query = 'SELECT total_units FROM courses WHERE subject_code = $1';
         const res = await client.query(query, [course]);
         const totalUnits = res.rows[0].total_units;

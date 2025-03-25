@@ -235,8 +235,8 @@ app.post('/generate-schedule', async (req, res) => {
         semester
     });
 
-    res.json(generatedSchedules)
-    return;
+    // res.json(generatedSchedules)
+    // return;
 
     // console.log(generatedSchedules)
     // return;
