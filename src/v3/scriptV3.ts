@@ -229,6 +229,7 @@ export const runGAV3 = async ({
             TASSchedule
         });
         let TASConflicts = evaluateTASAssignment(scheduleWithTASAssignment);
+        console.log(TASConflicts)
 
         console.log('assigning rooms');
         let roomSchedule = {};
@@ -298,12 +299,12 @@ export const runGAV3 = async ({
     // console.log(population[0].TASConflicts)
     // return;
 
-    let maxGen = 10;
+    let maxGen = 60;
     loop0: for (let g = 0; g < maxGen; g++) {
         console.log('crossover num: ', g);
 
         let sameCounter = 0;
-        loop1: for (let c = 0; c < population.length; c++) {
+        loop1: for (let c = 0; c < population.length - 1; c++) {
             console.log(c)
 
             if (population[c].TASConflicts === population[c + 1].TASConflicts) {
@@ -628,7 +629,10 @@ export const runGAV3 = async ({
     }
 
     if (retObj.length <= 0) {
-        // console.log(population[0].classSchedule);
+        console.log(population[0].classSchedule);
+        console.log(population[0].TASConflicts)
+        console.log(population[0].roomConflicts)
+        console.log(population[0].score)
         // return population[0].classSchedule;
         return {
             error: 'please retry with genesrating no plausible schedule generated'
@@ -1465,8 +1469,8 @@ const assignTAS = async ({
     let departmentKeys = Object.keys(classSchedulesCopy);
     for (let i = 0; i < departmentKeys.length; i++) {
         let tries = 0;
-        console.log('i', i)
-        console.log('assigning tas - try num: ', tries);
+        // console.log('i', i)
+        // console.log('assigning tas - try num: ', tries);
 
         let departmentSched = classSchedulesCopy[departmentKeys[i]];
 
@@ -1476,7 +1480,7 @@ const assignTAS = async ({
 
             let classKeys = Object.keys(yearSched);
             loop0: for (let k = 0; k < classKeys.length; ) {
-                console.log('trying to assign for class k: ', k)
+                // console.log('trying to assign for class k: ', k)
                 let classSched = yearSched[classKeys[k]];
 
                 let tasTracker: any = {};
@@ -1509,7 +1513,7 @@ const assignTAS = async ({
                             continue loop1;
                         }
 
-                        console.log('assigning schedblock: ', schedBlock.course.subjectCode)
+                        // console.log('assigning schedblock: ', schedBlock.course.subjectCode)
 
                         let strippedCourseCode =
                             course.subjectCode.endsWith('-LC') ||
@@ -1524,7 +1528,7 @@ const assignTAS = async ({
                             tasTracker[strippedCourseCode] &&
                             tasTracker[strippedCourseCode]['tas']
                         ) {
-                            console.log('previously assigned teacher')
+                            // console.log('previously assigned teacher')
                             // console.log('prospect tas: ', tasTracker[strippedCourseCode]['tas'])
                             // console.log('prospect sched: ', strippedCourseCode)
 
@@ -1546,7 +1550,7 @@ const assignTAS = async ({
                             });
 
                             if (!prospectTASAvailability) {
-                                console.log('prof not available')
+                                // console.log('prof not available')
                                 // set to null ung first
                                 // balik sa first iteration
                                 let {
@@ -1568,15 +1572,15 @@ const assignTAS = async ({
                                 schedBlock.tas = null;
 
                                 if (tries < 10) {
-                                    console.log('not available trying again')
-                                    console.log(strippedCourseCode)
+                                    // console.log('not available trying again')
+                                    // console.log(strippedCourseCode)
                                     k =
                                         classKeys.findIndex(
                                             (key) => key === firstClass
                                         );
                                     tries++;
                                     randomize = true;
-                                    console.log('tryign with k: ', k)
+                                    // console.log('tryign with k: ', k)
                                     continue loop0;
                                 } else {
                                     randomize = null;
@@ -1679,7 +1683,7 @@ const assignTAS = async ({
                         }
                     }
                 }
-                console.log('done assiging for class k: ', k)
+                // console.log('done assiging for class k: ', k)
                 k++;
             }
         }
