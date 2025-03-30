@@ -112,9 +112,8 @@ export const runGAV3 = async ({
     }[] = [];
 
     console.log('generating population');
-    let initialPopulation = 100;
+    let initialPopulation = 10;
     for (let i = 0; i < initialPopulation; i++) {
-
         // GENERATE CS
         console.log('generating chromosome: ', i);
         let classSchedule: any = {
@@ -294,17 +293,23 @@ export const runGAV3 = async ({
     // max gens is 10
     // pero pwede n mag exit once may score na na 0
 
-    let maxGen = 100;
+    // console.log(population[0].classSchedule)
+    // console.log(population[0].TASSchedule)
+    // console.log(population[0].TASConflicts)
+    // return;
+
+    let maxGen = 10;
     loop0: for (let g = 0; g < maxGen; g++) {
         console.log('crossover num: ', g);
 
         let sameCounter = 0;
-        loop1:
-        for (let c = 0; c < population.length; c++) {
+        loop1: for (let c = 0; c < population.length; c++) {
+            console.log(c)
+
             if (population[c].TASConflicts === population[c + 1].TASConflicts) {
                 sameCounter++;
             }
-            if (sameCounter === 5){
+            if (sameCounter === 5) {
                 break loop1;
             }
         }
@@ -464,7 +469,7 @@ export const runGAV3 = async ({
         let maxMutations = 4;
         for (let i = 0; i < maxMutations; i++) {
             // tas mutation
-            let chromosomeRan = population[i].classScheduleRaw
+            let chromosomeRan = population[i].classScheduleRaw;
             let TASScheduleRan = {};
             let roomScheduleRan = {};
             console.log('adding new chromosome b');
@@ -1454,10 +1459,15 @@ const assignTAS = async ({
     TASSchedule: any;
 }) => {
     let classSchedulesCopy = structuredClone(classSchedules);
-
+    let randomize = null;
+    
     // loop thru sections in generate
     let departmentKeys = Object.keys(classSchedulesCopy);
     for (let i = 0; i < departmentKeys.length; i++) {
+        let tries = 0;
+        console.log('i', i)
+        console.log('assigning tas - try num: ', tries);
+
         let departmentSched = classSchedulesCopy[departmentKeys[i]];
 
         let yearKeys = Object.keys(departmentSched);
@@ -1465,7 +1475,8 @@ const assignTAS = async ({
             let yearSched = departmentSched[yearKeys[j]];
 
             let classKeys = Object.keys(yearSched);
-            for (let k = 0; k < classKeys.length; k++) {
+            loop0: for (let k = 0; k < classKeys.length; ) {
+                console.log('trying to assign for class k: ', k)
                 let classSched = yearSched[classKeys[k]];
 
                 let tasTracker: any = {};
@@ -1483,16 +1494,22 @@ const assignTAS = async ({
                     // loop thru day sched
                     loop1: for (let n = 0; n < (daySched?.length ?? 0); n++) {
                         let schedBlock = daySched[n];
-
+                        
                         let course = schedBlock.course;
                         let timeBlock = schedBlock.timeBlock;
-
+                        
                         if (course.category === 'gened') {
                             schedBlock.tas = {
                                 tas_id: 'GENED PROF'
                             };
                             continue;
                         }
+                        
+                        if (schedBlock.tas){
+                            continue loop1;
+                        }
+
+                        console.log('assigning schedblock: ', schedBlock.course.subjectCode)
 
                         let strippedCourseCode =
                             course.subjectCode.endsWith('-LC') ||
@@ -1503,11 +1520,18 @@ const assignTAS = async ({
                                   )
                                 : course.subjectCode;
 
-                        if (tasTracker[strippedCourseCode]) {
+                        if (
+                            tasTracker[strippedCourseCode] &&
+                            tasTracker[strippedCourseCode]['tas']
+                        ) {
+                            console.log('previously assigned teacher')
+                            // console.log('prospect tas: ', tasTracker[strippedCourseCode]['tas'])
+                            // console.log('prospect sched: ', strippedCourseCode)
+
                             const query =
                                 'SELECT * FROM teaching_academic_staff WHERE tas_id = $1;';
                             const res = await client.query(query, [
-                                tasTracker[strippedCourseCode]
+                                tasTracker[strippedCourseCode]['tas']
                             ]);
                             const prospectTAS = res.rows[0];
 
@@ -1522,8 +1546,42 @@ const assignTAS = async ({
                             });
 
                             if (!prospectTASAvailability) {
+                                console.log('prof not available')
+                                // set to null ung first
+                                // balik sa first iteration
+                                let {
+                                    department: firstDepartment,
+                                    year: firstYear,
+                                    class: firstClass,
+                                    schoolDay: firstSchoolDay,
+                                    id: firstId
+                                } = tasTracker[strippedCourseCode]['details'];
+
+                                let firstSched = classSchedulesCopy[
+                                    firstDepartment
+                                ][firstYear][firstClass][firstSchoolDay].find(
+                                    (sched: any) => sched.id === firstId
+                                );
+
+                                tasTracker[strippedCourseCode] = null;
+                                firstSched.tas = null;
                                 schedBlock.tas = null;
-                                continue loop1;
+
+                                if (tries < 10) {
+                                    console.log('not available trying again')
+                                    console.log(strippedCourseCode)
+                                    k =
+                                        classKeys.findIndex(
+                                            (key) => key === firstClass
+                                        );
+                                    tries++;
+                                    randomize = true;
+                                    console.log('tryign with k: ', k)
+                                    continue loop0;
+                                } else {
+                                    randomize = null;
+                                    continue loop1;
+                                }
                             }
 
                             schedBlock.tas = {
@@ -1567,7 +1625,7 @@ const assignTAS = async ({
 
                         // assign room
                         let tas = await findTASForCourse({
-                            isRandom,
+                            isRandom: randomize ?? isRandom,
                             course: course.subjectCode,
                             classUnits: course.unitsPerClass,
                             TASSchedule,
@@ -1601,10 +1659,28 @@ const assignTAS = async ({
                             TASSchedule[tas.tas_id]['units'] +=
                                 course.unitsPerClass;
 
-                            tasTracker[strippedCourseCode] = tas.tas_id;
+                            tasTracker[strippedCourseCode] = {
+                                tas: tas.tas_id,
+                                details: {
+                                    department: departmentKeys[i],
+                                    year: yearKeys[j],
+                                    class: classKeys[k],
+                                    schoolDay: SCHOOL_DAYS[m],
+                                    id: schedBlock.id
+                                }
+                            }; // id
+                            // tasTracker[strippedCourseCode]['sched'] = {
+                            //     department: departmentKeys[i],
+                            //     year: yearKeys[j],
+                            //     class: classKeys[k],
+                            //     schoolDay: SCHOOL_DAYS[m],
+                            //     id: schedBlock.id
+                            // };
                         }
                     }
                 }
+                console.log('done assiging for class k: ', k)
+                k++;
             }
         }
     }
