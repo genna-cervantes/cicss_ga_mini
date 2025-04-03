@@ -11,14 +11,23 @@ import {
     applyRoomIdsToTASSchedule,
     applyTASViolationsToSchedule,
     applyViolationsToRoomSchedule,
+    checkLockedDepartments,
+    checkLockedDepartmentsCache,
+    getActiveTASSchedule,
     getClassScheduleBySection,
+    getCSSchedule,
+    getISSchedule,
+    getITSchedule,
     getRoomScheduleByRoomId,
     getScheduleFromCache,
     getTASScheduleByTASId,
+    getTASScheduleFromDepartmentLockedSchedule,
     insertToSchedule,
     insertToScheduleCache,
+    lockScheduleByDepartment,
     minimizeClassSchedule,
-    tranformSections
+    tranformSections,
+    unlockScheduleByDepartment
 } from './utils';
 import cors from 'cors';
 
@@ -104,6 +113,53 @@ app.get('/test-ga-v2', async (req, res) => {
 //     let schedules = await runGAV3();
 //     res.json(schedules);
 // });
+app.get('/schedule/lock/:department', async (req, res) => {
+
+    const department = req.params.department;
+
+    let locked = await lockScheduleByDepartment(department)
+
+    console.log('lock hit')
+    console.log(department)
+
+    // check din dito if locked na lahat para go na to manual editing
+
+
+    if (locked){
+        res.json({
+            success: true
+        })
+        return;
+    }
+
+    res.json({
+        success: false,
+        error: "Cannot lock schedule"
+    })
+})
+
+app.get('/schedule/unlock/:department', async (req, res) => {
+
+    const department = req.params.department;
+
+    let unlocked = await unlockScheduleByDepartment(department)
+
+    // check din dito if locked na lahat para go na to manual editing
+
+
+    if (unlocked){
+        res.json({
+            success: true
+        })
+        return;
+    }
+
+    res.json({
+        success: false,
+        error: "Cannot unlock schedule"
+    })
+})
+
 
 app.get('/schedule/class/:department/:year/:section', async (req, res) => {
 
@@ -173,36 +229,65 @@ app.get('/schedule/room/:roomId', async (req, res) => {
 
 app.post('/generate-schedule', async (req, res) => {
 
-    let topSchedule = await getScheduleFromCache();
+    let {csLocked, itLocked, isLocked} = await checkLockedDepartments();
+    let {csLockedCache, itLockedCache, isLockedCache} = await checkLockedDepartmentsCache();
 
-    // // if meron
-    if (topSchedule) {
-        console.log('top schedule')
-        // select that tapos apply violations
-        // scheduleWithViolations = applyClassViolationsToSchedule(topSchedule.class_schedule, topSchedule.violations)
-        // TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.tas_schedule, topSchedule.violations)
-
-        // insert that to schedules array tapos tanggalin ung previous na andon
-        await insertToSchedule({
-            classSchedule: topSchedule.class_schedule,
-            TASSchedule: topSchedule.tas_schedule,
-            roomSchedule: topSchedule.room_schedule,
-            classViolations: topSchedule.class_violations,
-            tasViolations: topSchedule.tas_violations
-        });
-
-        // res.json({scheduleWithViolations, violations: topSchedule.violations});
-        // const schedule = await getClassScheduleBySection('1', 'CSA', 'CS');
-        // res.json(schedule)
-        res.json(true);
-        return;
+    if ((csLocked === csLockedCache) && (itLocked === itLockedCache) && (isLocked === isLockedCache)){
+        let topSchedule = await getScheduleFromCache();
+    
+        // // if meron
+        if (topSchedule) {
+            console.log('top schedule')
+            // select that tapos apply violations
+            // scheduleWithViolations = applyClassViolationsToSchedule(topSchedule.class_schedule, topSchedule.violations)
+            // TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.tas_schedule, topSchedule.violations)
+    
+            // insert that to schedules array tapos tanggalin ung previous na andon
+            await insertToSchedule({
+                classSchedule: topSchedule.class_schedule,
+                TASSchedule: topSchedule.tas_schedule,
+                roomSchedule: topSchedule.room_schedule,
+                classViolations: topSchedule.class_violations,
+                tasViolations: topSchedule.tas_violations,
+                csLocked: topSchedule.cs_locked,
+                itLocked: topSchedule.it_locked,
+                isLocked: topSchedule.is_locked
+            });
+    
+            // res.json({scheduleWithViolations, violations: topSchedule.violations});
+            // const schedule = await getClassScheduleBySection('1', 'CSA', 'CS');
+            // res.json(schedule)
+            res.json(true);
+            return;
+        }
     }
 
+    // iba may nag lock so malamang generate ulit ng bago
+
     // console.log(req.body)
+    let csSchedule = {};
+    let itSchedule = {};
+    let isSchedule = {};
+    let lockedDepartments = [];
+
+    if (csLocked){
+        csSchedule = await getCSSchedule()
+        lockedDepartments.push('CS')
+    }
+    if (isLocked){
+        isSchedule = await getISSchedule()
+        lockedDepartments.push('IS')
+    }
+    if (itLocked){
+        itSchedule = await getITSchedule()
+        lockedDepartments.push('IT')
+    }
+
+    let activeTASSchedule = await getActiveTASSchedule();
+
+    let TASScheduleLocked = getTASScheduleFromDepartmentLockedSchedule({departments: lockedDepartments, TASSchedule: activeTASSchedule})
 
     let { CSSections, ITSections, ISSections, semester } = req.body;
-
-    console.log(CSSections, ITSections, ISSections, semester)
 
     let transformedCSFirstYearSections = tranformSections(CSSections[1]);
     let transformedCSSecondYearSections = tranformSections(CSSections[2]);
@@ -220,6 +305,13 @@ app.post('/generate-schedule', async (req, res) => {
     let transformedISFourthYearSections = tranformSections(ISSections[4]);
 
     let generatedSchedules: any = await runGAV3({
+        csLocked,
+        itLocked,
+        isLocked,
+        csSchedule,
+        itSchedule,
+        isSchedule,
+        TASScheduleLocked,
         CSFirstYearSections: transformedCSFirstYearSections,
         CSSecondYearSections: transformedCSSecondYearSections,
         CSThirdYearSections: transformedCSThirdYearSections,
@@ -267,7 +359,10 @@ app.post('/generate-schedule', async (req, res) => {
         TASSchedule: topGeneratedSchedule.TASSchedule,
         roomSchedule: topGeneratedSchedule.roomSchedule,
         classViolations: topGeneratedSchedule.structuredClassViolations,
-        tasViolations: topGeneratedSchedule.structuredTASViolations
+        tasViolations: topGeneratedSchedule.structuredTASViolations,
+        csLocked,
+        itLocked,
+        isLocked,
     });
 
     // res.json(true);

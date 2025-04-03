@@ -70,6 +70,13 @@ client
     });
 
 export const runGAV3 = async ({
+    csLocked,
+    itLocked,
+    isLocked,
+    csSchedule = {},
+    itSchedule = {},
+    isSchedule = {},
+    TASScheduleLocked = {},
     CSFirstYearSections,
     CSSecondYearSections,
     CSThirdYearSections,
@@ -84,6 +91,13 @@ export const runGAV3 = async ({
     ISFourthYearSections,
     semester
 }: {
+    csLocked: boolean;
+    itLocked: boolean;
+    isLocked: boolean;
+    csSchedule: any;
+    itSchedule: any;
+    isSchedule: any;
+    TASScheduleLocked: any;
     CSFirstYearSections: any;
     CSSecondYearSections: any;
     CSThirdYearSections: any;
@@ -109,6 +123,9 @@ export const runGAV3 = async ({
         violations: any;
         structuredClassViolations: any;
         structuredTASViolations: any;
+        csLocked: boolean;
+        itLocked: boolean;
+        isLocked: boolean;
     }[] = [];
 
     console.log('generating population');
@@ -117,111 +134,123 @@ export const runGAV3 = async ({
         // GENERATE CS
         console.log('generating chromosome: ', i);
         let classSchedule: any = {
-            CS: {},
-            IT: {},
-            IS: {}
+            CS: csSchedule,
+            IT: itSchedule,
+            IS: isSchedule
         };
-        let schedulesFirst = await generateV3({
-            department: 'CS',
-            year: 1,
-            semester,
-            sectionSpecializations: CSFirstYearSections
-        });
-        classSchedule['CS'][1] = schedulesFirst;
+        // let classSchedule: any = {
+        //     ...(Object.keys(csSchedule).length === 0 ? { CS: {} } : {}),
+        //     ...(Object.keys(itSchedule).length === 0 ? { IT: {} } : {}),
+        //     ...(Object.keys(isSchedule).length === 0 ? { IS: {} } : {})
+        // };
 
-        let schedulesSecond = await generateV3({
-            department: 'CS',
-            year: 2,
-            semester,
-            sectionSpecializations: CSSecondYearSections
-        });
-        classSchedule['CS'][2] = schedulesSecond;
+        if (Object.keys(csSchedule).length === 0) {
+            let schedulesFirst = await generateV3({
+                department: 'CS',
+                year: 1,
+                semester,
+                sectionSpecializations: CSFirstYearSections
+            });
+            classSchedule['CS'][1] = schedulesFirst;
 
-        let schedulesThird = await generateV3({
-            department: 'CS',
-            year: 3,
-            semester,
-            sectionSpecializations: CSThirdYearSections
-        });
-        classSchedule['CS'][3] = schedulesThird;
+            let schedulesSecond = await generateV3({
+                department: 'CS',
+                year: 2,
+                semester,
+                sectionSpecializations: CSSecondYearSections
+            });
+            classSchedule['CS'][2] = schedulesSecond;
 
-        let schedulesFourth = await generateV3({
-            department: 'CS',
-            year: 4,
-            semester,
-            sectionSpecializations: CSFourthYearSections
-        });
-        classSchedule['CS'][4] = schedulesFourth;
+            let schedulesThird = await generateV3({
+                department: 'CS',
+                year: 3,
+                semester,
+                sectionSpecializations: CSThirdYearSections
+            });
+            classSchedule['CS'][3] = schedulesThird;
+
+            let schedulesFourth = await generateV3({
+                department: 'CS',
+                year: 4,
+                semester,
+                sectionSpecializations: CSFourthYearSections
+            });
+            classSchedule['CS'][4] = schedulesFourth;
+        }
 
         // GENERATE IT
-        let schedulesFirstIT = await generateV3({
-            department: 'IT',
-            year: 1,
-            semester,
-            sectionSpecializations: ITFirstYearSections
-        });
-        classSchedule['IT'][1] = schedulesFirstIT;
+        if (Object.keys(itSchedule).length === 0) {
+            let schedulesFirstIT = await generateV3({
+                department: 'IT',
+                year: 1,
+                semester,
+                sectionSpecializations: ITFirstYearSections
+            });
+            classSchedule['IT'][1] = schedulesFirstIT;
 
-        let schedulesSecondIT = await generateV3({
-            department: 'IT',
-            year: 2,
-            semester,
-            sectionSpecializations: ITSecondYearSections
-        });
-        classSchedule['IT'][2] = schedulesSecondIT;
+            let schedulesSecondIT = await generateV3({
+                department: 'IT',
+                year: 2,
+                semester,
+                sectionSpecializations: ITSecondYearSections
+            });
+            classSchedule['IT'][2] = schedulesSecondIT;
 
-        let schedulesThirdIT = await generateV3({
-            department: 'IT',
-            year: 3,
-            semester,
-            sectionSpecializations: ITThirdYearSections
-        });
-        classSchedule['IT'][3] = schedulesThirdIT;
+            let schedulesThirdIT = await generateV3({
+                department: 'IT',
+                year: 3,
+                semester,
+                sectionSpecializations: ITThirdYearSections
+            });
+            classSchedule['IT'][3] = schedulesThirdIT;
 
-        let schedulesFourthIT = await generateV3({
-            department: 'IT',
-            year: 4,
-            semester,
-            sectionSpecializations: ITFourthYearSections
-        });
-        classSchedule['IT'][4] = schedulesFourthIT;
+            let schedulesFourthIT = await generateV3({
+                department: 'IT',
+                year: 4,
+                semester,
+                sectionSpecializations: ITFourthYearSections
+            });
+            classSchedule['IT'][4] = schedulesFourthIT;
+        }
 
         // GENERATE UNG SA IS
-        let schedulesFirstIS = await generateV3({
-            department: 'IS',
-            year: 1,
-            semester,
-            sectionSpecializations: ISFirstYearSections
-        });
-        classSchedule['IS'][1] = schedulesFirstIS;
+        if (Object.keys(isSchedule).length === 0) {
+            let schedulesFirstIS = await generateV3({
+                department: 'IS',
+                year: 1,
+                semester,
+                sectionSpecializations: ISFirstYearSections
+            });
+            classSchedule['IS'][1] = schedulesFirstIS;
 
-        let schedulesSecondIS = await generateV3({
-            department: 'IS',
-            year: 2,
-            semester,
-            sectionSpecializations: ISSecondYearSections
-        });
-        classSchedule['IS'][2] = schedulesSecondIS;
+            let schedulesSecondIS = await generateV3({
+                department: 'IS',
+                year: 2,
+                semester,
+                sectionSpecializations: ISSecondYearSections
+            });
+            classSchedule['IS'][2] = schedulesSecondIS;
 
-        let schedulesThirdIS = await generateV3({
-            department: 'IS',
-            year: 3,
-            semester,
-            sectionSpecializations: ISThirdYearSections
-        });
-        classSchedule['IS'][3] = schedulesThirdIS;
+            let schedulesThirdIS = await generateV3({
+                department: 'IS',
+                year: 3,
+                semester,
+                sectionSpecializations: ISThirdYearSections
+            });
+            classSchedule['IS'][3] = schedulesThirdIS;
 
-        let schedulesFourthIS = await generateV3({
-            department: 'IS',
-            year: 4,
-            semester,
-            sectionSpecializations: ISFourthYearSections
-        });
-        classSchedule['IS'][4] = schedulesFourthIS;
+            let schedulesFourthIS = await generateV3({
+                department: 'IS',
+                year: 4,
+                semester,
+                sectionSpecializations: ISFourthYearSections
+            });
+            classSchedule['IS'][4] = schedulesFourthIS;
+        }
 
         // check if mas okay mauna ung room or mauna ung tas
         console.log('assigning tas');
-        let TASSchedule = {};
+        let TASSchedule = TASScheduleLocked;
         // try{
         let scheduleWithTASAssignment = await assignTAS({
             isRandom: false,
@@ -229,7 +258,7 @@ export const runGAV3 = async ({
             TASSchedule
         });
         let TASConflicts = evaluateTASAssignment(scheduleWithTASAssignment);
-        console.log(TASConflicts)
+        console.log(TASConflicts);
 
         console.log('assigning rooms');
         let roomSchedule = {};
@@ -264,9 +293,21 @@ export const runGAV3 = async ({
         //     roomConflicts
         // }
 
+        let rawClassSchedules = {
+            ...(Object.keys(csSchedule).length === 0
+                ? { CS: classSchedule['CS'] }
+                : {}),
+            ...(Object.keys(itSchedule).length === 0
+                ? { IT: classSchedule['IT'] }
+                : {}),
+            ...(Object.keys(isSchedule).length === 0
+                ? { IS: classSchedule['IS'] }
+                : {})
+        };
+
         console.log('pushing to population');
         population.push({
-            classScheduleRaw: classSchedule,
+            classScheduleRaw: rawClassSchedules,
             classSchedule: classScheduleWithRooms,
             roomSchedule,
             TASSchedule,
@@ -275,7 +316,10 @@ export const runGAV3 = async ({
             score,
             violations,
             structuredClassViolations,
-            structuredTASViolations
+            structuredTASViolations,
+            csLocked,
+            itLocked,
+            isLocked
         });
 
         // return {
@@ -305,7 +349,7 @@ export const runGAV3 = async ({
 
         let sameCounter = 0;
         loop1: for (let c = 0; c < population.length - 1; c++) {
-            console.log(c)
+            console.log(c);
 
             if (population[c].TASConflicts === population[c + 1].TASConflicts) {
                 sameCounter++;
@@ -318,8 +362,6 @@ export const runGAV3 = async ({
         // cross over the population
         let half = population.length / 2;
         for (let i = 0; i < half; i++) {
-            // console.log(population[i])
-            // console.log(population[half + i])
             let chromosomeA = structuredClone(population[i].classScheduleRaw);
             let chromosomeB = structuredClone(
                 population[half + i].classScheduleRaw
@@ -361,7 +403,21 @@ export const runGAV3 = async ({
                 }
             }
 
-            let TASSchedule = {};
+            let chromosomeARaw = structuredClone(chromosomeA);
+            let chromosomeBRaw = structuredClone(chromosomeB);
+
+            // add back
+            if (Object.keys(csSchedule).length > 0) {
+                chromosomeA['CS'] = csSchedule;
+            }
+            if (Object.keys(itSchedule).length > 0) {
+                chromosomeA['IT'] = itSchedule;
+            }
+            if (Object.keys(isSchedule).length > 0) {
+                chromosomeA['IS'] = isSchedule;
+            }
+
+            let TASSchedule = TASScheduleLocked;
             let roomSchedule = {};
             // add rooms
             console.log('adding new chromosome a');
@@ -395,7 +451,7 @@ export const runGAV3 = async ({
             });
 
             population.push({
-                classScheduleRaw: chromosomeA,
+                classScheduleRaw: chromosomeARaw,
                 classSchedule: chromosomeAClassScheduleWithRooms,
                 roomSchedule,
                 TASSchedule,
@@ -404,14 +460,39 @@ export const runGAV3 = async ({
                 score,
                 violations,
                 structuredClassViolations,
-                structuredTASViolations
+                structuredTASViolations,
+                csLocked,
+                itLocked,
+                isLocked
             });
 
             console.log('room conflict a', chromosomeARoomConflicts);
             console.log('tas conflict a', chromosomeATASConflicts);
             console.log('score a', score);
 
-            let TASScheduleB = {};
+            // add back
+            if (Object.keys(csSchedule).length > 0) {
+                chromosomeB['CS'] = csSchedule;
+            }
+            if (Object.keys(itSchedule).length > 0) {
+                chromosomeB['IT'] = itSchedule;
+            }
+            if (Object.keys(isSchedule).length > 0) {
+                chromosomeB['IS'] = isSchedule;
+            }
+
+            // add back
+            if (Object.keys(csSchedule).length > 0) {
+                chromosomeB['CS'] = csSchedule;
+            }
+            if (Object.keys(itSchedule).length > 0) {
+                chromosomeB['IT'] = itSchedule;
+            }
+            if (Object.keys(isSchedule).length > 0) {
+                chromosomeB['IS'] = isSchedule;
+            }
+
+            let TASScheduleB = TASScheduleLocked;
             let roomScheduleB = {};
             console.log('adding new chromosome b');
             let chromosomeBClassScheduleWithTAS = await assignTAS({
@@ -444,7 +525,7 @@ export const runGAV3 = async ({
             });
 
             population.push({
-                classScheduleRaw: chromosomeB,
+                classScheduleRaw: chromosomeBRaw,
                 classSchedule: chromosomeBClassScheduleWithRooms,
                 roomSchedule: roomScheduleB,
                 TASSchedule: TASScheduleB,
@@ -453,7 +534,10 @@ export const runGAV3 = async ({
                 score: scoreB,
                 violations: violationsB,
                 structuredClassViolations: structuredClassViolationsB,
-                structuredTASViolations: structuredTASViolationsB
+                structuredTASViolations: structuredTASViolationsB,
+                csLocked,
+                itLocked,
+                isLocked
             });
 
             console.log('room conflict b', chromosomeBRoomConflicts);
@@ -471,9 +555,22 @@ export const runGAV3 = async ({
         for (let i = 0; i < maxMutations; i++) {
             // tas mutation
             let chromosomeRan = population[i].classScheduleRaw;
-            let TASScheduleRan = {};
+            let chromosomeRanRaw = population[i].classScheduleRaw;
+            let TASScheduleRan = TASScheduleLocked;
             let roomScheduleRan = {};
             console.log('adding new chromosome b');
+
+            // add back
+            if (Object.keys(csSchedule).length > 0) {
+                chromosomeRan['CS'] = csSchedule;
+            }
+            if (Object.keys(itSchedule).length > 0) {
+                chromosomeRan['IT'] = itSchedule;
+            }
+            if (Object.keys(isSchedule).length > 0) {
+                chromosomeRan['IS'] = isSchedule;
+            }
+
             let chromosomeRanClassScheduleWithTAS = await assignTAS({
                 isRandom: true,
                 classSchedules: chromosomeRan,
@@ -504,7 +601,7 @@ export const runGAV3 = async ({
             });
 
             population.push({
-                classScheduleRaw: chromosomeRan,
+                classScheduleRaw: chromosomeRanRaw,
                 classSchedule: chromosomeRanClassScheduleWithRooms,
                 roomSchedule: roomScheduleRan,
                 TASSchedule: TASScheduleRan,
@@ -513,7 +610,10 @@ export const runGAV3 = async ({
                 score: scoreRan,
                 violations: violationsRan,
                 structuredClassViolations: structuredClassViolationsRan,
-                structuredTASViolations: structuredTASViolationsRan
+                structuredTASViolations: structuredTASViolationsRan,
+                csLocked,
+                itLocked,
+                isLocked
             });
 
             console.log('room conflict b', chromosomeRanRoomConflicts);
@@ -522,6 +622,9 @@ export const runGAV3 = async ({
 
             // crossover mutation
             let chromosomeC = structuredClone(population[i].classScheduleRaw);
+            let chromosomeCRaw = structuredClone(
+                population[i].classScheduleRaw
+            );
             let departmentKeys = Object.keys(chromosomeC);
             for (let j = 0; j < departmentKeys.length; j++) {
                 let departmentSched = chromosomeC[departmentKeys[j]];
@@ -557,7 +660,18 @@ export const runGAV3 = async ({
                 }
             }
 
-            let TASScheduleC = {};
+            // add back
+            if (Object.keys(csSchedule).length > 0) {
+                chromosomeC['CS'] = csSchedule;
+            }
+            if (Object.keys(itSchedule).length > 0) {
+                chromosomeC['IT'] = itSchedule;
+            }
+            if (Object.keys(isSchedule).length > 0) {
+                chromosomeC['IS'] = isSchedule;
+            }
+
+            let TASScheduleC = TASScheduleLocked;
             let roomScheduleC = {};
             let chromosomeCClassScheduleWithTAS = await assignTAS({
                 isRandom: sameCounter === 5,
@@ -593,7 +707,7 @@ export const runGAV3 = async ({
             console.log('score c', scoreC);
 
             population.push({
-                classScheduleRaw: chromosomeC,
+                classScheduleRaw: chromosomeCRaw,
                 classSchedule: chromosomeCClassScheduleWithRooms,
                 roomSchedule: roomScheduleC,
                 TASSchedule: TASScheduleC,
@@ -602,7 +716,10 @@ export const runGAV3 = async ({
                 score: scoreC,
                 violations: violationsC,
                 structuredClassViolations: structuredClassViolationsC,
-                structuredTASViolations: structuredTASViolationsC
+                structuredTASViolations: structuredTASViolationsC,
+                csLocked,
+                itLocked,
+                isLocked
             });
         }
 
@@ -630,9 +747,9 @@ export const runGAV3 = async ({
 
     if (retObj.length <= 0) {
         console.log(population[0].classSchedule);
-        console.log(population[0].TASConflicts)
-        console.log(population[0].roomConflicts)
-        console.log(population[0].score)
+        console.log(population[0].TASConflicts);
+        console.log(population[0].roomConflicts);
+        console.log(population[0].score);
         // return population[0].classSchedule;
         return {
             error: 'please retry with genesrating no plausible schedule generated'
@@ -1464,7 +1581,7 @@ const assignTAS = async ({
 }) => {
     let classSchedulesCopy = structuredClone(classSchedules);
     let randomize = null;
-    
+
     // loop thru sections in generate
     let departmentKeys = Object.keys(classSchedulesCopy);
     for (let i = 0; i < departmentKeys.length; i++) {
@@ -1498,19 +1615,19 @@ const assignTAS = async ({
                     // loop thru day sched
                     loop1: for (let n = 0; n < (daySched?.length ?? 0); n++) {
                         let schedBlock = daySched[n];
-                        
+
+                        if (schedBlock.tas) {
+                            continue loop1;
+                        }
+
                         let course = schedBlock.course;
                         let timeBlock = schedBlock.timeBlock;
-                        
+
                         if (course.category === 'gened') {
                             schedBlock.tas = {
                                 tas_id: 'GENED PROF'
                             };
                             continue;
-                        }
-                        
-                        if (schedBlock.tas){
-                            continue loop1;
                         }
 
                         // console.log('assigning schedblock: ', schedBlock.course.subjectCode)
@@ -1574,10 +1691,9 @@ const assignTAS = async ({
                                 if (tries < 10) {
                                     // console.log('not available trying again')
                                     // console.log(strippedCourseCode)
-                                    k =
-                                        classKeys.findIndex(
-                                            (key) => key === firstClass
-                                        );
+                                    k = classKeys.findIndex(
+                                        (key) => key === firstClass
+                                    );
                                     tries++;
                                     randomize = true;
                                     // console.log('tryign with k: ', k)

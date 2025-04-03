@@ -2,6 +2,88 @@ import { SCHOOL_DAYS } from './constants';
 import { chromosome } from './data';
 import { client } from './v3/scriptV3';
 
+export const checkLockedDepartmentsCache = async () => {
+    const query =
+        'SELECT cs_locked, it_locked, is_locked FROM generated_schedule_cache WHERE is_active = TRUE ORDER BY score LIMIT 1';
+    const res = await client.query(query);
+    const csLockedCache = res.rows[0].cs_locked;
+    const itLockedCache = res.rows[0].it_locked;
+    const isLockedCache = res.rows[0].is_locked;
+
+    return {
+        csLockedCache,
+        itLockedCache,
+        isLockedCache
+    };
+};
+
+export const checkLockedDepartments = async () => {
+    const query =
+        'SELECT cs_locked, it_locked, is_locked FROM schedules WHERE is_active = TRUE';
+    const res = await client.query(query);
+    const csLocked = res.rows[0].cs_locked;
+    const itLocked = res.rows[0].it_locked;
+    const isLocked = res.rows[0].is_locked;
+
+    return {
+        csLocked,
+        itLocked,
+        isLocked
+    };
+};
+
+export const unlockScheduleByDepartment = async (department: string) => {
+    let lockDepartment = '';
+    switch (department) {
+        case 'CS':
+            lockDepartment = 'cs_locked';
+            break;
+        case 'IT':
+            lockDepartment = 'it_locked';
+            break;
+        case 'IS':
+            lockDepartment = 'is_locked';
+            break;
+        default:
+            return false;
+    }
+
+    const query = `UPDATE schedules SET ${lockDepartment} = FALSE WHERE is_active = TRUE`;
+    const res = await client.query(query);
+
+    if (res && res.rowCount && res?.rowCount > 0) {
+        return true;
+    }
+
+    return false;
+};
+
+export const lockScheduleByDepartment = async (department: string) => {
+    let lockDepartment = '';
+    switch (department) {
+        case 'CS':
+            lockDepartment = 'cs_locked';
+            break;
+        case 'IT':
+            lockDepartment = 'it_locked';
+            break;
+        case 'IS':
+            lockDepartment = 'is_locked';
+            break;
+        default:
+            return false;
+    }
+
+    const query = `UPDATE schedules SET ${lockDepartment} = TRUE WHERE is_active = TRUE`;
+    const res = await client.query(query);
+
+    if (res && res.rowCount && res?.rowCount > 0) {
+        return true;
+    }
+
+    return false;
+};
+
 export const getScheduleFromCache = async () => {
     // get schedule
     const query = 'SELECT * FROM generated_schedule_cache ORDER BY score';
@@ -17,7 +99,7 @@ export const getScheduleFromCache = async () => {
         return topSchedule;
     }
 
-    console.log('null nirereturn ng cache')
+    console.log('null nirereturn ng cache');
 
     return null;
 };
@@ -36,7 +118,7 @@ export const insertToScheduleCache = async (chromosome: any) => {
     let miniClassSchedule = minimizeClassSchedule(chromosome.classSchedule);
 
     const id = `CH${generateRandomString(8)}`;
-    const query = `INSERT INTO generated_schedule_cache (generated_schedule_cache_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations, score) VALUES (
+    const query = `INSERT INTO generated_schedule_cache (generated_schedule_cache_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations, score, cs_locked, it_locked, is_locked) VALUES (
         $1, $2, $3, $4, $5, $6, $7
         )`;
     const res = await client.query(query, [
@@ -46,7 +128,10 @@ export const insertToScheduleCache = async (chromosome: any) => {
         chromosome.roomSchedule,
         chromosome.structuredClassViolations,
         chromosome.structuredTASViolations,
-        chromosome.score
+        chromosome.score,
+        chromosome.csLocked,
+        chromosome.itLocked,
+        chromosome.isLocked
     ]);
 
     return res.rowCount;
@@ -57,30 +142,39 @@ export const insertToSchedule = async ({
     TASSchedule,
     roomSchedule,
     classViolations,
-    tasViolations
+    tasViolations,
+    csLocked,
+    itLocked,
+    isLocked
 }: {
     classSchedule: any;
     TASSchedule: any;
     roomSchedule: any;
     classViolations: any;
     tasViolations: any;
+    csLocked: boolean;
+    itLocked: boolean;
+    isLocked: boolean;
 }) => {
     const queryDelete = 'DELETE FROM schedules';
     const resDelete = await client.query(queryDelete);
-    const rowCount = resDelete.rowCount
+    const rowCount = resDelete.rowCount;
 
-    console.log('deleted', rowCount)
+    console.log('deleted', rowCount);
 
     const id = `CH${generateRandomString(8)}`;
 
-    const query = `INSERT INTO schedules (schedule_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations) VALUES ($1, $2, $3, $4, $5, $6);`;
+    const query = `INSERT INTO schedules (schedule_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations, cs_locked, is_locked, it_locked) VALUES ($1, $2, $3, $4, $5, $6);`;
     const res = await client.query(query, [
         id,
         classSchedule,
         TASSchedule,
         roomSchedule,
         classViolations,
-        tasViolations
+        tasViolations,
+        csLocked,
+        isLocked,
+        itLocked
     ]);
     const data = res.rowCount;
 
@@ -98,9 +192,9 @@ export const getClassScheduleBySection = async (
         'SELECT class_schedule->$1->$2->$3 as class_schedule, class_violations, tas_violations FROM schedules;';
     const res = await client.query(query, [department, `${year}`, section]);
 
-    console.log(department)
-    console.log(year)
-    console.log(section)
+    console.log(department);
+    console.log(year);
+    console.log(section);
 
     const schedule = res.rows[0].class_schedule;
     const classViolations = res.rows[0].class_violations;
@@ -142,12 +236,13 @@ export const getTASScheduleByTASId = async (tasId: string) => {
 };
 
 export const getRoomScheduleByRoomId = async (roomId: string) => {
-    const query = 'SELECT room_schedule->$1 as room_schedule, class_violations, tas_violations FROM schedules;';
-    const res = await client.query(query, [roomId])
+    const query =
+        'SELECT room_schedule->$1 as room_schedule, class_violations, tas_violations FROM schedules;';
+    const res = await client.query(query, [roomId]);
 
-    console.log(roomId)
+    console.log(roomId);
 
-    const roomSchedule = res.rows[0].room_schedule
+    const roomSchedule = res.rows[0].room_schedule;
     const classViolations = res.rows[0].class_violations;
     const TASViolations = res.rows[0].tas_violations;
 
@@ -160,39 +255,36 @@ export const getRoomScheduleByRoomId = async (roomId: string) => {
         classViolations,
         TASViolations
     };
-}
+};
 
 export const applyRoomIdsToTASSchedule = (
     TASSchedule: any,
     classSchedule: any
 ) => {
-    console.log('applying room ids')
+    console.log('applying room ids');
     for (let j = 0; j < SCHOOL_DAYS.length; j++) {
         let daySched = TASSchedule[SCHOOL_DAYS[j]];
-        
-        loop1:
-        for (let k = 0; k < daySched.length; k++) {
+
+        loop1: for (let k = 0; k < daySched.length; k++) {
             let schedBlock = daySched[k];
-            
-            console.log(schedBlock)
+
+            console.log(schedBlock);
             let specClassSched =
                 classSchedule[schedBlock.department][schedBlock.year][
                     schedBlock.section
                 ];
 
-
-            for (let m = 0; m < SCHOOL_DAYS.length; m++){
-
+            for (let m = 0; m < SCHOOL_DAYS.length; m++) {
                 // console.log(specClassSched)
-                let classDaySched = specClassSched[SCHOOL_DAYS[m]] ?? []
-                
-                console.log(classDaySched)
+                let classDaySched = specClassSched[SCHOOL_DAYS[m]] ?? [];
+
+                console.log(classDaySched);
 
                 for (let l = 0; l < classDaySched.length; l++) {
                     let classSchedBlock = classDaySched[l];
-    
+
                     if (schedBlock.id === classSchedBlock.id) {
-                        console.log('same')
+                        console.log('same');
                         schedBlock.room = classSchedBlock.room;
                         continue loop1;
                     }
@@ -271,7 +363,12 @@ let classViolationTypes = [
     'roomProximity'
 ];
 
-export const applyViolationsToRoomSchedule = (roomId: string, roomSchedule: any, classViolations: any, TASViolations: any) => {
+export const applyViolationsToRoomSchedule = (
+    roomId: string,
+    roomSchedule: any,
+    classViolations: any,
+    TASViolations: any
+) => {
     console.log('applying to room violations');
 
     for (let j = 0; j < SCHOOL_DAYS.length; j++) {
@@ -287,18 +384,18 @@ export const applyViolationsToRoomSchedule = (roomId: string, roomSchedule: any,
             let year = schedBlock.year;
 
             let perSchedBlockViolations = TASViolations?.[tasId]
-            ? TASViolations[tasId]['perSchedBlock']
-            : [];
+                ? TASViolations[tasId]['perSchedBlock']
+                : [];
 
-            let specSchedBlockViolations = classViolations?.[department]?.[year]?.[
-                section
-            ]
-            ? classViolations[department][year][section]['perSchedBlock']
-            : [];
+            let specSchedBlockViolations = classViolations?.[department]?.[
+                year
+            ]?.[section]
+                ? classViolations[department][year][section]['perSchedBlock']
+                : [];
 
-            console.log('roomid', roomId)
-            if (year === '1' && department === 'CS' && section === 'CSB'){
-                console.log('class viol', specSchedBlockViolations)
+            console.log('roomid', roomId);
+            if (year === '1' && department === 'CS' && section === 'CSB') {
+                console.log('class viol', specSchedBlockViolations);
             }
 
             // for (let n = 0; n < TASViolationTypes.length; n++) {
@@ -328,32 +425,38 @@ export const applyViolationsToRoomSchedule = (roomId: string, roomSchedule: any,
                 let specViolation = specSchedBlockViolations[k];
 
                 if (specViolation.schedBlockId) {
+                    if (
+                        specViolation.room == null ||
+                        specViolation.room !== schedBlock.room.room_id
+                    ) {
+                        console.log('di raw pwede');
+                        console.log(schedBlock);
+                        console.log(specViolation);
 
-                    if ((specViolation.room == null) || (specViolation.room !== schedBlock.room.room_id)){
-                        console.log('di raw pwede')
-                        console.log(schedBlock)
-                        console.log(specViolation)
-
-                        console.log(specViolation.room?.room_id)
-                        console.log(schedBlock.room)
+                        console.log(specViolation.room?.room_id);
+                        console.log(schedBlock.room);
                         continue;
                     }
 
-                    console.log('match viol', specViolation)
-                    console.log(schedBlock)
-                    console.log(specViolation.room)
+                    console.log('match viol', specViolation);
+                    console.log(schedBlock);
+                    console.log(specViolation.room);
 
-                    if (schedBlock.id === specViolation.schedBlockId && !schedBlock.violations.includes(specViolation.schedBlockId)) {
-                        schedBlock  .violations.push(specViolation);
+                    if (
+                        schedBlock.id === specViolation.schedBlockId &&
+                        !schedBlock.violations.includes(
+                            specViolation.schedBlockId
+                        )
+                    ) {
+                        schedBlock.violations.push(specViolation);
                     }
                 }
             }
-
         }
     }
 
     return roomSchedule;
-}
+};
 
 export const applyTASViolationsToSchedule = (
     tasId: string,
@@ -370,7 +473,7 @@ export const applyTASViolationsToSchedule = (
         ? TASViolations[tasId]['perSchedBlock']
         : [];
 
-    console.log('sched block viol', perSchedBlockViolations)
+    console.log('sched block viol', perSchedBlockViolations);
 
     for (let j = 0; j < SCHOOL_DAYS.length; j++) {
         let dailySpecProfSched = schedule[SCHOOL_DAYS[j]];
@@ -387,10 +490,10 @@ export const applyTASViolationsToSchedule = (
                         (v: any) => v.type === TASViolationTypes[n]
                     ) ?? [];
 
-                console.log('type')
-                console.log(perSchedBlockViolations)
-                console.log(TASViolationTypes[n])
-                console.log(violationTypeArray)
+                console.log('type');
+                console.log(perSchedBlockViolations);
+                console.log(TASViolationTypes[n]);
+                console.log(violationTypeArray);
 
                 for (let p = 0; p < violationTypeArray.length; p++) {
                     let specViolation = violationTypeArray[p];
@@ -399,8 +502,8 @@ export const applyTASViolationsToSchedule = (
                         ['tasRequests', 'tasSpecialty'].includes(
                             TASViolationTypes[n]
                         )
-                    ) {    
-                        if (schedBlock.id === specViolation.schedBlockId){
+                    ) {
+                        if (schedBlock.id === specViolation.schedBlockId) {
                             schedBlock.violations.push(specViolation);
                         }
                     } else {
@@ -504,4 +607,86 @@ export const tranformSections = (rawSections: any) => {
     });
 
     return transformedSections;
+};
+
+export const getCSSchedule = async () => {
+    const query =
+        "SELECT class_schedule->'CS' AS csSchedule FROM schedules WHERE is_active = TRUE LIMIT 1;";
+    const res = await client.query(query);
+    const csSchedule = res.rows[0].csSchedule;
+
+    return csSchedule;
+};
+export const getITSchedule = async () => {
+    const query =
+        "SELECT class_schedule->'IT' AS itSchedule FROM schedules WHERE is_active = TRUE LIMIT 1;";
+    const res = await client.query(query);
+    const itSchedule = res.rows[0].itSchedule;
+
+    return itSchedule;
+};
+export const getISSchedule = async () => {
+    const query =
+        "SELECT class_schedule->'IS' AS isSchedule FROM schedules WHERE is_active = TRUE LIMIT 1;";
+    const res = await client.query(query);
+    const isSchedule = res.rows[0].isSchedule;
+
+    return isSchedule;
+};
+
+export const getTASScheduleFromDepartmentLockedSchedule = async ({
+    departments,
+    TASSchedule
+}: {
+    departments: string[];
+    TASSchedule: any;
+}) => {
+    let newTASSchedule: any = {};
+    let profKeys = Object.keys(TASSchedule);
+
+    for (let i = 0; i < profKeys.length; i++) {
+        let profSchedule = TASSchedule[profKeys[i]];
+
+        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+            let daySched = profSchedule[SCHOOL_DAYS[j]];
+
+            for (let k = 0; k < daySched.length; k++) {
+                let schedBlock = daySched[k];
+
+                for (let m = 0; m < departments.length; m++) {
+                    if (schedBlock.department === departments[m]) {
+                        if (!newTASSchedule[profKeys[i]]) {
+                            newTASSchedule[profKeys[i]] = {
+                                M: [],
+                                T: [],
+                                W: [],
+                                TH: [],
+                                F: [],
+                                S: []
+                            };
+                        }
+
+                        newTASSchedule[profKeys[i]][SCHOOL_DAYS[k]].push(
+                            schedBlock
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    return newTASSchedule;
+    // loop thru class sched
+    // loop thru tas schedule
+    // keep all that contains the department
+    //return
+};
+
+export const getActiveTASSchedule = async () => {
+    const query =
+        'SELECT tas_schedule FROM schedules WHERE is_active = TRUE LIMIT 1';
+    const res = await client.query(query);
+    const tasSchedule = res.rows[0].tas_schedule;
+
+    return tasSchedule;
 };
