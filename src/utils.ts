@@ -18,12 +18,12 @@ export const checkLockedDepartmentsCache = async () => {
 };
 
 export const clearScheduleCache = async () => {
-    const query = "DELETE FROM generated_schedule_cache;";
+    const query = 'DELETE FROM generated_schedule_cache;';
     const res = await client.query(query);
     const data = res.rowCount;
 
     return data;
-}
+};
 
 export const checkLockedDepartments = async () => {
     const query =
@@ -93,18 +93,19 @@ export const lockScheduleByDepartment = async (department: string) => {
 };
 
 export const getReadyDepartments = async () => {
-    const query = 'SELECT cs_ready, it_ready, is_ready FROM schedules WHERE is_active = TRUE LIMIT 1;'
+    const query =
+        'SELECT cs_ready, it_ready, is_ready FROM schedules WHERE is_active = TRUE LIMIT 1;';
     const res = await client.query(query);
-    const csReady = res.rows[0].cs_ready
-    const itReady = res.rows[0].it_ready
-    const isReady = res.rows[0].is_ready
+    const csReady = res.rows[0].cs_ready;
+    const itReady = res.rows[0].it_ready;
+    const isReady = res.rows[0].is_ready;
 
     return {
         csReady,
         itReady,
         isReady
-    }
-}
+    };
+};
 
 export const readyScheduleByDepartment = async (department: string) => {
     let readyDepartment = '';
@@ -663,8 +664,8 @@ export const getCSSchedule = async () => {
     const res = await client.query(query);
     const csSchedule = res.rows[0]?.csschedule;
 
-    console.log('cs sched')
-    console.log(csSchedule)
+    console.log('cs sched');
+    console.log(csSchedule);
 
     return csSchedule;
 };
@@ -692,8 +693,7 @@ export const getTASScheduleFromDepartmentLockedSchedule = ({
     departments: string[];
     TASSchedule: any;
 }) => {
-
-    if (TASSchedule == undefined){
+    if (TASSchedule == undefined) {
         return null;
     }
 
@@ -745,8 +745,7 @@ export const getRoomScheduleFromDepartmentLockedSchedule = ({
     departments: string[];
     roomSchedule: any;
 }) => {
-
-    if (roomSchedule == undefined){
+    if (roomSchedule == undefined) {
         return null;
     }
 
@@ -755,7 +754,6 @@ export const getRoomScheduleFromDepartmentLockedSchedule = ({
 
     for (let i = 0; i < roomKeys.length; i++) {
         let specRoomSchedule = roomSchedule[roomKeys[i]];
-
 
         for (let j = 0; j < SCHOOL_DAYS.length; j++) {
             let daySched = specRoomSchedule[SCHOOL_DAYS[j]];
@@ -785,12 +783,94 @@ export const getRoomScheduleFromDepartmentLockedSchedule = ({
         }
     }
 
-    console.log(newRoomSchedule)
+    console.log(newRoomSchedule);
     return newRoomSchedule;
     // loop thru class sched
     // loop thru tas schedule
     // keep all that contains the department
     //return
+};
+
+export const editSchedBlockClassSchedule = async (
+    classSchedule: any,
+    newSchedBlock: any
+) => {
+    let newClassSchedule = structuredClone(classSchedule);
+
+    let departmentKeys = Object.keys(newClassSchedule);
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = newClassSchedule[departmentKeys[i]];
+
+        let yearKeys = Object.keys(departmentSched);
+        for (let j = 0; j < yearKeys.length; j++) {
+            let yearSched = departmentSched[yearKeys[j]];
+
+            let classKeys = Object.keys(yearSched);
+            for (let k = 0; k < classKeys.length; k++) {
+                let classSched = yearSched[classKeys[k]];
+
+                for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                    let daySched = classSched[SCHOOL_DAYS[m]];
+
+                    // add schedblock
+                    if (SCHOOL_DAYS[m] === newSchedBlock.day && classKeys[k] === newSchedBlock.section && yearKeys[j] == newSchedBlock.year && departmentKeys[i] === newSchedBlock.department) {
+                        let tasId = await findTasIdByName(newSchedBlock.tas);
+
+                        console.log('pushing new')
+                        daySched.push({
+                            id: newSchedBlock.id,
+                            tas: {
+                                tas_id: tasId
+                            },
+                            room: {
+                                roomId: newSchedBlock.room.roomId
+                            },
+                            course: newSchedBlock.course,
+                            timeBlock: newSchedBlock.timeBlock
+                        });
+                    }
+
+                    if (!daySched) {
+                        continue;
+                    }
+
+                    for (let n = 0; n < daySched.length; n++) {
+                        let schedBlock = daySched[n];
+
+                        if (schedBlock.id === newSchedBlock.id) {
+                            // remove this
+                            console.log('deleting old')
+                            daySched.slice(n, 1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return newClassSchedule;
+};
+
+export const findTasIdByName = async (name: string) => {
+    if (name === 'GENED_PROF') {
+        return name;
+    }
+
+    const query =
+        'SELECT tas_id FROM teaching_academic_staff WHERE name = $1 AND is_active = TRUE LIMIT 1;';
+    const res = await client.query(query, [name]);
+    const tasId = res.rows[0]?.tas_id;
+
+    return tasId;
+};
+
+export const getActiveClassSchedule = async () => {
+    const query =
+        'SELECT class_schedule FROM schedules WHERE is_active = TRUE LIMIT 1';
+    const res = await client.query(query);
+    const classSchedule = res.rows[0]?.class_schedule;
+
+    return classSchedule;
 };
 
 export const getActiveTASSchedule = async () => {

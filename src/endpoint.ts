@@ -5,7 +5,11 @@ import { evaluate, evaluateFast } from './v2/evaluate';
 import { chromosome } from './data';
 import { generateChromosomeV2 } from './v2/generateV2';
 import { runGAV2 } from './v2/scriptV2';
-import { getAvailableProfsSpecificDay, getBetterCourses, runGAV3 } from './v3/scriptV3';
+import {
+    getAvailableProfsSpecificDay,
+    getBetterCourses,
+    runGAV3
+} from './v3/scriptV3';
 import {
     applyClassViolationsToSchedule,
     applyRoomIdsToTASSchedule,
@@ -14,6 +18,8 @@ import {
     checkLockedDepartments,
     checkLockedDepartmentsCache,
     clearScheduleCache,
+    editSchedBlockClassSchedule,
+    getActiveClassSchedule,
     getActiveRoomSchedule,
     getActiveTASSchedule,
     getClassScheduleBySection,
@@ -41,7 +47,7 @@ const app = express();
 const port = 3000;
 
 app.use(cors({ origin: 'http://localhost:5173' }));
-app.use(express.json())
+app.use(express.json());
 
 app.get('/', (req, res) => {
     res.json({ auth: true });
@@ -120,89 +126,99 @@ app.get('/test-ga-v2', async (req, res) => {
 //     res.json(schedules);
 // });
 app.get('/schedule/lock/:department', async (req, res) => {
-
     const department = req.params.department;
 
-    let locked = await lockScheduleByDepartment(department)
+    let locked = await lockScheduleByDepartment(department);
 
-    console.log('lock hit')
-    console.log(department)
-    
-    if (locked){
+    console.log('lock hit');
+    console.log(department);
+
+    if (locked) {
         res.json({
             success: true
-        })
+        });
         return;
     }
 
     res.json({
         success: false,
-        error: "Cannot lock schedule"
-    })
-})
+        error: 'Cannot lock schedule'
+    });
+});
 
 app.get('/schedule/ready/departments', async (req, res) => {
-    const readyDepartments = await getReadyDepartments()
-    console.log(readyDepartments)
+    const readyDepartments = await getReadyDepartments();
+    console.log(readyDepartments);
     res.json(readyDepartments);
-})
+});
 
 app.get('/schedule/ready/:department', async (req, res) => {
-
     const department = req.params.department;
 
-    let readied = await readyScheduleByDepartment(department)
+    let readied = await readyScheduleByDepartment(department);
 
-    console.log('ready hit')
-    console.log(department)
+    console.log('ready hit');
+    console.log(department);
 
-    if (readied){
+    if (readied) {
         res.json({
             success: true
-        })
+        });
         return;
     }
 
     res.json({
         success: false,
-        error: "Cannot ready schedule"
-    })
-})
+        error: 'Cannot ready schedule'
+    });
+});
 
 app.get('/schedule/unlock/:department', async (req, res) => {
-
     const department = req.params.department;
 
-    let unlocked = await unlockScheduleByDepartment(department)
+    let unlocked = await unlockScheduleByDepartment(department);
 
     // check din dito if locked na lahat para go na to manual editing
 
-
-    if (unlocked){
+    if (unlocked) {
         res.json({
             success: true
-        })
+        });
         return;
     }
 
     res.json({
         success: false,
-        error: "Cannot unlock schedule"
-    })
-})
+        error: 'Cannot unlock schedule'
+    });
+});
 
+app.post('/schedule/check/violations', async (req, res) => {
+    // req obj
+    // const { course, day, id, room, tas, timeBlock, violations } = req.body;
+
+    // class violations check
+    // fetch entire schedule
+    let classSchedule = await getActiveClassSchedule()
+    let newClassSchedule = await editSchedBlockClassSchedule(classSchedule, req.body)
+
+    res.json(newClassSchedule)
+    // return newClassSchedule
+    // make copy
+    // loop thru if same id delete and then add the new one
+
+    // evaluate the schedule
+    // cross check with violations
+    // if may added - return added violations
+});
 
 app.get('/schedule/class/:department/:year/:section', async (req, res) => {
-
     const section = req.params.section;
     const year = req.params.year;
     const department = req.params.department;
 
-    const { schedule, classViolations, TASViolations } = await getClassScheduleBySection(
-        year,
-        section,
-        department
-    );
+    const { schedule, classViolations, TASViolations } =
+        await getClassScheduleBySection(year, section, department);
     if (schedule == null) {
         res.json({ error: true, message: 'call the generate function again' });
         return;
@@ -214,7 +230,7 @@ app.get('/schedule/class/:department/:year/:section', async (req, res) => {
         section,
         schedule,
         classViolations ?? {},
-        TASViolations ?? {},
+        TASViolations ?? {}
     );
 
     res.json(scheduleWithViolations);
@@ -223,7 +239,8 @@ app.get('/schedule/class/:department/:year/:section', async (req, res) => {
 app.get('/schedule/tas/:tasId', async (req, res) => {
     const tasId = req.params.tasId;
 
-    const {TASSchedule, classSchedule, classViolations, TASViolations} = await getTASScheduleByTASId(tasId);
+    const { TASSchedule, classSchedule, classViolations, TASViolations } =
+        await getTASScheduleByTASId(tasId);
     if (TASSchedule == null || classSchedule == null) {
         res.json({ error: true, message: 'call the generate function again' });
         return;
@@ -231,50 +248,62 @@ app.get('/schedule/tas/:tasId', async (req, res) => {
 
     // console.log(TASSchedule)
 
-    let scheduleWithRoomIds = applyRoomIdsToTASSchedule(TASSchedule, classSchedule)
+    let scheduleWithRoomIds = applyRoomIdsToTASSchedule(
+        TASSchedule,
+        classSchedule
+    );
 
     let scheduleWithViolations = applyTASViolationsToSchedule(
         tasId,
         scheduleWithRoomIds,
         classViolations ?? [],
         TASViolations ?? []
-    )
+    );
 
-    res.json(scheduleWithViolations)
-
-})
+    res.json(scheduleWithViolations);
+});
 
 app.get('/schedule/room/:roomId', async (req, res) => {
     const roomId = req.params.roomId;
 
-    const {roomSchedule, classViolations, TASViolations} = await getRoomScheduleByRoomId(roomId);
+    const { roomSchedule, classViolations, TASViolations } =
+        await getRoomScheduleByRoomId(roomId);
     if (roomSchedule == null) {
         res.json({ error: true, message: 'call the generate function again' });
         return;
     }
 
-    let scheduleWithViolations = applyViolationsToRoomSchedule(roomId, roomSchedule, classViolations, TASViolations)
+    let scheduleWithViolations = applyViolationsToRoomSchedule(
+        roomId,
+        roomSchedule,
+        classViolations,
+        TASViolations
+    );
 
-    res.json(scheduleWithViolations)
-})
+    res.json(scheduleWithViolations);
+});
 
 app.post('/generate-schedule', async (req, res) => {
+    console.log('getting called');
 
-    console.log('getting called')
+    let { csLocked, itLocked, isLocked } = await checkLockedDepartments();
+    let { csLockedCache, itLockedCache, isLockedCache } =
+        await checkLockedDepartmentsCache();
 
-    let {csLocked, itLocked, isLocked} = await checkLockedDepartments();
-    let {csLockedCache, itLockedCache, isLockedCache} = await checkLockedDepartmentsCache();
-
-    if ((csLocked === csLockedCache) && (itLocked === itLockedCache) && (isLocked === isLockedCache)){
+    if (
+        csLocked === csLockedCache &&
+        itLocked === itLockedCache &&
+        isLocked === isLockedCache
+    ) {
         let topSchedule = await getScheduleFromCache();
-    
+
         // // if meron
         if (topSchedule) {
-            console.log('top schedule')
+            console.log('top schedule');
             // select that tapos apply violations
             // scheduleWithViolations = applyClassViolationsToSchedule(topSchedule.class_schedule, topSchedule.violations)
             // TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.tas_schedule, topSchedule.violations)
-    
+
             // insert that to schedules array tapos tanggalin ung previous na andon
             await insertToSchedule({
                 classSchedule: topSchedule.class_schedule,
@@ -286,15 +315,15 @@ app.post('/generate-schedule', async (req, res) => {
                 itLocked: topSchedule.it_locked,
                 isLocked: topSchedule.is_locked
             });
-    
+
             // res.json({scheduleWithViolations, violations: topSchedule.violations});
             // const schedule = await getClassScheduleBySection('1', 'CSA', 'CS');
             // res.json(schedule)
             res.json(true);
             return;
         }
-    }else{
-        clearScheduleCache()
+    } else {
+        clearScheduleCache();
     }
 
     // iba may nag lock so malamang generate ulit ng bago
@@ -305,27 +334,33 @@ app.post('/generate-schedule', async (req, res) => {
     let isSchedule = {};
     let lockedDepartments = [];
 
-    if (csLocked){
-        console.log('cs locked')
-        csSchedule = await getCSSchedule()
-        lockedDepartments.push('CS')
+    if (csLocked) {
+        console.log('cs locked');
+        csSchedule = await getCSSchedule();
+        lockedDepartments.push('CS');
     }
-    if (isLocked){
-        console.log('is locked')
-        isSchedule = await getISSchedule()
-        lockedDepartments.push('IS')
+    if (isLocked) {
+        console.log('is locked');
+        isSchedule = await getISSchedule();
+        lockedDepartments.push('IS');
     }
-    if (itLocked){
-        console.log('it locked')
-        itSchedule = await getITSchedule()
-        lockedDepartments.push('IT')
+    if (itLocked) {
+        console.log('it locked');
+        itSchedule = await getITSchedule();
+        lockedDepartments.push('IT');
     }
 
     let activeTASSchedule = await getActiveTASSchedule();
     let activeRoomSchedule = await getActiveRoomSchedule();
 
-    let TASScheduleLocked = getTASScheduleFromDepartmentLockedSchedule({departments: lockedDepartments, TASSchedule: activeTASSchedule})
-    let roomScheduleLocked = getRoomScheduleFromDepartmentLockedSchedule({departments: lockedDepartments, roomSchedule: activeRoomSchedule})
+    let TASScheduleLocked = getTASScheduleFromDepartmentLockedSchedule({
+        departments: lockedDepartments,
+        TASSchedule: activeTASSchedule
+    });
+    let roomScheduleLocked = getRoomScheduleFromDepartmentLockedSchedule({
+        departments: lockedDepartments,
+        roomSchedule: activeRoomSchedule
+    });
 
     let { CSSections, ITSections, ISSections, semester } = req.body;
 
@@ -344,10 +379,10 @@ app.post('/generate-schedule', async (req, res) => {
     let transformedISThirdYearSections = tranformSections(ISSections[3]);
     let transformedISFourthYearSections = tranformSections(ISSections[4]);
 
-    console.log('schedules')
-    console.log(csSchedule)
-    console.log(itSchedule)
-    console.log(isSchedule)
+    console.log('schedules');
+    console.log(csSchedule);
+    console.log(itSchedule);
+    console.log(isSchedule);
 
     let generatedSchedules: any = await runGAV3({
         csLocked,
@@ -379,22 +414,22 @@ app.post('/generate-schedule', async (req, res) => {
     // console.log(generatedSchedules)
     // return;
 
-    if (generatedSchedules?.error){
-        res.json(generatedSchedules.error)
+    if (generatedSchedules?.error) {
+        res.json(generatedSchedules.error);
         return;
     }
 
     for (let i = 1; i < generatedSchedules?.length; i++) {
         let chromosome = generatedSchedules[i];
 
-        console.log(chromosome.classSchedule)
+        console.log(chromosome.classSchedule);
 
         await insertToScheduleCache(chromosome);
     }
 
     let topGeneratedSchedule: any = generatedSchedules[0];
 
-    console.log(topGeneratedSchedule.classSchedule)
+    console.log(topGeneratedSchedule.classSchedule);
 
     let miniClassSchedule = minimizeClassSchedule(
         topGeneratedSchedule.classSchedule
@@ -408,21 +443,24 @@ app.post('/generate-schedule', async (req, res) => {
         tasViolations: topGeneratedSchedule.structuredTASViolations,
         csLocked,
         itLocked,
-        isLocked,
+        isLocked
     });
 
     // res.json(true);
-    res.json({classSchedule: generatedSchedules[0].classSchedule, TASSchedule: generatedSchedules[0].TASSchedule});
+    res.json({
+        classSchedule: generatedSchedules[0].classSchedule,
+        TASSchedule: generatedSchedules[0].TASSchedule
+    });
     return;
 });
 
 app.get('/test-something', async (req, res) => {
-    let ref = await getAvailableProfsSpecificDay('T', 'CS')
-    console.log(ref)
+    let ref = await getAvailableProfsSpecificDay('T', 'CS');
+    console.log(ref);
     // res.json({ref: ref})
 
-    getBetterCourses(ref)
-})
+    getBetterCourses(ref);
+});
 
 // apply tas violations
 // app.get('/generate-schedule', async (req, res) => {
