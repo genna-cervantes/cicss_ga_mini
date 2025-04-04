@@ -6,9 +6,9 @@ export const checkLockedDepartmentsCache = async () => {
     const query =
         'SELECT cs_locked, it_locked, is_locked FROM generated_schedule_cache WHERE is_active = TRUE ORDER BY score LIMIT 1';
     const res = await client.query(query);
-    const csLockedCache = res.rows[0].cs_locked;
-    const itLockedCache = res.rows[0].it_locked;
-    const isLockedCache = res.rows[0].is_locked;
+    const csLockedCache = res.rows[0]?.cs_locked ?? false;
+    const itLockedCache = res.rows[0]?.it_locked ?? false;
+    const isLockedCache = res.rows[0]?.is_locked ?? false;
 
     return {
         csLockedCache,
@@ -17,13 +17,21 @@ export const checkLockedDepartmentsCache = async () => {
     };
 };
 
+export const clearScheduleCache = async () => {
+    const query = "DELETE FROM generated_schedule_cache;";
+    const res = await client.query(query);
+    const data = res.rowCount;
+
+    return data;
+}
+
 export const checkLockedDepartments = async () => {
     const query =
         'SELECT cs_locked, it_locked, is_locked FROM schedules WHERE is_active = TRUE';
     const res = await client.query(query);
-    const csLocked = res.rows[0].cs_locked;
-    const itLocked = res.rows[0].it_locked;
-    const isLocked = res.rows[0].is_locked;
+    const csLocked = res.rows[0]?.cs_locked ?? false;
+    const itLocked = res.rows[0]?.it_locked ?? false;
+    const isLocked = res.rows[0]?.is_locked ?? false;
 
     return {
         csLocked,
@@ -119,7 +127,7 @@ export const insertToScheduleCache = async (chromosome: any) => {
 
     const id = `CH${generateRandomString(8)}`;
     const query = `INSERT INTO generated_schedule_cache (generated_schedule_cache_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations, score, cs_locked, it_locked, is_locked) VALUES (
-        $1, $2, $3, $4, $5, $6, $7
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
         )`;
     const res = await client.query(query, [
         id,
@@ -164,7 +172,7 @@ export const insertToSchedule = async ({
 
     const id = `CH${generateRandomString(8)}`;
 
-    const query = `INSERT INTO schedules (schedule_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations, cs_locked, is_locked, it_locked) VALUES ($1, $2, $3, $4, $5, $6);`;
+    const query = `INSERT INTO schedules (schedule_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations, cs_locked, is_locked, it_locked) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`;
     const res = await client.query(query, [
         id,
         classSchedule,
@@ -613,7 +621,10 @@ export const getCSSchedule = async () => {
     const query =
         "SELECT class_schedule->'CS' AS csSchedule FROM schedules WHERE is_active = TRUE LIMIT 1;";
     const res = await client.query(query);
-    const csSchedule = res.rows[0].csSchedule;
+    const csSchedule = res.rows[0].csschedule;
+
+    console.log('cs sched')
+    console.log(csSchedule)
 
     return csSchedule;
 };
@@ -621,7 +632,7 @@ export const getITSchedule = async () => {
     const query =
         "SELECT class_schedule->'IT' AS itSchedule FROM schedules WHERE is_active = TRUE LIMIT 1;";
     const res = await client.query(query);
-    const itSchedule = res.rows[0].itSchedule;
+    const itSchedule = res.rows[0].itschedule;
 
     return itSchedule;
 };
@@ -629,12 +640,12 @@ export const getISSchedule = async () => {
     const query =
         "SELECT class_schedule->'IS' AS isSchedule FROM schedules WHERE is_active = TRUE LIMIT 1;";
     const res = await client.query(query);
-    const isSchedule = res.rows[0].isSchedule;
+    const isSchedule = res.rows[0].isschedule;
 
     return isSchedule;
 };
 
-export const getTASScheduleFromDepartmentLockedSchedule = async ({
+export const getTASScheduleFromDepartmentLockedSchedule = ({
     departments,
     TASSchedule
 }: {
@@ -666,7 +677,7 @@ export const getTASScheduleFromDepartmentLockedSchedule = async ({
                             };
                         }
 
-                        newTASSchedule[profKeys[i]][SCHOOL_DAYS[k]].push(
+                        newTASSchedule[profKeys[i]][SCHOOL_DAYS[j]].push(
                             schedBlock
                         );
                     }
@@ -682,6 +693,56 @@ export const getTASScheduleFromDepartmentLockedSchedule = async ({
     //return
 };
 
+export const getRoomScheduleFromDepartmentLockedSchedule = ({
+    departments,
+    roomSchedule
+}: {
+    departments: string[];
+    roomSchedule: any;
+}) => {
+    let newRoomSchedule: any = {};
+    let roomKeys = Object.keys(roomSchedule);
+
+    for (let i = 0; i < roomKeys.length; i++) {
+        let specRoomSchedule = roomSchedule[roomKeys[i]];
+
+
+        for (let j = 0; j < SCHOOL_DAYS.length; j++) {
+            let daySched = specRoomSchedule[SCHOOL_DAYS[j]];
+
+            for (let k = 0; k < daySched.length; k++) {
+                let schedBlock = daySched[k];
+
+                for (let m = 0; m < departments.length; m++) {
+                    if (schedBlock.department === departments[m]) {
+                        if (!newRoomSchedule[roomKeys[i]]) {
+                            newRoomSchedule[roomKeys[i]] = {
+                                M: [],
+                                T: [],
+                                W: [],
+                                TH: [],
+                                F: [],
+                                S: []
+                            };
+                        }
+
+                        newRoomSchedule[roomKeys[i]][SCHOOL_DAYS[j]].push(
+                            schedBlock
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    console.log(newRoomSchedule)
+    return newRoomSchedule;
+    // loop thru class sched
+    // loop thru tas schedule
+    // keep all that contains the department
+    //return
+};
+
 export const getActiveTASSchedule = async () => {
     const query =
         'SELECT tas_schedule FROM schedules WHERE is_active = TRUE LIMIT 1';
@@ -689,4 +750,13 @@ export const getActiveTASSchedule = async () => {
     const tasSchedule = res.rows[0].tas_schedule;
 
     return tasSchedule;
+};
+
+export const getActiveRoomSchedule = async () => {
+    const query =
+        'SELECT room_schedule FROM schedules WHERE is_active = TRUE LIMIT 1';
+    const res = await client.query(query);
+    const roomSchedule = res.rows[0].room_schedule;
+
+    return roomSchedule;
 };

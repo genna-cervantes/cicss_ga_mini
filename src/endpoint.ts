@@ -13,12 +13,15 @@ import {
     applyViolationsToRoomSchedule,
     checkLockedDepartments,
     checkLockedDepartmentsCache,
+    clearScheduleCache,
+    getActiveRoomSchedule,
     getActiveTASSchedule,
     getClassScheduleBySection,
     getCSSchedule,
     getISSchedule,
     getITSchedule,
     getRoomScheduleByRoomId,
+    getRoomScheduleFromDepartmentLockedSchedule,
     getScheduleFromCache,
     getTASScheduleByTASId,
     getTASScheduleFromDepartmentLockedSchedule,
@@ -30,6 +33,7 @@ import {
     unlockScheduleByDepartment
 } from './utils';
 import cors from 'cors';
+import e from 'express';
 
 const app = express();
 const port = 3000;
@@ -229,6 +233,8 @@ app.get('/schedule/room/:roomId', async (req, res) => {
 
 app.post('/generate-schedule', async (req, res) => {
 
+    console.log('getting called')
+
     let {csLocked, itLocked, isLocked} = await checkLockedDepartments();
     let {csLockedCache, itLockedCache, isLockedCache} = await checkLockedDepartmentsCache();
 
@@ -260,6 +266,8 @@ app.post('/generate-schedule', async (req, res) => {
             res.json(true);
             return;
         }
+    }else{
+        clearScheduleCache()
     }
 
     // iba may nag lock so malamang generate ulit ng bago
@@ -271,21 +279,26 @@ app.post('/generate-schedule', async (req, res) => {
     let lockedDepartments = [];
 
     if (csLocked){
+        console.log('cs locked')
         csSchedule = await getCSSchedule()
         lockedDepartments.push('CS')
     }
     if (isLocked){
+        console.log('is locked')
         isSchedule = await getISSchedule()
         lockedDepartments.push('IS')
     }
     if (itLocked){
+        console.log('it locked')
         itSchedule = await getITSchedule()
         lockedDepartments.push('IT')
     }
 
     let activeTASSchedule = await getActiveTASSchedule();
+    let activeRoomSchedule = await getActiveRoomSchedule();
 
     let TASScheduleLocked = getTASScheduleFromDepartmentLockedSchedule({departments: lockedDepartments, TASSchedule: activeTASSchedule})
+    let roomScheduleLocked = getRoomScheduleFromDepartmentLockedSchedule({departments: lockedDepartments, roomSchedule: activeRoomSchedule})
 
     let { CSSections, ITSections, ISSections, semester } = req.body;
 
@@ -304,6 +317,11 @@ app.post('/generate-schedule', async (req, res) => {
     let transformedISThirdYearSections = tranformSections(ISSections[3]);
     let transformedISFourthYearSections = tranformSections(ISSections[4]);
 
+    console.log('schedules')
+    console.log(csSchedule)
+    console.log(itSchedule)
+    console.log(isSchedule)
+
     let generatedSchedules: any = await runGAV3({
         csLocked,
         itLocked,
@@ -312,6 +330,7 @@ app.post('/generate-schedule', async (req, res) => {
         itSchedule,
         isSchedule,
         TASScheduleLocked,
+        roomScheduleLocked,
         CSFirstYearSections: transformedCSFirstYearSections,
         CSSecondYearSections: transformedCSSecondYearSections,
         CSThirdYearSections: transformedCSThirdYearSections,
@@ -333,12 +352,12 @@ app.post('/generate-schedule', async (req, res) => {
     // console.log(generatedSchedules)
     // return;
 
-    if (generatedSchedules.error){
+    if (generatedSchedules?.error){
         res.json(generatedSchedules.error)
         return;
     }
 
-    for (let i = 1; i < generatedSchedules.length; i++) {
+    for (let i = 1; i < generatedSchedules?.length; i++) {
         let chromosome = generatedSchedules[i];
 
         console.log(chromosome.classSchedule)

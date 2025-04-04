@@ -77,6 +77,7 @@ export const runGAV3 = async ({
     itSchedule = {},
     isSchedule = {},
     TASScheduleLocked = {},
+    roomScheduleLocked = {},
     CSFirstYearSections,
     CSSecondYearSections,
     CSThirdYearSections,
@@ -98,6 +99,7 @@ export const runGAV3 = async ({
     itSchedule: any;
     isSchedule: any;
     TASScheduleLocked: any;
+    roomScheduleLocked: any;
     CSFirstYearSections: any;
     CSSecondYearSections: any;
     CSThirdYearSections: any;
@@ -134,9 +136,9 @@ export const runGAV3 = async ({
         // GENERATE CS
         console.log('generating chromosome: ', i);
         let classSchedule: any = {
-            CS: csSchedule,
-            IT: itSchedule,
-            IS: isSchedule
+            CS: structuredClone(csSchedule),
+            IT: structuredClone(itSchedule),
+            IS: structuredClone(isSchedule)
         };
         // let classSchedule: any = {
         //     ...(Object.keys(csSchedule).length === 0 ? { CS: {} } : {}),
@@ -144,7 +146,12 @@ export const runGAV3 = async ({
         //     ...(Object.keys(isSchedule).length === 0 ? { IS: {} } : {})
         // };
 
+        console.log('class schedule', classSchedule)
+        // return;
+
         if (Object.keys(csSchedule).length === 0) {
+            console.log('generating cs')
+
             let schedulesFirst = await generateV3({
                 department: 'CS',
                 year: 1,
@@ -180,6 +187,8 @@ export const runGAV3 = async ({
 
         // GENERATE IT
         if (Object.keys(itSchedule).length === 0) {
+            console.log('generating it')
+
             let schedulesFirstIT = await generateV3({
                 department: 'IT',
                 year: 1,
@@ -215,6 +224,8 @@ export const runGAV3 = async ({
 
         // GENERATE UNG SA IS
         if (Object.keys(isSchedule).length === 0) {
+            console.log('generating is')
+
             let schedulesFirstIS = await generateV3({
                 department: 'IS',
                 year: 1,
@@ -250,7 +261,7 @@ export const runGAV3 = async ({
 
         // check if mas okay mauna ung room or mauna ung tas
         console.log('assigning tas');
-        let TASSchedule = TASScheduleLocked;
+        let TASSchedule = structuredClone(TASScheduleLocked);
         // try{
         let scheduleWithTASAssignment = await assignTAS({
             isRandom: false,
@@ -261,7 +272,7 @@ export const runGAV3 = async ({
         console.log(TASConflicts);
 
         console.log('assigning rooms');
-        let roomSchedule = {};
+        let roomSchedule = structuredClone(roomScheduleLocked);
 
         let classScheduleWithRooms = await assignRooms({
             classSchedules: scheduleWithTASAssignment,
@@ -293,6 +304,11 @@ export const runGAV3 = async ({
         //     roomConflicts
         // }
 
+        console.log(classSchedule)
+        console.log(Object.keys(csSchedule).length === 0 ? 'dont skip cs' : 'skip cs')
+        console.log(Object.keys(itSchedule).length === 0 ? 'dont skip it' : 'skip it')
+        console.log(Object.keys(isSchedule).length === 0 ? 'dont skip is' : 'skip is')
+
         let rawClassSchedules = {
             ...(Object.keys(csSchedule).length === 0
                 ? { CS: classSchedule['CS'] }
@@ -305,7 +321,9 @@ export const runGAV3 = async ({
                 : {})
         };
 
-        console.log('pushing to population');
+        // console.log('pushing to population');
+
+        // console.log('raw chromosome gen', rawClassSchedules);
         population.push({
             classScheduleRaw: rawClassSchedules,
             classSchedule: classScheduleWithRooms,
@@ -343,6 +361,8 @@ export const runGAV3 = async ({
     // console.log(population[0].TASConflicts)
     // return;
 
+    let retObj = [];
+
     let maxGen = 60;
     loop0: for (let g = 0; g < maxGen; g++) {
         console.log('crossover num: ', g);
@@ -366,6 +386,9 @@ export const runGAV3 = async ({
             let chromosomeB = structuredClone(
                 population[half + i].classScheduleRaw
             );
+
+            // console.log('cha', chromosomeA)
+            // console.log('chb', chromosomeB)
 
             // loop thru the sched
             // for every year key i generate a random cross over point
@@ -403,8 +426,8 @@ export const runGAV3 = async ({
                 }
             }
 
-            let chromosomeARaw = structuredClone(chromosomeA);
-            let chromosomeBRaw = structuredClone(chromosomeB);
+            let chromosomeARaw = structuredClone(population[i].classScheduleRaw);
+            let chromosomeBRaw = structuredClone(population[half + i].classScheduleRaw);
 
             // add back
             if (Object.keys(csSchedule).length > 0) {
@@ -417,8 +440,8 @@ export const runGAV3 = async ({
                 chromosomeA['IS'] = isSchedule;
             }
 
-            let TASSchedule = TASScheduleLocked;
-            let roomSchedule = {};
+            let TASSchedule = structuredClone(TASScheduleLocked);
+            let roomSchedule = structuredClone(roomScheduleLocked);
             // add rooms
             console.log('adding new chromosome a');
             let chromosomeAClassScheduleWithTAS = await assignTAS({
@@ -450,6 +473,8 @@ export const runGAV3 = async ({
                 semester: 2
             });
 
+            console.log('a raw push', chromosomeARaw)
+
             population.push({
                 classScheduleRaw: chromosomeARaw,
                 classSchedule: chromosomeAClassScheduleWithRooms,
@@ -466,6 +491,7 @@ export const runGAV3 = async ({
                 isLocked
             });
 
+            console.log('tas locked sched', TASSchedule)
             console.log('room conflict a', chromosomeARoomConflicts);
             console.log('tas conflict a', chromosomeATASConflicts);
             console.log('score a', score);
@@ -481,19 +507,8 @@ export const runGAV3 = async ({
                 chromosomeB['IS'] = isSchedule;
             }
 
-            // add back
-            if (Object.keys(csSchedule).length > 0) {
-                chromosomeB['CS'] = csSchedule;
-            }
-            if (Object.keys(itSchedule).length > 0) {
-                chromosomeB['IT'] = itSchedule;
-            }
-            if (Object.keys(isSchedule).length > 0) {
-                chromosomeB['IS'] = isSchedule;
-            }
-
-            let TASScheduleB = TASScheduleLocked;
-            let roomScheduleB = {};
+            let TASScheduleB = structuredClone(TASScheduleLocked);
+            let roomScheduleB = structuredClone(roomScheduleLocked);
             console.log('adding new chromosome b');
             let chromosomeBClassScheduleWithTAS = await assignTAS({
                 isRandom: sameCounter === 5,
@@ -524,6 +539,8 @@ export const runGAV3 = async ({
                 semester: 2
             });
 
+
+            console.log('b raw push', chromosomeBRaw)
             population.push({
                 classScheduleRaw: chromosomeBRaw,
                 classSchedule: chromosomeBClassScheduleWithRooms,
@@ -540,6 +557,7 @@ export const runGAV3 = async ({
                 isLocked
             });
 
+            console.log('tas locked sched', TASScheduleB)
             console.log('room conflict b', chromosomeBRoomConflicts);
             console.log('tas conflict b', chromosomeATASConflicts);
             console.log('score b', scoreB);
@@ -554,10 +572,10 @@ export const runGAV3 = async ({
         let maxMutations = 4;
         for (let i = 0; i < maxMutations; i++) {
             // tas mutation
-            let chromosomeRan = population[i].classScheduleRaw;
-            let chromosomeRanRaw = population[i].classScheduleRaw;
-            let TASScheduleRan = TASScheduleLocked;
-            let roomScheduleRan = {};
+            let chromosomeRan = structuredClone(population[i].classScheduleRaw);
+            let chromosomeRanRaw = structuredClone(population[i].classScheduleRaw);
+            let TASScheduleRan = structuredClone(TASScheduleLocked);
+            let roomScheduleRan = structuredClone(roomScheduleLocked);
             console.log('adding new chromosome b');
 
             // add back
@@ -600,6 +618,7 @@ export const runGAV3 = async ({
                 semester: 2
             });
 
+            console.log('ran raw push', chromosomeRanRaw)
             population.push({
                 classScheduleRaw: chromosomeRanRaw,
                 classSchedule: chromosomeRanClassScheduleWithRooms,
@@ -616,11 +635,15 @@ export const runGAV3 = async ({
                 isLocked
             });
 
+            console.log('tas locked sched', TASScheduleRan)
             console.log('room conflict b', chromosomeRanRoomConflicts);
             console.log('tas conflict b', chromosomeRanTASConflicts);
             console.log('score b', scoreRan);
 
             // crossover mutation
+            // console.log(population[i])
+            // console.log(population[i].classScheduleRaw)
+            // console.log(population[i].classScheduleRaw)
             let chromosomeC = structuredClone(population[i].classScheduleRaw);
             let chromosomeCRaw = structuredClone(
                 population[i].classScheduleRaw
@@ -671,8 +694,8 @@ export const runGAV3 = async ({
                 chromosomeC['IS'] = isSchedule;
             }
 
-            let TASScheduleC = TASScheduleLocked;
-            let roomScheduleC = {};
+            let TASScheduleC = structuredClone(TASScheduleLocked);
+            let roomScheduleC = structuredClone(roomScheduleLocked);
             let chromosomeCClassScheduleWithTAS = await assignTAS({
                 isRandom: sameCounter === 5,
                 classSchedules: chromosomeC,
@@ -702,10 +725,12 @@ export const runGAV3 = async ({
                 semester: 2
             });
 
+            console.log('tas locked sched', TASScheduleC)
             console.log('room conflict C', chromosomeCRoomConflicts);
             console.log('tas conflict c', chromosomeCTASConflicts);
             console.log('score c', scoreC);
 
+            console.log('c raw push', chromosomeCRaw)
             population.push({
                 classScheduleRaw: chromosomeCRaw,
                 classSchedule: chromosomeCClassScheduleWithRooms,
@@ -731,17 +756,34 @@ export const runGAV3 = async ({
         //     console.log('broke out early', g);
         //     break loop0;
         // }
+
+        population = getTop50(population);
+
+        // RETURN
+
+        for (let i = 0; i < population.length; i++) {
+            let chromosome = population[i];
+            if (chromosome.roomConflicts === 0 && chromosome.TASConflicts === 0 && retObj.length < 10) {
+                retObj.push(chromosome);
+            }
+        }
+
+        if (retObj.length >= 10){
+            break loop0;
+        }
     }
 
     population = getTop50(population);
 
     // RETURN
-    let retObj = [];
+    // let retObj = [];
 
-    for (let i = 0; i < population.length; i++) {
-        let chromosome = population[i];
-        if (chromosome.roomConflicts === 0 && chromosome.TASConflicts === 0) {
-            retObj.push(chromosome);
+    if (retObj.length < 10){
+        for (let i = 0; i < population.length; i++) {
+            let chromosome = population[i];
+            if (chromosome.roomConflicts === 0 && chromosome.TASConflicts === 0 && retObj.length < 10) {
+                retObj.push(chromosome);
+            }
         }
     }
 
