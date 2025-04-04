@@ -20,6 +20,7 @@ import {
     getCSSchedule,
     getISSchedule,
     getITSchedule,
+    getReadyDepartments,
     getRoomScheduleByRoomId,
     getRoomScheduleFromDepartmentLockedSchedule,
     getScheduleFromCache,
@@ -29,6 +30,7 @@ import {
     insertToScheduleCache,
     lockScheduleByDepartment,
     minimizeClassSchedule,
+    readyScheduleByDepartment,
     tranformSections,
     unlockScheduleByDepartment
 } from './utils';
@@ -125,10 +127,7 @@ app.get('/schedule/lock/:department', async (req, res) => {
 
     console.log('lock hit')
     console.log(department)
-
-    // check din dito if locked na lahat para go na to manual editing
-
-
+    
     if (locked){
         res.json({
             success: true
@@ -139,6 +138,34 @@ app.get('/schedule/lock/:department', async (req, res) => {
     res.json({
         success: false,
         error: "Cannot lock schedule"
+    })
+})
+
+app.get('/schedule/ready/departments', async (req, res) => {
+    const readyDepartments = await getReadyDepartments()
+    console.log(readyDepartments)
+    res.json(readyDepartments);
+})
+
+app.get('/schedule/ready/:department', async (req, res) => {
+
+    const department = req.params.department;
+
+    let readied = await readyScheduleByDepartment(department)
+
+    console.log('ready hit')
+    console.log(department)
+
+    if (readied){
+        res.json({
+            success: true
+        })
+        return;
+    }
+
+    res.json({
+        success: false,
+        error: "Cannot ready schedule"
     })
 })
 

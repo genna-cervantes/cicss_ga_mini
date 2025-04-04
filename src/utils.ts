@@ -92,6 +92,46 @@ export const lockScheduleByDepartment = async (department: string) => {
     return false;
 };
 
+export const getReadyDepartments = async () => {
+    const query = 'SELECT cs_ready, it_ready, is_ready FROM schedules WHERE is_active = TRUE LIMIT 1;'
+    const res = await client.query(query);
+    const csReady = res.rows[0].cs_ready
+    const itReady = res.rows[0].it_ready
+    const isReady = res.rows[0].is_ready
+
+    return {
+        csReady,
+        itReady,
+        isReady
+    }
+}
+
+export const readyScheduleByDepartment = async (department: string) => {
+    let readyDepartment = '';
+    switch (department) {
+        case 'CS':
+            readyDepartment = 'cs_ready';
+            break;
+        case 'IT':
+            readyDepartment = 'it_ready';
+            break;
+        case 'IS':
+            readyDepartment = 'is_ready';
+            break;
+        default:
+            return false;
+    }
+
+    const query = `UPDATE schedules SET ${readyDepartment} = TRUE WHERE is_active = TRUE`;
+    const res = await client.query(query);
+
+    if (res && res.rowCount && res?.rowCount > 0) {
+        return true;
+    }
+
+    return false;
+};
+
 export const getScheduleFromCache = async () => {
     // get schedule
     const query = 'SELECT * FROM generated_schedule_cache ORDER BY score';
@@ -621,7 +661,7 @@ export const getCSSchedule = async () => {
     const query =
         "SELECT class_schedule->'CS' AS csSchedule FROM schedules WHERE is_active = TRUE LIMIT 1;";
     const res = await client.query(query);
-    const csSchedule = res.rows[0].csschedule;
+    const csSchedule = res.rows[0]?.csschedule;
 
     console.log('cs sched')
     console.log(csSchedule)
@@ -632,7 +672,7 @@ export const getITSchedule = async () => {
     const query =
         "SELECT class_schedule->'IT' AS itSchedule FROM schedules WHERE is_active = TRUE LIMIT 1;";
     const res = await client.query(query);
-    const itSchedule = res.rows[0].itschedule;
+    const itSchedule = res.rows[0]?.itschedule;
 
     return itSchedule;
 };
@@ -640,7 +680,7 @@ export const getISSchedule = async () => {
     const query =
         "SELECT class_schedule->'IS' AS isSchedule FROM schedules WHERE is_active = TRUE LIMIT 1;";
     const res = await client.query(query);
-    const isSchedule = res.rows[0].isschedule;
+    const isSchedule = res.rows[0]?.isschedule;
 
     return isSchedule;
 };
@@ -652,6 +692,11 @@ export const getTASScheduleFromDepartmentLockedSchedule = ({
     departments: string[];
     TASSchedule: any;
 }) => {
+
+    if (TASSchedule == undefined){
+        return null;
+    }
+
     let newTASSchedule: any = {};
     let profKeys = Object.keys(TASSchedule);
 
@@ -700,6 +745,11 @@ export const getRoomScheduleFromDepartmentLockedSchedule = ({
     departments: string[];
     roomSchedule: any;
 }) => {
+
+    if (roomSchedule == undefined){
+        return null;
+    }
+
     let newRoomSchedule: any = {};
     let roomKeys = Object.keys(roomSchedule);
 
@@ -747,7 +797,7 @@ export const getActiveTASSchedule = async () => {
     const query =
         'SELECT tas_schedule FROM schedules WHERE is_active = TRUE LIMIT 1';
     const res = await client.query(query);
-    const tasSchedule = res.rows[0].tas_schedule;
+    const tasSchedule = res.rows[0]?.tas_schedule;
 
     return tasSchedule;
 };
@@ -756,7 +806,7 @@ export const getActiveRoomSchedule = async () => {
     const query =
         'SELECT room_schedule FROM schedules WHERE is_active = TRUE LIMIT 1';
     const res = await client.query(query);
-    const roomSchedule = res.rows[0].room_schedule;
+    const roomSchedule = res.rows[0]?.room_schedule;
 
     return roomSchedule;
 };
