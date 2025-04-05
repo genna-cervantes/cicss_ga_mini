@@ -18,10 +18,15 @@ import {
     checkLockedDepartments,
     checkLockedDepartmentsCache,
     clearScheduleCache,
+    compareViolations,
     editSchedBlockClassSchedule,
+    extractRoomScheduleFromClassSchedule,
+    extractTASScheduleFromClassSchedule,
+    flattenViolations,
     getActiveClassSchedule,
     getActiveRoomSchedule,
     getActiveTASSchedule,
+    getActiveViolations,
     getClassScheduleBySection,
     getCSSchedule,
     getISSchedule,
@@ -42,6 +47,7 @@ import {
 } from './utils';
 import cors from 'cors';
 import e from 'express';
+import { evaluateRoomSchedule, evaluateTASSchedule, evaluateV3 } from './v3/evaluatev3';
 
 const app = express();
 const port = 3000;
@@ -202,13 +208,55 @@ app.post('/schedule/check/violations', async (req, res) => {
     let classSchedule = await getActiveClassSchedule()
     let newClassSchedule = await editSchedBlockClassSchedule(classSchedule, req.body)
 
-    res.json(newClassSchedule)
-    // return newClassSchedule
-    // make copy
-    // loop thru if same id delete and then add the new one
-
     // evaluate the schedule
+    // res.json(newClassSchedule)
+
+    // convert to tas schedule
+    let newTASSchedule = extractTASScheduleFromClassSchedule(newClassSchedule)
+    // res.json(newTASSchedule) // PFLE11LEk7
+    const {violations: TASViolations, violationCount: TASViolationCount} = evaluateTASSchedule(newTASSchedule)
+    if (TASViolationCount > 0){
+        // evaluate conflicts - return na agad if meron
+        res.json(TASViolations)
+        return;
+    }
+    
+    // convert to room schedule
+    let newRoomSchedule = extractRoomScheduleFromClassSchedule(newClassSchedule)
+    // res.json(newRoomSchedule);
+    const {violations: roomViolations, violationCount: roomViolationCount} = evaluateRoomSchedule(newRoomSchedule)
+    console.log('roomviol', roomViolations)
+    if (roomViolationCount > 0){
+        // evaluate conflicts - return na agad if meron
+        res.json(roomViolations)
+        return;
+    }
+
+    // evaluate conflicts
+    // im creating new ids here
+    let {allViolations} = await evaluateV3({schedule: newClassSchedule, TASSchedule: newTASSchedule, roomSchedule: newRoomSchedule, semester: 2})
+    let currentViolations = await getActiveViolations()
+
+    let flattenedViolations = flattenViolations(allViolations);
+    // let newViolations = filterNewViolations(structuredClassViolations, req.body)
+
+    let notInOriginalViolations = [];
+    if (flattenedViolations.length !== currentViolations.length){
+        notInOriginalViolations = flattenedViolations.filter(viol1 => !currentViolations.some((viol2:any) => compareViolations(viol1, viol2)))
+    }
+
+    if (notInOriginalViolations.length > 0){
+        res.json(notInOriginalViolations)
+        return;
+    }
+
+    res.json({
+        success: true
+    })
+
+
     // cross check with violations
+
     // if may added - return added violations
 });
 
