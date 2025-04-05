@@ -209,8 +209,7 @@ app.post('/schedule/check/violations', async (req, res) => {
     let newClassSchedule = await editSchedBlockClassSchedule(classSchedule, req.body)
 
     // evaluate the schedule
-    // res.json(newClassSchedule)
-
+    
     // convert to tas schedule
     let newTASSchedule = extractTASScheduleFromClassSchedule(newClassSchedule)
     // res.json(newTASSchedule) // PFLE11LEk7
@@ -222,27 +221,36 @@ app.post('/schedule/check/violations', async (req, res) => {
     }
     
     // convert to room schedule
+    // res.json(newClassSchedule)
     let newRoomSchedule = extractRoomScheduleFromClassSchedule(newClassSchedule)
     // res.json(newRoomSchedule);
+    // return;
     const {violations: roomViolations, violationCount: roomViolationCount} = evaluateRoomSchedule(newRoomSchedule)
-    console.log('roomviol', roomViolations)
     if (roomViolationCount > 0){
         // evaluate conflicts - return na agad if meron
         res.json(roomViolations)
         return;
     }
-
+    
     // evaluate conflicts
     // im creating new ids here
+    // DI NACCALL
+    // kulang ung details sa class_schedule -> check ung return sa scripv3 gav3 since don nakabase
+    
+    res.json(newClassSchedule)
     let {allViolations} = await evaluateV3({schedule: newClassSchedule, TASSchedule: newTASSchedule, roomSchedule: newRoomSchedule, semester: 2})
     let currentViolations = await getActiveViolations()
 
     let flattenedViolations = flattenViolations(allViolations);
+    // res.json(flattenedViolations)
+    // return;
     // let newViolations = filterNewViolations(structuredClassViolations, req.body)
 
     let notInOriginalViolations = [];
     if (flattenedViolations.length !== currentViolations.length){
+        console.log('not equal')
         notInOriginalViolations = flattenedViolations.filter(viol1 => !currentViolations.some((viol2:any) => compareViolations(viol1, viol2)))
+        res.json(notInOriginalViolations)
     }
 
     if (notInOriginalViolations.length > 0){

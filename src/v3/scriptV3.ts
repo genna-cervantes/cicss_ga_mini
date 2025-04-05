@@ -261,28 +261,29 @@ export const runGAV3 = async ({
 
         // check if mas okay mauna ung room or mauna ung tas
         console.log('assigning tas');
-        let TASSchedule = structuredClone(TASScheduleLocked);
+        let TASScheduleRaw = structuredClone(TASScheduleLocked);
         // try{
-        let scheduleWithTASAssignment = await assignTAS({
+        let {classSchedulesCopy: scheduleWithTASAssignment, TASSchedule} = await assignTAS({
             isRandom: false,
             classSchedules: classSchedule,
-            TASSchedule
+            TASSchedule: TASScheduleRaw
         });
         let TASConflicts = evaluateTASAssignment(scheduleWithTASAssignment);
         console.log(TASConflicts);
 
         console.log('assigning rooms');
-        let roomSchedule = structuredClone(roomScheduleLocked);
+        let roomScheduleRaw = structuredClone(roomScheduleLocked);
 
-        let classScheduleWithRooms = await assignRooms({
+        let {classSchedulesCopy: classScheduleWithRooms, roomSchedule} = await assignRooms({
             classSchedules: scheduleWithTASAssignment,
-            roomSchedule
+            roomSchedule: roomScheduleRaw
         });
 
         let roomConflicts = evaluateRoomAssignment(classScheduleWithRooms);
 
         // evaluate everything else
         console.log('evaluating');
+        console.log(TASSchedule)
         let {
             score,
             allViolations: violations,
@@ -440,22 +441,22 @@ export const runGAV3 = async ({
                 chromosomeA['IS'] = isSchedule;
             }
 
-            let TASSchedule = structuredClone(TASScheduleLocked);
-            let roomSchedule = structuredClone(roomScheduleLocked);
+            let TASScheduleRaw = structuredClone(TASScheduleLocked);
+            let roomScheduleRaw = structuredClone(roomScheduleLocked);
             // add rooms
             console.log('adding new chromosome a');
-            let chromosomeAClassScheduleWithTAS = await assignTAS({
+            let {classSchedulesCopy: chromosomeAClassScheduleWithTAS, TASSchedule} = await assignTAS({
                 isRandom: sameCounter === 5,
                 classSchedules: chromosomeA,
-                TASSchedule
+                TASSchedule: TASScheduleRaw
             });
             let chromosomeATASConflicts = evaluateTASAssignment(
                 chromosomeAClassScheduleWithTAS
             );
 
-            let chromosomeAClassScheduleWithRooms = await assignRooms({
+            let {classSchedulesCopy: chromosomeAClassScheduleWithRooms, roomSchedule} = await assignRooms({
                 classSchedules: chromosomeAClassScheduleWithTAS,
-                roomSchedule
+                roomSchedule: roomScheduleRaw
             });
             let chromosomeARoomConflicts = evaluateRoomAssignment(
                 chromosomeAClassScheduleWithRooms
@@ -507,21 +508,21 @@ export const runGAV3 = async ({
                 chromosomeB['IS'] = isSchedule;
             }
 
-            let TASScheduleB = structuredClone(TASScheduleLocked);
-            let roomScheduleB = structuredClone(roomScheduleLocked);
+            let TASScheduleBRaw = structuredClone(TASScheduleLocked);
+            let roomScheduleBRaw = structuredClone(roomScheduleLocked);
             console.log('adding new chromosome b');
-            let chromosomeBClassScheduleWithTAS = await assignTAS({
+            let {classSchedulesCopy: chromosomeBClassScheduleWithTAS, TASSchedule: TASScheduleB} = await assignTAS({
                 isRandom: sameCounter === 5,
                 classSchedules: chromosomeB,
-                TASSchedule: TASScheduleB
+                TASSchedule: TASScheduleBRaw
             });
             let chromosomeBTASConflicts = evaluateTASAssignment(
                 chromosomeBClassScheduleWithTAS
             );
 
-            let chromosomeBClassScheduleWithRooms = await assignRooms({
+            let {classSchedulesCopy: chromosomeBClassScheduleWithRooms, roomSchedule: roomScheduleB} = await assignRooms({
                 classSchedules: chromosomeBClassScheduleWithTAS,
-                roomSchedule: roomScheduleB
+                roomSchedule: roomScheduleBRaw
             });
             let chromosomeBRoomConflicts = evaluateRoomAssignment(
                 chromosomeBClassScheduleWithRooms
@@ -574,8 +575,8 @@ export const runGAV3 = async ({
             // tas mutation
             let chromosomeRan = structuredClone(population[i].classScheduleRaw);
             let chromosomeRanRaw = structuredClone(population[i].classScheduleRaw);
-            let TASScheduleRan = structuredClone(TASScheduleLocked);
-            let roomScheduleRan = structuredClone(roomScheduleLocked);
+            let TASScheduleRanRaw = structuredClone(TASScheduleLocked);
+            let roomScheduleRanRaw = structuredClone(roomScheduleLocked);
             console.log('adding new chromosome b');
 
             // add back
@@ -589,18 +590,18 @@ export const runGAV3 = async ({
                 chromosomeRan['IS'] = isSchedule;
             }
 
-            let chromosomeRanClassScheduleWithTAS = await assignTAS({
+            let {classSchedulesCopy: chromosomeRanClassScheduleWithTAS, TASSchedule: TASScheduleRan} = await assignTAS({
                 isRandom: true,
                 classSchedules: chromosomeRan,
-                TASSchedule: TASScheduleRan
+                TASSchedule: TASScheduleRanRaw
             });
             let chromosomeRanTASConflicts = evaluateTASAssignment(
                 chromosomeRanClassScheduleWithTAS
             );
 
-            let chromosomeRanClassScheduleWithRooms = await assignRooms({
+            let {classSchedulesCopy: chromosomeRanClassScheduleWithRooms, roomSchedule: roomScheduleRan} = await assignRooms({
                 classSchedules: chromosomeRanClassScheduleWithTAS,
-                roomSchedule: roomScheduleRan
+                roomSchedule: roomScheduleRanRaw
             });
             let chromosomeRanRoomConflicts = evaluateRoomAssignment(
                 chromosomeRanClassScheduleWithRooms
@@ -694,20 +695,20 @@ export const runGAV3 = async ({
                 chromosomeC['IS'] = isSchedule;
             }
 
-            let TASScheduleC = structuredClone(TASScheduleLocked);
-            let roomScheduleC = structuredClone(roomScheduleLocked);
-            let chromosomeCClassScheduleWithTAS = await assignTAS({
+            let TASScheduleCRaw = structuredClone(TASScheduleLocked);
+            let roomScheduleCRaw = structuredClone(roomScheduleLocked);
+            let {classSchedulesCopy: chromosomeCClassScheduleWithTAS, TASSchedule: TASScheduleC} = await assignTAS({
                 isRandom: sameCounter === 5,
                 classSchedules: chromosomeC,
-                TASSchedule: TASScheduleC
+                TASSchedule: TASScheduleCRaw
             });
             let chromosomeCTASConflicts = evaluateTASAssignment(
                 chromosomeCClassScheduleWithTAS
             );
 
-            let chromosomeCClassScheduleWithRooms = await assignRooms({
+            let {classSchedulesCopy: chromosomeCClassScheduleWithRooms, roomSchedule: roomScheduleC} = await assignRooms({
                 classSchedules: chromosomeCClassScheduleWithTAS,
-                roomSchedule: roomScheduleC
+                roomSchedule: roomScheduleCRaw
             });
             let chromosomeCRoomConflicts = evaluateRoomAssignment(
                 chromosomeCClassScheduleWithRooms
@@ -1621,6 +1622,11 @@ const assignTAS = async ({
     classSchedules: any;
     TASSchedule: any;
 }) => {
+
+    if (TASSchedule == null){
+        TASSchedule = {}
+    }
+
     let classSchedulesCopy = structuredClone(classSchedules);
     let randomize = null;
 
@@ -1847,7 +1853,7 @@ const assignTAS = async ({
         }
     }
 
-    return classSchedulesCopy;
+    return {classSchedulesCopy, TASSchedule};
 };
 
 const shuffleArray = <T>(array: T[]): T[] => {
@@ -1889,7 +1895,7 @@ const findTASForCourse = async ({
 
         // check if pwede pa sa units
         if (
-            (TASSchedule[prospectTAS.tas_id]?.['units'] ?? 0) + classUnits >=
+            (TASSchedule?.[prospectTAS.tas_id]?.['units'] ?? 0) + classUnits >=
             prospectTAS.units
         ) {
             continue loop0;
@@ -2103,6 +2109,11 @@ const assignRooms = async ({
     classSchedules: any;
     roomSchedule: any;
 }) => {
+
+    if (roomSchedule == null){
+        roomSchedule = {}
+    }
+
     let classSchedulesCopy = structuredClone(classSchedules);
 
     // loop thru sections in generate
@@ -2178,7 +2189,7 @@ const assignRooms = async ({
         }
     }
 
-    return classSchedulesCopy;
+    return {classSchedulesCopy, roomSchedule};
     // before adding check if may conflict
     // if wala add if meron check ung next if pwede
     // loop until makakuha ng pwede
@@ -2466,7 +2477,7 @@ const convertMinutesToMilitaryTime = (totalMinutes: number) => {
     return hours + minutes;
 };
 
-const getCourseDetails = async (subjectCode: string) => {
+export const getCourseDetails = async (subjectCode: string) => {
     // console.log(subjectCode)
     const query = 'SELECT * FROM courses WHERE subject_code = $1';
     const res = await client.query(query, [subjectCode]);

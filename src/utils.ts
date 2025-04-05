@@ -1,6 +1,6 @@
 import { SCHOOL_DAYS } from './constants';
 import { chromosome } from './data';
-import { client } from './v3/scriptV3';
+import { client, getCourseDetails } from './v3/scriptV3';
 import { v4 as uuidv4 } from 'uuid';
 
 export const checkLockedDepartmentsCache = async () => {
@@ -817,19 +817,30 @@ export const extractRoomScheduleFromClassSchedule = (classSchedule: any) => {
                     for (let n = 0; n < daySched.length; n++) {
                         let schedBlock = daySched[n];
 
-                        if (schedBlock.room.room_id === 'PE ROOM' || schedBlock.room.roomId === 'PE_ROOM'){
+                        // console.log('schedblock')
+                        // console.log(schedBlock)
+
+                        if (
+                            schedBlock.room?.roomId === 'PE_ROOM' ||
+                            schedBlock.room?.roomId === 'PE ROOM' ||
+                            schedBlock.room?.room_id === 'PE_ROOM' ||
+                            schedBlock.room?.room_id === 'PE ROOM'
+                        ) {
                             continue;
                         }
 
-                        if (!roomSchedule[schedBlock.room.roomId]){
-                            roomSchedule[schedBlock.room.roomId] = {
+                        // if (schedBlock.room == undefined || schedBlock.room?.roomId == undefined) console.log(schedBlock)
+                        // console.log(schedBlock.room)
+
+                        if (!roomSchedule[schedBlock.room.room_id]) {
+                            roomSchedule[schedBlock.room.room_id] = {
                                 M: [],
                                 T: [],
                                 W: [],
                                 TH: [],
                                 F: [],
-                                S: [],
-                            }
+                                S: []
+                            };
                         }
 
                         let newSchedBlock = {
@@ -840,8 +851,10 @@ export const extractRoomScheduleFromClassSchedule = (classSchedule: any) => {
                             section: classKeys[k],
                             timeBlock: schedBlock.timeBlock,
                             department: departmentKeys[i]
-                        }
-                        roomSchedule[schedBlock.room.roomId][SCHOOL_DAYS[m]].push(newSchedBlock)
+                        };
+                        roomSchedule[schedBlock.room.room_id][
+                            SCHOOL_DAYS[m]
+                        ].push(newSchedBlock);
                     }
                 }
             }
@@ -849,26 +862,28 @@ export const extractRoomScheduleFromClassSchedule = (classSchedule: any) => {
     }
 
     return roomSchedule;
-}
+};
 
 export const flattenViolations = (allViolations: any) => {
-    let flattenedViolations = []
-    for (let i = 0; i < allViolations.length; i++){
+    let flattenedViolations = [];
+    for (let i = 0; i < allViolations.length; i++) {
         let violations = allViolations[i].violations;
-        for (let j = 0; j < violations.length; j++){
-            let specViolations = violations[j]
-            flattenedViolations.push(specViolations)
+        for (let j = 0; j < violations.length; j++) {
+            let specViolations = violations[j];
+            // console.log(specViolations)
+            flattenedViolations.push(specViolations);
         }
     }
     return flattenedViolations;
-}
+};
 
 export const extractTASScheduleFromClassSchedule = (classSchedule: any) => {
     let tasSchedule: any = {};
+    let copyOfClassSchedule = structuredClone(classSchedule);
 
-    let departmentKeys = Object.keys(classSchedule);
+    let departmentKeys = Object.keys(copyOfClassSchedule);
     for (let i = 0; i < departmentKeys.length; i++) {
-        let departmentSched = classSchedule[departmentKeys[i]];
+        let departmentSched = copyOfClassSchedule[departmentKeys[i]];
 
         let yearKeys = Object.keys(departmentSched);
         for (let j = 0; j < yearKeys.length; j++) {
@@ -888,30 +903,36 @@ export const extractTASScheduleFromClassSchedule = (classSchedule: any) => {
                     for (let n = 0; n < daySched.length; n++) {
                         let schedBlock = daySched[n];
 
-                        if (schedBlock.tas.tas_id === 'GENED_PROF' || schedBlock.tas.tas_id === 'GENED PROF'){
+                        if (
+                            schedBlock.tas.tas_id === 'GENED_PROF' ||
+                            schedBlock.tas.tas_id === 'GENED PROF'
+                        ) {
                             continue;
                         }
 
-                        if (!tasSchedule[schedBlock.tas.tas_id]){
+                        if (!tasSchedule[schedBlock.tas.tas_id]) {
                             tasSchedule[schedBlock.tas.tas_id] = {
                                 M: [],
                                 T: [],
                                 W: [],
                                 TH: [],
                                 F: [],
-                                S: [],
-                            }
+                                S: []
+                            };
                         }
 
                         let newSchedBlock = {
                             id: schedBlock.id,
                             year: yearKeys[j],
+                            room: schedBlock.room,
                             course: schedBlock.course.subjectCode,
                             section: classKeys[k],
                             timeBlock: schedBlock.timeBlock,
                             department: departmentKeys[i]
-                        }
-                        tasSchedule[schedBlock.tas.tas_id][SCHOOL_DAYS[m]].push(newSchedBlock)
+                        };
+                        tasSchedule[schedBlock.tas.tas_id][SCHOOL_DAYS[m]].push(
+                            newSchedBlock
+                        );
                     }
                 }
             }
@@ -919,7 +940,7 @@ export const extractTASScheduleFromClassSchedule = (classSchedule: any) => {
     }
 
     return tasSchedule;
-}
+};
 
 export const editSchedBlockClassSchedule = async (
     classSchedule: any,
@@ -942,23 +963,36 @@ export const editSchedBlockClassSchedule = async (
                 for (let m = 0; m < SCHOOL_DAYS.length; m++) {
                     let daySched = classSched[SCHOOL_DAYS[m]];
 
-                    // add schedblock
-                    if (SCHOOL_DAYS[m] === newSchedBlock.day && classKeys[k] === newSchedBlock.section && yearKeys[j] == newSchedBlock.year && departmentKeys[i] === newSchedBlock.department) {
-                        let tasId = await findTasIdByName(newSchedBlock.tas);
+                    let toPush;
 
-                        console.log('pushing new')
-                        console.log(newSchedBlock)
-                        daySched.push({
+                    // add schedblock
+                    if (
+                        SCHOOL_DAYS[m] === newSchedBlock.day &&
+                        classKeys[k] === newSchedBlock.section &&
+                        yearKeys[j] == newSchedBlock.year &&
+                        departmentKeys[i] === newSchedBlock.department
+                    ) {
+                        let tasId = await findTasIdByName(newSchedBlock.tas);
+                        let roomDetails = await getRoomDetails(
+                            newSchedBlock.room.roomId
+                        );
+                        let courseDetails = await getCourseDetails(
+                            newSchedBlock.course.subjectCode
+                        );
+
+                        console.log('pushing new');
+                        toPush = {
                             id: uuidv4(),
                             tas: {
-                                tas_id: tasId
+                                tas_id: tasId,
+                                tas_name: newSchedBlock.tas
                             },
-                            room: {
-                                roomId: newSchedBlock.room.roomId
-                            },
-                            course: newSchedBlock.course,
+                            room: roomDetails,
+                            course: courseDetails,
                             timeBlock: newSchedBlock.timeBlock
-                        });
+                        };
+                        // console.log(toPush)
+                        daySched.push(toPush);
                     }
 
                     if (!daySched) {
@@ -970,17 +1004,56 @@ export const editSchedBlockClassSchedule = async (
 
                         if (schedBlock.id === newSchedBlock.id) {
                             // remove this
-                            console.log('deleting old')
+                            console.log('deleting old');
                             daySched.splice(n, 1);
-                            break;
-                        }
+                        } 
                     }
+
+                    for (let n = 0; n < daySched.length; n++) {
+                        let schedBlock = daySched[n];
+
+                        if (schedBlock.id !== newSchedBlock.id) {
+                            if (schedBlock.id === toPush?.id) {
+                                continue;
+                            }
+
+                            let roomDetails = await getRoomDetails(
+                                schedBlock.room?.roomId ??
+                                    schedBlock.room?.room_id
+                            );
+                            let courseDetails = await getCourseDetails(
+                                schedBlock.course.subjectCode
+                            );
+                            daySched[n] = {
+                                ...schedBlock,
+                                room: roomDetails,
+                                course: courseDetails
+                            };
+                        } 
+                    }
+
+
                 }
             }
         }
     }
 
     return newClassSchedule;
+};
+
+export const getRoomDetails = async (roomId: string) => {
+    if (roomId == 'PE ROOM' || roomId === 'PE_ROOM') {
+        return {
+            room_id: 'PE_ROOM'
+        };
+    }
+
+    const query =
+        'SELECT * FROM rooms WHERE room_id = $1 AND is_active = TRUE LIMIT 1;';
+    const res = await client.query(query, [roomId]);
+    const roomDetails = res.rows[0];
+
+    return roomDetails;
 };
 
 export const findTasIdByName = async (name: string) => {
@@ -999,18 +1072,20 @@ export const findTasIdByName = async (name: string) => {
 export const getActiveViolations = async () => {
     let flattenedViolations = [];
 
-    const queryClass = 'SELECT class_violations FROM schedules WHERE is_active = TRUE LIMIT 1;';
+    const queryClass =
+        'SELECT class_violations FROM schedules WHERE is_active = TRUE LIMIT 1;';
     const resClass = await client.query(queryClass);
     const classViolations = resClass.rows[0].class_violations;
 
-    const queryTAS = 'SELECT tas_violations FROM schedules WHERE is_active = TRUE LIMIT 1;';
+    const queryTAS =
+        'SELECT tas_violations FROM schedules WHERE is_active = TRUE LIMIT 1;';
     const resTAS = await client.query(queryTAS);
     const tasViolations = resTAS.rows[0].tas_violations;
 
     // loop thru classViol
     let departmentKeys = Object.keys(classViolations);
-    for (let i = 0; i < departmentKeys.length; i++){
-        let departmentSched = classViolations[departmentKeys[i]]
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = classViolations[departmentKeys[i]];
 
         let yearKeys = Object.keys(departmentSched);
         for (let j = 0; j < yearKeys.length; j++) {
@@ -1020,34 +1095,65 @@ export const getActiveViolations = async () => {
             for (let k = 0; k < classKeys.length; k++) {
                 let classSched = yearSched[classKeys[k]];
 
-                flattenedViolations.push(...classSched.perSection)
-                flattenedViolations.push(...classSched.perSchedBlock)
+                flattenedViolations.push(...classSched.perSection);
+                flattenedViolations.push(...classSched.perSchedBlock);
             }
         }
     }
 
     // loop thru tasViol
     let profKeys = Object.keys(tasViolations);
-    for (let i = 0; i < profKeys.length; i++){
+    for (let i = 0; i < profKeys.length; i++) {
         let profSched = tasViolations[profKeys[i]];
 
-        flattenedViolations.push(...profSched.perTAS)
-        flattenedViolations.push(...profSched.perSchedBlock)
+        flattenedViolations.push(...profSched.perTAS);
+        flattenedViolations.push(...profSched.perSchedBlock);
     }
 
     return flattenedViolations;
-}
+};
 
-export const compareViolations = async (viol1: any, viol2: any) => {
-    if (viol1.id === viol2.id){
+const deepEqual = (obj1: any, obj2: any) => {
+    // If both are strictly equal (handles primitive values and same references)
+    if (obj1 === obj2) {
         return true;
     }
 
-    if (viol1.schedBlockId === viol2.schedBlockId && viol1.type === viol2.type){
-        return true;
+    // If one is null or undefined, return false
+    if (obj1 == null || obj2 == null) {
+        return false;
     }
-    
-}
+
+    // If both are not objects, return false (e.g. primitive values)
+    if (typeof obj1 !== 'object' || typeof obj2 !== 'object') {
+        return false;
+    }
+
+    // Compare the keys of both objects
+    let keys1 = Object.keys(obj1);
+    let keys2 = Object.keys(obj2);
+
+    if (keys1.length !== keys2.length) {
+        return false;
+    }
+
+    // Recursively compare each key and value
+    for (let key of keys1) {
+        if (key === 'id') {
+            continue;
+        }
+        // If the key is not present in the second object or values are different
+        if (!keys2.includes(key) || !deepEqual(obj1[key], obj2[key])) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
+export const compareViolations = (viol1: any, viol2: any) => {
+    return deepEqual(viol1, viol2)
+};
 
 export const getActiveClassSchedule = async () => {
     const query =
