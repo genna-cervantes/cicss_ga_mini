@@ -11,14 +11,14 @@ import { v4 as uuidv4 } from 'uuid';
 export const evaluateTASSchedule = (TASSchedule: any) => {
     // loop thru
     // look for overlap
-    let violations = []
+    let violations = [];
     let violationCount = 0;
 
     let profKeys = Object.keys(TASSchedule);
     for (let i = 0; i < profKeys.length; i++) {
         // loop thru all the assigned sa kanya -
 
-        if (profKeys[i] === 'GENED PROF' || profKeys[i] === 'GENED_PROF'){
+        if (profKeys[i] === 'GENED PROF' || profKeys[i] === 'GENED_PROF') {
             continue;
         }
 
@@ -48,25 +48,29 @@ export const evaluateTASSchedule = (TASSchedule: any) => {
                         parseInt(schedBlock.timeBlock.end) <=
                             parseInt(nextSchedBlock.timeBlock.end))
                 ) {
-
                     let specViolation = {
                         id: uuidv4(),
                         schedBlockId: schedBlock.id,
                         tas: profKeys[i],
-                        course: schedBlock.course.subjectCode,
-                        section: schedBlock.section,
+                        course: {
+                            current: schedBlock.course.subjectCode,
+                            against: nextSchedBlock.course.subjectCode
+                        },
+                        section: {
+                            current: `${schedBlock.year}${schedBlock.section}`,
+                            against: `${nextSchedBlock.year}${nextSchedBlock.section}`
+                        },
                         type: 'tas overlap',
-                        description:
-                            'tas assigned overlapping schedules',
+                        description: 'tas assigned overlapping schedules',
                         time: {
                             day: SCHOOL_DAYS[j],
                             time: schedBlock.timeBlock
-                        },
+                        }
                         // room: schedBlock.room.roomId
                     };
 
-                    violations.push(specViolation)
-                    violationCount++
+                    violations.push(specViolation);
+                    violationCount++;
                 }
             }
         }
@@ -75,20 +79,20 @@ export const evaluateTASSchedule = (TASSchedule: any) => {
     return {
         violationCount,
         violations
-    }
+    };
 };
 
 export const evaluateRoomSchedule = (roomSchedule: any) => {
     // loop thru
     // look for overlap
-    let violations = []
+    let violations = [];
     let violationCount = 0;
 
     let roomKeys = Object.keys(roomSchedule);
     for (let i = 0; i < roomKeys.length; i++) {
         // loop thru all the assigned sa kanya -
 
-        if (roomKeys[i] === 'PE ROOM' || roomKeys[i] === 'PE_ROOM'){
+        if (roomKeys[i] === 'PE ROOM' || roomKeys[i] === 'PE_ROOM') {
             continue;
         }
 
@@ -106,15 +110,15 @@ export const evaluateRoomSchedule = (roomSchedule: any) => {
                 }
             );
 
-            
             for (let k = 0; k < ascendingSched.length - 1; k++) {
                 let schedBlock = ascendingSched[k];
                 let nextSchedBlock = ascendingSched[k + 1];
-                
-                if (schedBlock.course === 'ICS2606-LB') console.log(ascendingSched)
-                if (schedBlock.id == "fc72a5f4-4aa0-4174-9857-6f6bad7d47c1"){
-                    console.log(schedBlock)
-                    console.log(nextSchedBlock)
+
+                if (schedBlock.course === 'ICS2606-LB')
+                    console.log(ascendingSched);
+                if (schedBlock.id == 'fc72a5f4-4aa0-4174-9857-6f6bad7d47c1') {
+                    console.log(schedBlock);
+                    console.log(nextSchedBlock);
                 }
 
                 // 9 1130
@@ -137,26 +141,30 @@ export const evaluateRoomSchedule = (roomSchedule: any) => {
                         parseInt(schedBlock.timeBlock.end) <=
                             parseInt(nextSchedBlock.timeBlock.end))
                 ) {
-
                     let specViolation = {
                         id: uuidv4(),
                         schedBlockId: schedBlock.id,
                         room: roomKeys[i],
                         tas: schedBlock.tas,
-                        course: schedBlock.course.subjectCode,
-                        section: schedBlock.section,
+                        course: {
+                            current: schedBlock.course.subjectCode,
+                            against: nextSchedBlock.course.subjectCode
+                        },
+                        section: {
+                            current: `${schedBlock.year}${schedBlock.section}`,
+                            against: `${nextSchedBlock.year}${nextSchedBlock.section}`
+                        },
                         type: 'room overlap',
-                        description:
-                            'room assigned overlapping schedules',
+                        description: 'room assigned overlapping schedules',
                         time: {
                             day: SCHOOL_DAYS[j],
                             time: schedBlock.timeBlock
-                        },
+                        }
                         // room: schedBlock.room.roomId
                     };
 
-                    violations.push(specViolation)
-                    violationCount++
+                    violations.push(specViolation);
+                    violationCount++;
                 }
             }
         }
@@ -165,7 +173,7 @@ export const evaluateRoomSchedule = (roomSchedule: any) => {
     return {
         violationCount,
         violations
-    }
+    };
 };
 
 const evaluateRoomTypeAssignment = (
@@ -399,7 +407,10 @@ const evaluateTASSpecialty = async (
                             description: 'TAS assignment not specialty',
                             time: {
                                 day: SCHOOL_DAYS[j],
-                                time: schedBlock.timeBlock.start
+                                time: {
+                                    start: schedBlock.timeBlock.start,
+                                    end: schedBlock.timeBlock.end
+                                }
                             }
                         };
 
@@ -846,6 +857,13 @@ const evaluateGenedConstraints = async (
                                     course: schedBlock.course.subjectCode,
                                     section: classKeys[k],
                                     room: schedBlock.room,
+                                    time: {
+                                        day: SCHOOL_DAYS[m],
+                                        time: {
+                                            start: schedBlock.timeBlock.start,
+                                            end: schedBlock.timeBlock.end
+                                        }
+                                    },
                                     type: 'gened class assignment',
                                     description:
                                         'Gened course constraint not followed'
@@ -1576,13 +1594,20 @@ const evaluateRoomProximity = (
                             continue;
                         }
 
-                        const rawRoomId = schedBlock.room.room_id || schedBlock.room.roomId;
-                        const firstRoomFloor = rawRoomId ? parseInt(rawRoomId.slice(2)) / 100 : NaN;
+                        const rawRoomId =
+                            schedBlock.room.room_id || schedBlock.room.roomId;
+                        const firstRoomFloor = rawRoomId
+                            ? parseInt(rawRoomId.slice(2)) / 100
+                            : NaN;
                         // let firstRoomFloor = Math.floor(
                         //     parseInt(schedBlock.room.room_id?.slice(2) ?? schedBlock.room.roomId.slice(2)) / 100
                         // );
-                        const nextRawRoomId = nextSchedBlock.room.room_id || nextSchedBlock.room.roomId;
-                        const secondRoomFloor = nextRawRoomId ? parseInt(nextRawRoomId.slice(2)) / 100 : NaN;
+                        const nextRawRoomId =
+                            nextSchedBlock.room.room_id ||
+                            nextSchedBlock.room.roomId;
+                        const secondRoomFloor = nextRawRoomId
+                            ? parseInt(nextRawRoomId.slice(2)) / 100
+                            : NaN;
                         // let secondRoomFloor = Math.floor(
                         //     parseInt(nextSchedBlock.room.room_id?.slice(2) ?? schedBlock.room.roomId.slice(2)) / 100
                         // );
@@ -1595,6 +1620,13 @@ const evaluateRoomProximity = (
                                 year: yearKeys[j],
                                 section: classKeys[k],
                                 room: schedBlock.room,
+                                time: {
+                                    day: SCHOOL_DAYS[m],
+                                    time: {
+                                        start: schedBlock.timeBlock.start,
+                                        end: schedBlock.timeBlock.end
+                                    }
+                                },
                                 type: 'room proximity assignment',
                                 description:
                                     'Room is too far apart from previous room'

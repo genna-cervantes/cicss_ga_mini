@@ -246,9 +246,9 @@ export const getClassScheduleBySection = async (
     console.log(year);
     console.log(section);
 
-    const schedule = res.rows[0].class_schedule;
-    const classViolations = res.rows[0].class_violations;
-    const TASViolations = res.rows[0].tas_violations;
+    const schedule = res.rows[0]?.class_schedule ?? null;
+    const classViolations = res.rows[0]?.class_violations ?? null;
+    const TASViolations = res.rows[0]?.tas_violations ?? null;
 
     // console.log('violations', violations);
 

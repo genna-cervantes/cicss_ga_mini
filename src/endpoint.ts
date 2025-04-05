@@ -216,7 +216,7 @@ app.post('/schedule/check/violations', async (req, res) => {
     const {violations: TASViolations, violationCount: TASViolationCount} = evaluateTASSchedule(newTASSchedule)
     if (TASViolationCount > 0){
         // evaluate conflicts - return na agad if meron
-        res.json(TASViolations)
+        res.json({type: 'hard', violations:TASViolations})
         return;
     }
     
@@ -228,7 +228,7 @@ app.post('/schedule/check/violations', async (req, res) => {
     const {violations: roomViolations, violationCount: roomViolationCount} = evaluateRoomSchedule(newRoomSchedule)
     if (roomViolationCount > 0){
         // evaluate conflicts - return na agad if meron
-        res.json(roomViolations)
+        res.json({type: 'hard', violations:roomViolations})
         return;
     }
     
@@ -237,7 +237,6 @@ app.post('/schedule/check/violations', async (req, res) => {
     // DI NACCALL
     // kulang ung details sa class_schedule -> check ung return sa scripv3 gav3 since don nakabase
     
-    res.json(newClassSchedule)
     let {allViolations} = await evaluateV3({schedule: newClassSchedule, TASSchedule: newTASSchedule, roomSchedule: newRoomSchedule, semester: 2})
     let currentViolations = await getActiveViolations()
 
@@ -247,14 +246,16 @@ app.post('/schedule/check/violations', async (req, res) => {
     // let newViolations = filterNewViolations(structuredClassViolations, req.body)
 
     let notInOriginalViolations = [];
-    if (flattenedViolations.length !== currentViolations.length){
+    if (flattenedViolations.length > currentViolations.length){
         console.log('not equal')
+        console.log(flattenedViolations.length)
+        console.log(currentViolations.length)
         notInOriginalViolations = flattenedViolations.filter(viol1 => !currentViolations.some((viol2:any) => compareViolations(viol1, viol2)))
         res.json(notInOriginalViolations)
     }
 
     if (notInOriginalViolations.length > 0){
-        res.json(notInOriginalViolations)
+        res.json({type: 'soft', violations: notInOriginalViolations})
         return;
     }
 
@@ -276,7 +277,7 @@ app.get('/schedule/class/:department/:year/:section', async (req, res) => {
     const { schedule, classViolations, TASViolations } =
         await getClassScheduleBySection(year, section, department);
     if (schedule == null) {
-        res.json({ error: true, message: 'call the generate function again' });
+        res.status(500).json({ error: true, message: 'call the generate function again' });
         return;
     }
 
