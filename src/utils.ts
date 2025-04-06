@@ -917,6 +917,7 @@ export const flattenViolations = (
         flattenedViolations.push(...profSched.perTAS);
         flattenedViolations.push(...profSched.perSchedBlock);
     }
+
     return flattenedViolations;
 };
 
@@ -1114,14 +1115,10 @@ export const getActiveViolations = async () => {
     let flattenedViolations = [];
 
     const queryClass =
-        'SELECT class_violations FROM schedules WHERE is_active = TRUE LIMIT 1;';
+        'SELECT class_violations, tas_violations FROM schedules WHERE is_active = TRUE LIMIT 1;';
     const resClass = await client.query(queryClass);
     const classViolations = resClass.rows[0].class_violations;
-
-    const queryTAS =
-        'SELECT tas_violations FROM schedules WHERE is_active = TRUE LIMIT 1;';
-    const resTAS = await client.query(queryTAS);
-    const tasViolations = resTAS.rows[0].tas_violations;
+    const tasViolations = resClass.rows[0].tas_violations;
 
     // loop thru classViol
     let departmentKeys = Object.keys(classViolations);
@@ -1181,43 +1178,17 @@ const deepEqual = (obj1: any, obj2: any) => {
 
     // Recursively compare each key and value
     for (let key of keys1) {
-        if (key === 'id') {
-            // console.log(obj1[key])
-            // console.log(obj2[key])
+        if (key === 'id' || key === 'schedBlockId' || key === 'created_at' || key === 'updated_at') {
             continue;
         }
-        if (key === 'schedBlockId') {
-            continue;
-        }
-        if (key === 'created_at'){
-            continue;
-        }
-        if (key === 'updated_at'){
-            continue;
-        }
-
-        // course year section
-        // If the key is not present in the second object or values are different
+        
         if (!keys2.includes(key)) {
-            // console.log('kulang key', key)
             return false;
         }
         if (!deepEqual(obj1[key], obj2[key])) {
-            // if (
-            //     obj2['id'] === 'd4be3534-1b8e-4208-ba9b-f0807831950e'
-            // ) {
-                console.log(`Objects differ at key: ${key}`);
-                console.log('First object value:', obj1[key]);
-                console.log('Second object value:', obj2[key]);
-            //     //     console.log('pinagkaibang key', key)
-            // }
-
             return false;
         }
     }
-
-    // console.log(' ETO NAG TRUE ');
-    // console.log(obj1, obj2);
 
     return true;
 };

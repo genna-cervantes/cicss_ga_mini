@@ -232,36 +232,23 @@ app.post('/schedule/accept/violations', async (req, res) => {
 })
 
 app.post('/schedule/check/violations', async (req, res) => {
-    // req obj
-    // const { course, day, id, room, tas, timeBlock, violations } = req.body;
-
     // class violations check
     // fetch entire schedule
+    console.log('endpoint hit')
     let classSchedule = await getActiveClassSchedule()
     let newClassSchedule = await editSchedBlockClassSchedule(classSchedule, req.body)
-
-
-
-    // evaluate the schedule
     
     // convert to tas schedule
     let newTASSchedule = extractTASScheduleFromClassSchedule(newClassSchedule)
-    // res.json(newTASSchedule) // PFLE11LEk7
     const {violations: TASViolations, violationCount: TASViolationCount} = evaluateTASSchedule(newTASSchedule)
     if (TASViolationCount > 0){
-        // evaluate conflicts - return na agad if meron
         res.json({type: 'hard', violations:TASViolations})
         return;
     }
     
-    // convert to room schedule
-    // res.json(newClassSchedule)
     let newRoomSchedule = extractRoomScheduleFromClassSchedule(newClassSchedule)
-    // res.json(newRoomSchedule);
-    // return;
     const {violations: roomViolations, violationCount: roomViolationCount} = evaluateRoomSchedule(newRoomSchedule)
     if (roomViolationCount > 0){
-        // evaluate conflicts - return na agad if meron
         res.json({type: 'hard', violations:roomViolations})
         return;
     }
@@ -271,41 +258,34 @@ app.post('/schedule/check/violations', async (req, res) => {
     // DI NACCALL
     // kulang ung details sa class_schedule -> check ung return sa scripv3 gav3 since don nakabase
     
-    let {allViolations, structuredClassViolations, structuredTASViolations} = await evaluateV3({schedule: newClassSchedule, TASSchedule: newTASSchedule, roomSchedule: newRoomSchedule, semester: 2})
+    let {structuredClassViolations, structuredTASViolations} = await evaluateV3({schedule: newClassSchedule, TASSchedule: newTASSchedule, roomSchedule: newRoomSchedule, semester: 2})
     let currentViolations = await getActiveViolations()
-
+    
     let flattenedViolations = flattenViolations(structuredClassViolations, structuredTASViolations);
-    // res.json(flattenedViolations)
-    // return;
-    // let newViolations = filterNewViolations(structuredClassViolations, req.body)
-
+    
     let addedViolations = [];
     let removedViolations = [];
 
-    if (flattenedViolations.length !== currentViolations.length){
-        console.log(flattenedViolations.length)
-        console.log(currentViolations.length)
-    }
+    // if (flattenedViolations.length !== currentViolations.length){
+        //     console.log(flattenedViolations.length)
+        //     console.log(currentViolations.length)
+    // }
     
-    
     if (flattenedViolations.length !== currentViolations.length){
-        console.log('not equal')
-
+        
         addedViolations = flattenedViolations.filter(viol1 => 
             !currentViolations.some(viol2 => compareViolations(viol1, viol2))
         );
-
+        
         removedViolations = currentViolations.filter(viol1 => 
             !flattenedViolations.some(viol2 => compareViolations(viol1, viol2))
         );
-
-        // console.log(flattenedViolations.length)
-        // console.log(currentViolations.length)
-        // res.json(notInOriginalViolations)
+        
     }
     
     if (addedViolations.length > 0 || removedViolations.length > 0){
         res.json({type: 'soft', violations: {addedViolations, removedViolations}})
+        console.log('endpoint returned')
         return;
     }
 
@@ -313,10 +293,6 @@ app.post('/schedule/check/violations', async (req, res) => {
         success: true
     })
 
-
-    // cross check with violations
-
-    // if may added - return added violations
 });
 
 app.get('/schedule/class/:department/:year/:section', async (req, res) => {
