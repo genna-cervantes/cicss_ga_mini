@@ -19,6 +19,8 @@ import {
     checkLockedDepartmentsCache,
     clearScheduleCache,
     compareViolations,
+    deploySchedule,
+    editMultipleSchedBlockClassSchedule,
     editSchedBlockClassSchedule,
     extractRoomScheduleFromClassSchedule,
     extractTASScheduleFromClassSchedule,
@@ -229,6 +231,52 @@ app.post('/schedule/accept/violations', async (req, res) => {
     res.json({
         success: true
     })  
+})
+
+app.get('/schedule/manual-edit/deploy', async (req, res) => {
+    try{
+        await deploySchedule()
+    
+        res.json({
+            success: true
+        }) 
+    }catch(err){
+        console.log(err)
+        res.status(500).json({success: false, error: err})   
+    }
+})
+
+app.post('/schedule/manual-edit/save', async (req, res) => {
+    try{
+        const {transformedSchedBlocks} = req.body;
+
+        let classSchedule = await getActiveClassSchedule()
+        let newClassSchedule = await editMultipleSchedBlockClassSchedule(classSchedule, transformedSchedBlocks)
+    
+        let miniClassSchedule = minimizeClassSchedule(
+            newClassSchedule
+        );
+    
+        let newTASSchedule = extractTASScheduleFromClassSchedule(newClassSchedule)
+        let newRoomSchedule = extractRoomScheduleFromClassSchedule(newClassSchedule)
+        let {structuredClassViolations, structuredTASViolations} = await evaluateV3({schedule: newClassSchedule, TASSchedule: newTASSchedule, roomSchedule: newRoomSchedule, semester: 2})
+        
+        await updateSchedule({
+            classSchedule: miniClassSchedule,
+            TASSchedule: newTASSchedule,
+            roomSchedule: newRoomSchedule,
+            classViolations: structuredClassViolations,
+            TASViolations: structuredTASViolations,
+        });
+    
+        res.json({
+            success: true
+        }) 
+        return;
+    }catch(err){
+        console.log(err)
+        res.status(500).json({success: false, error: err})
+    }
 })
 
 app.post('/schedule/check/violations', async (req, res) => {

@@ -986,6 +986,108 @@ export const extractTASScheduleFromClassSchedule = (classSchedule: any) => {
     return tasSchedule;
 };
 
+export const deploySchedule = async () => {
+    const query = 'UPDATE schedules SET deploy = TRUE WHERE is_active = TRUE'
+    const res = await client.query(query);
+    const data = res.rowCount;
+
+    return data;
+}
+
+export const editMultipleSchedBlockClassSchedule = async (classSchedule: any, newSchedBlocks: any) => {
+    let newClassSchedule = structuredClone(classSchedule);
+
+    let departmentKeys = Object.keys(newClassSchedule);
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = newClassSchedule[departmentKeys[i]];
+
+        let yearKeys = Object.keys(departmentSched);
+        for (let j = 0; j < yearKeys.length; j++) {
+            let yearSched = departmentSched[yearKeys[j]];
+
+            let classKeys = Object.keys(yearSched);
+            for (let k = 0; k < classKeys.length; k++) {
+                let classSched = yearSched[classKeys[k]];
+
+                for (let m = 0; m < SCHOOL_DAYS.length; m++) {
+                    let daySched = classSched[SCHOOL_DAYS[m]];
+
+                    
+                    // add schedblock
+                    for (let n = 0; n < newSchedBlocks.length; n++){
+                        let newSchedBlock = newSchedBlocks[n];
+                        let toPush;
+                        
+                        if (
+                            SCHOOL_DAYS[m] === newSchedBlock.day &&
+                            classKeys[k] === newSchedBlock.section &&
+                            yearKeys[j] == newSchedBlock.year &&
+                            departmentKeys[i] === newSchedBlock.department
+                        ) {
+                            let tasId = await findTasIdByName(newSchedBlock.tas);
+                            let roomDetails = await getRoomDetails(
+                                newSchedBlock.room.roomId
+                            );
+                            let courseDetails = await getCourseDetails(
+                                newSchedBlock.course.subjectCode
+                            );
+    
+                            console.log('pushing new');
+                            toPush = {
+                                id: uuidv4(),
+                                tas: {
+                                    tas_id: tasId,
+                                    tas_name: newSchedBlock.tas
+                                },
+                                room: roomDetails,
+                                course: courseDetails,
+                                timeBlock: newSchedBlock.timeBlock
+                            };
+                            // console.log(toPush)
+                            daySched.push(toPush);
+                        }
+    
+                        for (let n = 0; n < daySched?.length; n++) {
+                            let schedBlock = daySched[n];
+    
+                            if (schedBlock.id === newSchedBlock.id) {
+                                // remove this
+                                console.log('deleting old');
+                                daySched.splice(n, 1);
+                            }
+                        }
+    
+                        for (let n = 0; n < daySched?.length; n++) {
+                            let schedBlock = daySched[n];
+    
+                            if (schedBlock.id !== newSchedBlock.id) {
+                                if (schedBlock.id === toPush?.id) {
+                                    continue;
+                                }
+    
+                                let roomDetails = await getRoomDetails(
+                                    schedBlock.room?.roomId ??
+                                        schedBlock.room?.room_id
+                                );
+                                let courseDetails = await getCourseDetails(
+                                    schedBlock.course.subjectCode
+                                );
+                                daySched[n] = {
+                                    ...schedBlock,
+                                    room: roomDetails,
+                                    course: courseDetails
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return newClassSchedule;
+}
+
 export const editSchedBlockClassSchedule = async (
     classSchedule: any,
     newSchedBlock: any
