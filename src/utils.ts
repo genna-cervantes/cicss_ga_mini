@@ -187,6 +187,26 @@ export const insertToScheduleCache = async (chromosome: any) => {
     return res.rowCount;
 };
 
+export const updateSchedule = async ({
+    classSchedule,
+    TASSchedule,
+    roomSchedule,
+    classViolations,
+    TASViolations
+}: {
+    classSchedule: any,
+    TASSchedule: any,
+    roomSchedule: any,
+    classViolations: any,
+    TASViolations: any
+}) => {
+    const query = 'UPDATE schedules SET class_schedule = $1, tas_schedule = $2, room_schedule = $3, class_violations = $4, tas_violations = $5 WHERE is_active = TRUE';
+    const res = await client.query(query, [classSchedule, TASSchedule, roomSchedule, classViolations, TASViolations])
+    const data = res.rowCount;
+
+    return data;
+}
+
 export const insertToSchedule = async ({
     classSchedule,
     TASSchedule,
@@ -864,15 +884,38 @@ export const extractRoomScheduleFromClassSchedule = (classSchedule: any) => {
     return roomSchedule;
 };
 
-export const flattenViolations = (allViolations: any) => {
+export const flattenViolations = (
+    structuredClassViolations: any,
+    structuredTASViolations: any
+) => {
     let flattenedViolations = [];
-    for (let i = 0; i < allViolations.length; i++) {
-        let violations = allViolations[i].violations;
-        for (let j = 0; j < violations.length; j++) {
-            let specViolations = violations[j];
-            // console.log(specViolations)
-            flattenedViolations.push(specViolations);
+
+    // loop thru classViol
+    let departmentKeys = Object.keys(structuredClassViolations);
+    for (let i = 0; i < departmentKeys.length; i++) {
+        let departmentSched = structuredClassViolations[departmentKeys[i]];
+
+        let yearKeys = Object.keys(departmentSched);
+        for (let j = 0; j < yearKeys.length; j++) {
+            let yearSched = departmentSched[yearKeys[j]];
+
+            let classKeys = Object.keys(yearSched);
+            for (let k = 0; k < classKeys.length; k++) {
+                let classSched = yearSched[classKeys[k]];
+
+                flattenedViolations.push(...classSched.perSection);
+                flattenedViolations.push(...classSched.perSchedBlock);
+            }
         }
+    }
+
+    // loop thru tasViol
+    let profKeys = Object.keys(structuredTASViolations);
+    for (let i = 0; i < profKeys.length; i++) {
+        let profSched = structuredTASViolations[profKeys[i]];
+
+        flattenedViolations.push(...profSched.perTAS);
+        flattenedViolations.push(...profSched.perSchedBlock);
     }
     return flattenedViolations;
 };
@@ -1006,7 +1049,7 @@ export const editSchedBlockClassSchedule = async (
                             // remove this
                             console.log('deleting old');
                             daySched.splice(n, 1);
-                        } 
+                        }
                     }
 
                     for (let n = 0; n < daySched.length; n++) {
@@ -1029,10 +1072,8 @@ export const editSchedBlockClassSchedule = async (
                                 room: roomDetails,
                                 course: courseDetails
                             };
-                        } 
+                        }
                     }
-
-
                 }
             }
         }
@@ -1115,6 +1156,7 @@ export const getActiveViolations = async () => {
 
 const deepEqual = (obj1: any, obj2: any) => {
     // If both are strictly equal (handles primitive values and same references)
+
     if (obj1 === obj2) {
         return true;
     }
@@ -1140,19 +1182,48 @@ const deepEqual = (obj1: any, obj2: any) => {
     // Recursively compare each key and value
     for (let key of keys1) {
         if (key === 'id') {
+            // console.log(obj1[key])
+            // console.log(obj2[key])
             continue;
         }
+        if (key === 'schedBlockId') {
+            continue;
+        }
+        if (key === 'created_at'){
+            continue;
+        }
+        if (key === 'updated_at'){
+            continue;
+        }
+
+        // course year section
         // If the key is not present in the second object or values are different
-        if (!keys2.includes(key) || !deepEqual(obj1[key], obj2[key])) {
+        if (!keys2.includes(key)) {
+            // console.log('kulang key', key)
+            return false;
+        }
+        if (!deepEqual(obj1[key], obj2[key])) {
+            // if (
+            //     obj2['id'] === 'd4be3534-1b8e-4208-ba9b-f0807831950e'
+            // ) {
+                console.log(`Objects differ at key: ${key}`);
+                console.log('First object value:', obj1[key]);
+                console.log('Second object value:', obj2[key]);
+            //     //     console.log('pinagkaibang key', key)
+            // }
+
             return false;
         }
     }
+
+    // console.log(' ETO NAG TRUE ');
+    // console.log(obj1, obj2);
 
     return true;
 };
 
 export const compareViolations = (viol1: any, viol2: any) => {
-    return deepEqual(viol1, viol2)
+    return deepEqual(viol1, viol2);
 };
 
 export const getActiveClassSchedule = async () => {

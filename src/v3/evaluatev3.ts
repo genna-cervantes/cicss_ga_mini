@@ -53,8 +53,8 @@ export const evaluateTASSchedule = (TASSchedule: any) => {
                         schedBlockId: schedBlock.id,
                         tas: profKeys[i],
                         course: {
-                            current: schedBlock.course.subjectCode,
-                            against: nextSchedBlock.course.subjectCode
+                            current: schedBlock.course,
+                            against: nextSchedBlock.course
                         },
                         section: {
                             current: `${schedBlock.year}${schedBlock.section}`,
@@ -147,8 +147,8 @@ export const evaluateRoomSchedule = (roomSchedule: any) => {
                         room: roomKeys[i],
                         tas: schedBlock.tas,
                         course: {
-                            current: schedBlock.course.subjectCode,
-                            against: nextSchedBlock.course.subjectCode
+                            current: schedBlock.course,
+                            against: nextSchedBlock.course
                         },
                         section: {
                             current: `${schedBlock.year}${schedBlock.section}`,
@@ -226,9 +226,9 @@ const evaluateRoomTypeAssignment = (
                                 let specViolation = {
                                     id: uuidv4(),
                                     schedBlockId: schedBlock.id,
-                                    year: yearKeys[j],
-                                    course: schedBlock.course.subjectCode,
-                                    section: classKeys[k],
+                                    year: {current: yearKeys[j]},
+                                    course: {current: schedBlock.course.subjectCode},
+                                    section: {current: `${yearKeys[j]}${classKeys[k]}`},
                                     type: 'room type assignment',
                                     description:
                                         'lec course assigned to lab and vice versa',
@@ -400,9 +400,9 @@ const evaluateTASSpecialty = async (
                         let specViolation = {
                             id: uuidv4(),
                             schedBlockId: schedBlock.id,
-                            year: schedBlock.year,
-                            course: schedBlock.course,
-                            section: schedBlock.section,
+                            year: {current: schedBlock.year},
+                            course: {current: schedBlock.course},
+                            section: {current: `${schedBlock.year}${schedBlock.section}`},
                             type: 'tasSpecialty',
                             description: 'TAS assignment not specialty',
                             time: {
@@ -510,8 +510,11 @@ const evaluateDayLength = (
                         if (dailyUnits > 8) {
                             let specViolation = {
                                 id: uuidv4(),
-                                year: yearKeys[j],
-                                section: classKeys[k],
+                                year: {current: yearKeys[j]},
+                                section: {current: `${yearKeys[j]}${classKeys[k]}`},
+                                time: {
+                                    day: SCHOOL_DAYS[m]
+                                },
                                 type: 'day length assignment',
                                 description:
                                     'Section assigned more than 8 hours a day'
@@ -572,6 +575,9 @@ const evaluateDayLength = (
                     let specViolation = {
                         id: uuidv4(),
                         tas: profKeys[i],
+                        time: {
+                            day: SCHOOL_DAYS[j]
+                        },
                         type: 'dayLength(TAS)',
                         description: 'TAS assigned more than 8 hours a day'
                     };
@@ -656,9 +662,12 @@ const evaluateClassLength = (
                                 let specViolation = {
                                     id: uuidv4(),
                                     schedBlockId: schedBlock.id,
-                                    year: yearKeys[j],
-                                    course: schedBlock.course.subjectCode,
-                                    section: classKeys[k],
+                                    year: {current: yearKeys[j]},
+                                    course: {current: schedBlock.course.subjectCode},
+                                    section: {current: `${yearKeys[j]}${classKeys[k]}`},
+                                    time: {
+                                        day: SCHOOL_DAYS[m]
+                                    },
                                     type: 'class length assignment',
                                     description:
                                         'Section assigned more than 3 consecutive hours of class'
@@ -755,6 +764,9 @@ const evaluateClassLength = (
                             id: uuidv4(),
                             schedBlockId: schedBlock.id,
                             tas: profKeys[i],
+                            time: {
+                                day: SCHOOL_DAYS[j]
+                            },
                             type: 'classLength(TAS)',
                             description:
                                 'TAS assigned more than 3 consecutive hours of class'
@@ -853,9 +865,9 @@ const evaluateGenedConstraints = async (
                                 let specViolation = {
                                     id: uuidv4(),
                                     schedBlockId: schedBlock.id,
-                                    year: yearKeys[j],
-                                    course: schedBlock.course.subjectCode,
-                                    section: classKeys[k],
+                                    year: {current: yearKeys[j]},
+                                    course: {current: schedBlock.course.subjectCode},
+                                    section: {current: `${yearKeys[j]}${classKeys[k]}`},
                                     room: schedBlock.room,
                                     time: {
                                         day: SCHOOL_DAYS[m],
@@ -950,9 +962,12 @@ export const evaluateClassNumber = (
                         let specViolation = {
                             id: uuidv4(),
                             schedBlockId: daySched[0].id,
-                            year: yearKeys[j],
-                            course: daySched[0].course.subjectCode,
-                            section: classKeys[k],
+                            year: {current: yearKeys[j]},
+                            course: {current: daySched[0].course.subjectCode},
+                            section: {current: `${yearKeys[j]}${classKeys[k]}`},
+                            time: {
+                                day: SCHOOL_DAYS[m]
+                            },
                             type: 'class number assignment',
                             description: 'Class assinged only 1 class in 1 day'
                         };
@@ -1073,11 +1088,14 @@ const evaluateAllowedDays = async (
                             let specViolation = {
                                 id: uuidv4(),
                                 schedBlockId: daySched[0].id,
-                                year: yearKeys[j],
-                                course: daySched[0].course.subjectCode,
-                                section: classKeys[k],
+                                year: {current: yearKeys[j]},
+                                course: {current: daySched[0].course.subjectCode},
+                                section: {current: `${yearKeys[j]}${classKeys[k]}`},
                                 room: daySched[0].room,
                                 type: 'allowed days assignment',
+                                time: {
+                                    day: SCHOOL_DAYS[m]
+                                },
                                 description:
                                     'Course(s) assigned to restricted day'
                             };
@@ -1121,8 +1139,8 @@ const evaluateAllowedDays = async (
                 if (assignedDays > specAllowedDays.max_days) {
                     let specViolation = {
                         id: uuidv4(),
-                        year: yearKeys[j],
-                        section: classKeys[k],
+                        year: {current: yearKeys[j]},
+                        section: {current: `${yearKeys[j]}${classKeys[k]}`},
                         type: 'allowed number of days assignment',
                         description:
                             'Course(s) assigned to more than allowed day'
@@ -1262,10 +1280,17 @@ const evaluateAllowedTime = async (
                                 let specViolation = {
                                     id: uuidv4(),
                                     schedBlockId: schedBlock.id,
-                                    year: yearKeys[j],
-                                    course: schedBlock.course.subjectCode,
-                                    section: classKeys[k],
+                                    year: {current: yearKeys[j]},
+                                    course: {current: schedBlock.course.subjectCode},
+                                    section: {current: `${yearKeys[j]}${classKeys[k]}`},
                                     room: schedBlock.room,
+                                    time: {
+                                        day: SCHOOL_DAYS[m],
+                                        time: {
+                                            start: schedBlock.timeBlock.start,
+                                            end: schedBlock.timeBlock.end,
+                                        }
+                                    },
                                     type: 'allowed time assignment',
                                     description:
                                         'Course(s) assigned to restricted time'
@@ -1360,8 +1385,8 @@ const evaluateRestDays = (
                     if (restDays < 2) {
                         let specViolation = {
                             id: uuidv4(),
-                            year: yearKeys[j],
-                            section: classKeys[k],
+                            year: {current: yearKeys[j]},
+                            section: {current: `${yearKeys[j]}${classKeys[k]}`},
                             type: 'rest days assignment',
                             description:
                                 'Section assigned rest days less than ideal'
@@ -1520,6 +1545,13 @@ const evaluateTasRequests = async (
                                 id: uuidv4(),
                                 tas: profKeys[i],
                                 type: 'tasRequests',
+                                time: {
+                                    day: SCHOOL_DAYS[j],
+                                    time: {
+                                        start: schedBlock.timeBlock.start,
+                                        end: schedBlock.timeBlock.end,
+                                    }
+                                },
                                 description: 'Violated hard TAS request'
                             };
 
@@ -1616,9 +1648,9 @@ const evaluateRoomProximity = (
                             let specViolation = {
                                 id: uuidv4(),
                                 schedBlockId: schedBlock.id,
-                                course: schedBlock.course.subjectCode,
-                                year: yearKeys[j],
-                                section: classKeys[k],
+                                course: {current: schedBlock.course.subjectCode},
+                                year: {current: yearKeys[j]},
+                                section: {current: `${yearKeys[j]}${classKeys[k]}`},
                                 room: schedBlock.room,
                                 time: {
                                     day: SCHOOL_DAYS[m],

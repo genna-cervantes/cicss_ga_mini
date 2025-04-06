@@ -43,7 +43,8 @@ import {
     minimizeClassSchedule,
     readyScheduleByDepartment,
     tranformSections,
-    unlockScheduleByDepartment
+    unlockScheduleByDepartment,
+    updateSchedule
 } from './utils';
 import cors from 'cors';
 import e from 'express';
@@ -199,6 +200,37 @@ app.get('/schedule/unlock/:department', async (req, res) => {
     });
 });
 
+app.post('/schedule/accept/violations', async (req, res) => {
+
+    console.log('hit endpoint accept')
+    console.log(req.body)
+
+    let classSchedule = await getActiveClassSchedule()
+    let newClassSchedule = await editSchedBlockClassSchedule(classSchedule, req.body)
+
+    let miniClassSchedule = minimizeClassSchedule(
+        newClassSchedule
+    );
+    
+    // convert to tas schedule
+    let newTASSchedule = extractTASScheduleFromClassSchedule(newClassSchedule)
+    let newRoomSchedule = extractRoomScheduleFromClassSchedule(newClassSchedule)
+    
+    let {structuredClassViolations, structuredTASViolations} = await evaluateV3({schedule: newClassSchedule, TASSchedule: newTASSchedule, roomSchedule: newRoomSchedule, semester: 2})
+    
+    await updateSchedule({
+        classSchedule: miniClassSchedule,
+        TASSchedule: newTASSchedule,
+        roomSchedule: newRoomSchedule,
+        classViolations: structuredClassViolations,
+        TASViolations: structuredTASViolations,
+    });
+
+    res.json({
+        success: true
+    })  
+})
+
 app.post('/schedule/check/violations', async (req, res) => {
     // req obj
     // const { course, day, id, room, tas, timeBlock, violations } = req.body;
@@ -207,6 +239,8 @@ app.post('/schedule/check/violations', async (req, res) => {
     // fetch entire schedule
     let classSchedule = await getActiveClassSchedule()
     let newClassSchedule = await editSchedBlockClassSchedule(classSchedule, req.body)
+
+
 
     // evaluate the schedule
     
@@ -237,25 +271,41 @@ app.post('/schedule/check/violations', async (req, res) => {
     // DI NACCALL
     // kulang ung details sa class_schedule -> check ung return sa scripv3 gav3 since don nakabase
     
-    let {allViolations} = await evaluateV3({schedule: newClassSchedule, TASSchedule: newTASSchedule, roomSchedule: newRoomSchedule, semester: 2})
+    let {allViolations, structuredClassViolations, structuredTASViolations} = await evaluateV3({schedule: newClassSchedule, TASSchedule: newTASSchedule, roomSchedule: newRoomSchedule, semester: 2})
     let currentViolations = await getActiveViolations()
 
-    let flattenedViolations = flattenViolations(allViolations);
+    let flattenedViolations = flattenViolations(structuredClassViolations, structuredTASViolations);
     // res.json(flattenedViolations)
     // return;
     // let newViolations = filterNewViolations(structuredClassViolations, req.body)
 
-    let notInOriginalViolations = [];
-    if (flattenedViolations.length > currentViolations.length){
-        console.log('not equal')
+    let addedViolations = [];
+    let removedViolations = [];
+
+    if (flattenedViolations.length !== currentViolations.length){
         console.log(flattenedViolations.length)
         console.log(currentViolations.length)
-        notInOriginalViolations = flattenedViolations.filter(viol1 => !currentViolations.some((viol2:any) => compareViolations(viol1, viol2)))
-        res.json(notInOriginalViolations)
     }
+    
+    
+    if (flattenedViolations.length !== currentViolations.length){
+        console.log('not equal')
 
-    if (notInOriginalViolations.length > 0){
-        res.json({type: 'soft', violations: notInOriginalViolations})
+        addedViolations = flattenedViolations.filter(viol1 => 
+            !currentViolations.some(viol2 => compareViolations(viol1, viol2))
+        );
+
+        removedViolations = currentViolations.filter(viol1 => 
+            !flattenedViolations.some(viol2 => compareViolations(viol1, viol2))
+        );
+
+        // console.log(flattenedViolations.length)
+        // console.log(currentViolations.length)
+        // res.json(notInOriginalViolations)
+    }
+    
+    if (addedViolations.length > 0 || removedViolations.length > 0){
+        res.json({type: 'soft', violations: {addedViolations, removedViolations}})
         return;
     }
 
