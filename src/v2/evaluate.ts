@@ -1115,7 +1115,7 @@ export const groupSchedByRoom = (chromosome: any) => {
     return schedByRoom;
 };
 
-const getTotalUnitsFromWeeklySchedule = ({
+export const getTotalUnitsFromWeeklySchedule = ({
     sectionSchedule
 }: {
     sectionSchedule: any;

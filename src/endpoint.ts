@@ -17,6 +17,7 @@ import {
     applyViolationsToRoomSchedule,
     checkLockedDepartments,
     checkLockedDepartmentsCache,
+    checkScheduleSemester,
     clearScheduleCache,
     compareViolations,
     deploySchedule,
@@ -55,7 +56,7 @@ import { evaluateRoomSchedule, evaluateTASSchedule, evaluateV3 } from './v3/eval
 const app = express();
 const port = 3000;
 
-app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(cors({ origin: ['http://localhost:5174', "http://ec2-47-129-54-71.ap-southeast-1.compute.amazonaws.com", "http://47.129.54.71"] }));
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -417,6 +418,7 @@ app.get('/schedule/room/:roomId', async (req, res) => {
 app.post('/generate-schedule', async (req, res) => {
     console.log('getting called');
 
+    let currentScheduleSemester = await checkScheduleSemester()
     let { csLocked, itLocked, isLocked } = await checkLockedDepartments();
     let { csLockedCache, itLockedCache, isLockedCache } =
         await checkLockedDepartmentsCache();
@@ -424,7 +426,8 @@ app.post('/generate-schedule', async (req, res) => {
     if (
         csLocked === csLockedCache &&
         itLocked === itLockedCache &&
-        isLocked === isLockedCache
+        isLocked === isLockedCache &&
+        currentScheduleSemester === req.body.semester
     ) {
         let topSchedule = await getScheduleFromCache();
 
@@ -444,7 +447,8 @@ app.post('/generate-schedule', async (req, res) => {
                 tasViolations: topSchedule.tas_violations,
                 csLocked: topSchedule.cs_locked,
                 itLocked: topSchedule.it_locked,
-                isLocked: topSchedule.is_locked
+                isLocked: topSchedule.is_locked,
+                semester: currentScheduleSemester
             });
 
             // res.json({scheduleWithViolations, violations: topSchedule.violations});
@@ -555,7 +559,7 @@ app.post('/generate-schedule', async (req, res) => {
 
         console.log(chromosome.classSchedule);
 
-        await insertToScheduleCache(chromosome);
+        await insertToScheduleCache(chromosome, semester);
     }
 
     let topGeneratedSchedule: any = generatedSchedules[0];
@@ -574,7 +578,8 @@ app.post('/generate-schedule', async (req, res) => {
         tasViolations: topGeneratedSchedule.structuredTASViolations,
         csLocked,
         itLocked,
-        isLocked
+        isLocked,
+        semester
     });
 
     // res.json(true);
@@ -585,12 +590,136 @@ app.post('/generate-schedule', async (req, res) => {
     return;
 });
 
-app.get('/test-something', async (req, res) => {
-    let ref = await getAvailableProfsSpecificDay('T', 'CS');
-    console.log(ref);
-    // res.json({ref: ref})
+app.post('/test-something', async (req, res) => {
+    // let ref = await getAvailableProfsSpecificDay('T', 'CS');
+    // console.log(ref);
+    // // res.json({ref: ref})
 
-    getBetterCourses(ref);
+    // getBetterCourses(ref);
+    let currentScheduleSemester = await checkScheduleSemester()
+    let { csLocked, itLocked, isLocked } = await checkLockedDepartments();
+    let { csLockedCache, itLockedCache, isLockedCache } =
+        await checkLockedDepartmentsCache();
+
+    if (
+        csLocked === csLockedCache &&
+        itLocked === itLockedCache &&
+        isLocked === isLockedCache &&
+        currentScheduleSemester === req.body.semester
+    ) {
+        let topSchedule = await getScheduleFromCache();
+
+        // // if meron
+        if (topSchedule) {
+            console.log('top schedule');
+            // select that tapos apply violations
+            // scheduleWithViolations = applyClassViolationsToSchedule(topSchedule.class_schedule, topSchedule.violations)
+            // TASScheduleWithViolations = applyTASViolationsToSchedule(topSchedule.tas_schedule, topSchedule.violations)
+
+            // insert that to schedules array tapos tanggalin ung previous na andon
+            await insertToSchedule({
+                classSchedule: topSchedule.class_schedule,
+                TASSchedule: topSchedule.tas_schedule,
+                roomSchedule: topSchedule.room_schedule,
+                classViolations: topSchedule.class_violations,
+                tasViolations: topSchedule.tas_violations,
+                csLocked: topSchedule.cs_locked,
+                itLocked: topSchedule.it_locked,
+                isLocked: topSchedule.is_locked,
+                semester: currentScheduleSemester
+            });
+
+            // res.json({scheduleWithViolations, violations: topSchedule.violations});
+            // const schedule = await getClassScheduleBySection('1', 'CSA', 'CS');
+            // res.json(schedule)
+            res.json(true);
+            return;
+        }
+    } else {
+        clearScheduleCache();
+    }
+
+    let csSchedule = {};
+    let itSchedule = {};
+    let isSchedule = {};
+    let lockedDepartments = [];
+
+    if (csLocked) {
+        console.log('cs locked');
+        csSchedule = await getCSSchedule();
+        lockedDepartments.push('CS');
+    }
+    if (isLocked) {
+        console.log('is locked');
+        isSchedule = await getISSchedule();
+        lockedDepartments.push('IS');
+    }
+    if (itLocked) {
+        console.log('it locked');
+        itSchedule = await getITSchedule();
+        lockedDepartments.push('IT');
+    }
+    
+    let activeTASSchedule = await getActiveTASSchedule();
+    let activeRoomSchedule = await getActiveRoomSchedule();
+
+    let TASScheduleLocked = getTASScheduleFromDepartmentLockedSchedule({
+        departments: lockedDepartments,
+        TASSchedule: activeTASSchedule
+    });
+    let roomScheduleLocked = getRoomScheduleFromDepartmentLockedSchedule({
+        departments: lockedDepartments,
+        roomSchedule: activeRoomSchedule
+    });
+
+    let { CSSections, ITSections, ISSections, semester } = req.body;
+
+    let transformedCSFirstYearSections = tranformSections(CSSections[1]);
+    let transformedCSSecondYearSections = tranformSections(CSSections[2]);
+    let transformedCSThirdYearSections = tranformSections(CSSections[3]);
+    let transformedCSFourthYearSections = tranformSections(CSSections[4]);
+
+    let transformedITFirstYearSections = tranformSections(ITSections[1]);
+    let transformedITSecondYearSections = tranformSections(ITSections[2]);
+    let transformedITThirdYearSections = tranformSections(ITSections[3]);
+    let transformedITFourthYearSections = tranformSections(ITSections[4]);
+
+    let transformedISFirstYearSections = tranformSections(ISSections[1]);
+    let transformedISSecondYearSections = tranformSections(ISSections[2]);
+    let transformedISThirdYearSections = tranformSections(ISSections[3]);
+    let transformedISFourthYearSections = tranformSections(ISSections[4]);
+
+    console.log('schedules');
+    console.log(csSchedule);
+    console.log(itSchedule);
+    console.log(isSchedule);
+
+    let generatedSchedules: any = await runGAV3({
+        csLocked,
+        itLocked,
+        isLocked,
+        csSchedule,
+        itSchedule,
+        isSchedule,
+        TASScheduleLocked,
+        roomScheduleLocked,
+        CSFirstYearSections: transformedCSFirstYearSections,
+        CSSecondYearSections: transformedCSSecondYearSections,
+        CSThirdYearSections: transformedCSThirdYearSections,
+        CSFourthYearSections: transformedCSFourthYearSections,
+        ITFirstYearSections: transformedITFirstYearSections,
+        ITSecondYearSections: transformedITSecondYearSections,
+        ITThirdYearSections: transformedITThirdYearSections,
+        ITFourthYearSections: transformedITFourthYearSections,
+        ISFirstYearSections: transformedISFirstYearSections,
+        ISSecondYearSections: transformedISSecondYearSections,
+        ISThirdYearSections: transformedISThirdYearSections,
+        ISFourthYearSections: transformedISFourthYearSections,
+        semester
+    });
+
+    res.json(generatedSchedules.classSchedule)
+
 });
 
 // apply tas violations

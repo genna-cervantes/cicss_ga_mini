@@ -5,7 +5,7 @@
 import { spec } from 'node:test/reporters';
 import { Client } from 'pg';
 import { SCHOOL_DAYS } from '../constants';
-import { evaluateV3 } from './evaluatev3';
+import { evaluateCoursesAssignment, evaluateV3 } from './evaluatev3';
 import { v4 as uuidv4 } from 'uuid';
 
 // assign rooms while checking conflict
@@ -146,11 +146,11 @@ export const runGAV3 = async ({
         //     ...(Object.keys(isSchedule).length === 0 ? { IS: {} } : {})
         // };
 
-        console.log('class schedule', classSchedule)
+        console.log('class schedule', classSchedule);
         // return;
 
         if (Object.keys(csSchedule).length === 0) {
-            console.log('generating cs')
+            console.log('generating cs');
 
             let schedulesFirst = await generateV3({
                 department: 'CS',
@@ -159,6 +159,7 @@ export const runGAV3 = async ({
                 sectionSpecializations: CSFirstYearSections
             });
             classSchedule['CS'][1] = schedulesFirst;
+            console.log('cs 1');
 
             let schedulesSecond = await generateV3({
                 department: 'CS',
@@ -167,6 +168,7 @@ export const runGAV3 = async ({
                 sectionSpecializations: CSSecondYearSections
             });
             classSchedule['CS'][2] = schedulesSecond;
+            console.log('cs 2');
 
             let schedulesThird = await generateV3({
                 department: 'CS',
@@ -175,6 +177,7 @@ export const runGAV3 = async ({
                 sectionSpecializations: CSThirdYearSections
             });
             classSchedule['CS'][3] = schedulesThird;
+            console.log('cs 3');
 
             let schedulesFourth = await generateV3({
                 department: 'CS',
@@ -183,11 +186,12 @@ export const runGAV3 = async ({
                 sectionSpecializations: CSFourthYearSections
             });
             classSchedule['CS'][4] = schedulesFourth;
+            console.log('cs 4');
         }
 
         // GENERATE IT
         if (Object.keys(itSchedule).length === 0) {
-            console.log('generating it')
+            console.log('generating it');
 
             let schedulesFirstIT = await generateV3({
                 department: 'IT',
@@ -196,6 +200,7 @@ export const runGAV3 = async ({
                 sectionSpecializations: ITFirstYearSections
             });
             classSchedule['IT'][1] = schedulesFirstIT;
+            console.log('it 1');
 
             let schedulesSecondIT = await generateV3({
                 department: 'IT',
@@ -204,6 +209,7 @@ export const runGAV3 = async ({
                 sectionSpecializations: ITSecondYearSections
             });
             classSchedule['IT'][2] = schedulesSecondIT;
+            console.log('it 2');
 
             let schedulesThirdIT = await generateV3({
                 department: 'IT',
@@ -212,6 +218,7 @@ export const runGAV3 = async ({
                 sectionSpecializations: ITThirdYearSections
             });
             classSchedule['IT'][3] = schedulesThirdIT;
+            console.log('it 3');
 
             let schedulesFourthIT = await generateV3({
                 department: 'IT',
@@ -220,11 +227,12 @@ export const runGAV3 = async ({
                 sectionSpecializations: ITFourthYearSections
             });
             classSchedule['IT'][4] = schedulesFourthIT;
+            console.log('it 4');
         }
 
         // GENERATE UNG SA IS
         if (Object.keys(isSchedule).length === 0) {
-            console.log('generating is')
+            console.log('generating is');
 
             let schedulesFirstIS = await generateV3({
                 department: 'IS',
@@ -233,6 +241,7 @@ export const runGAV3 = async ({
                 sectionSpecializations: ISFirstYearSections
             });
             classSchedule['IS'][1] = schedulesFirstIS;
+            console.log('is 1');
 
             let schedulesSecondIS = await generateV3({
                 department: 'IS',
@@ -241,6 +250,7 @@ export const runGAV3 = async ({
                 sectionSpecializations: ISSecondYearSections
             });
             classSchedule['IS'][2] = schedulesSecondIS;
+            console.log('is 2');
 
             let schedulesThirdIS = await generateV3({
                 department: 'IS',
@@ -249,6 +259,7 @@ export const runGAV3 = async ({
                 sectionSpecializations: ISThirdYearSections
             });
             classSchedule['IS'][3] = schedulesThirdIS;
+            console.log('is 3');
 
             let schedulesFourthIS = await generateV3({
                 department: 'IS',
@@ -257,33 +268,42 @@ export const runGAV3 = async ({
                 sectionSpecializations: ISFourthYearSections
             });
             classSchedule['IS'][4] = schedulesFourthIS;
+            console.log('is 4');
         }
+
+        // check for empty sched and assign negative score
+        // let {violationCount: curriculumViolationCount, violations: curriculumViolations} = await evaluateCoursesAssignment({semester, classSchedule: classSchedule})// if (classSchedule)
+        // if (curriculumViolationCount > 0){
+
+        // }
 
         // check if mas okay mauna ung room or mauna ung tas
         console.log('assigning tas');
         let TASScheduleRaw = structuredClone(TASScheduleLocked);
         // try{
-        let {classSchedulesCopy: scheduleWithTASAssignment, TASSchedule} = await assignTAS({
-            isRandom: false,
-            classSchedules: classSchedule,
-            TASSchedule: TASScheduleRaw
-        });
+        let { classSchedulesCopy: scheduleWithTASAssignment, TASSchedule } =
+            await assignTAS({
+                isRandom: false,
+                classSchedules: classSchedule,
+                TASSchedule: TASScheduleRaw
+            });
         let TASConflicts = evaluateTASAssignment(scheduleWithTASAssignment);
         console.log(TASConflicts);
 
         console.log('assigning rooms');
         let roomScheduleRaw = structuredClone(roomScheduleLocked);
 
-        let {classSchedulesCopy: classScheduleWithRooms, roomSchedule} = await assignRooms({
-            classSchedules: scheduleWithTASAssignment,
-            roomSchedule: roomScheduleRaw
-        });
+        let { classSchedulesCopy: classScheduleWithRooms, roomSchedule } =
+            await assignRooms({
+                classSchedules: scheduleWithTASAssignment,
+                roomSchedule: roomScheduleRaw
+            });
 
         let roomConflicts = evaluateRoomAssignment(classScheduleWithRooms);
 
         // evaluate everything else
         console.log('evaluating');
-        console.log(TASSchedule)
+        console.log(TASSchedule);
         let {
             score,
             allViolations: violations,
@@ -305,10 +325,16 @@ export const runGAV3 = async ({
         //     roomConflicts
         // }
 
-        console.log(classSchedule)
-        console.log(Object.keys(csSchedule).length === 0 ? 'dont skip cs' : 'skip cs')
-        console.log(Object.keys(itSchedule).length === 0 ? 'dont skip it' : 'skip it')
-        console.log(Object.keys(isSchedule).length === 0 ? 'dont skip is' : 'skip is')
+        console.log(classSchedule);
+        console.log(
+            Object.keys(csSchedule).length === 0 ? 'dont skip cs' : 'skip cs'
+        );
+        console.log(
+            Object.keys(itSchedule).length === 0 ? 'dont skip it' : 'skip it'
+        );
+        console.log(
+            Object.keys(isSchedule).length === 0 ? 'dont skip is' : 'skip is'
+        );
 
         let rawClassSchedules = {
             ...(Object.keys(csSchedule).length === 0
@@ -427,8 +453,12 @@ export const runGAV3 = async ({
                 }
             }
 
-            let chromosomeARaw = structuredClone(population[i].classScheduleRaw);
-            let chromosomeBRaw = structuredClone(population[half + i].classScheduleRaw);
+            let chromosomeARaw = structuredClone(
+                population[i].classScheduleRaw
+            );
+            let chromosomeBRaw = structuredClone(
+                population[half + i].classScheduleRaw
+            );
 
             // add back
             if (Object.keys(csSchedule).length > 0) {
@@ -445,7 +475,10 @@ export const runGAV3 = async ({
             let roomScheduleRaw = structuredClone(roomScheduleLocked);
             // add rooms
             console.log('adding new chromosome a');
-            let {classSchedulesCopy: chromosomeAClassScheduleWithTAS, TASSchedule} = await assignTAS({
+            let {
+                classSchedulesCopy: chromosomeAClassScheduleWithTAS,
+                TASSchedule
+            } = await assignTAS({
                 isRandom: sameCounter === 5,
                 classSchedules: chromosomeA,
                 TASSchedule: TASScheduleRaw
@@ -454,7 +487,10 @@ export const runGAV3 = async ({
                 chromosomeAClassScheduleWithTAS
             );
 
-            let {classSchedulesCopy: chromosomeAClassScheduleWithRooms, roomSchedule} = await assignRooms({
+            let {
+                classSchedulesCopy: chromosomeAClassScheduleWithRooms,
+                roomSchedule
+            } = await assignRooms({
                 classSchedules: chromosomeAClassScheduleWithTAS,
                 roomSchedule: roomScheduleRaw
             });
@@ -474,7 +510,7 @@ export const runGAV3 = async ({
                 semester: 2
             });
 
-            console.log('a raw push', chromosomeARaw)
+            console.log('a raw push', chromosomeARaw);
 
             population.push({
                 classScheduleRaw: chromosomeARaw,
@@ -492,7 +528,7 @@ export const runGAV3 = async ({
                 isLocked
             });
 
-            console.log('tas locked sched', TASSchedule)
+            console.log('tas locked sched', TASSchedule);
             console.log('room conflict a', chromosomeARoomConflicts);
             console.log('tas conflict a', chromosomeATASConflicts);
             console.log('score a', score);
@@ -511,7 +547,10 @@ export const runGAV3 = async ({
             let TASScheduleBRaw = structuredClone(TASScheduleLocked);
             let roomScheduleBRaw = structuredClone(roomScheduleLocked);
             console.log('adding new chromosome b');
-            let {classSchedulesCopy: chromosomeBClassScheduleWithTAS, TASSchedule: TASScheduleB} = await assignTAS({
+            let {
+                classSchedulesCopy: chromosomeBClassScheduleWithTAS,
+                TASSchedule: TASScheduleB
+            } = await assignTAS({
                 isRandom: sameCounter === 5,
                 classSchedules: chromosomeB,
                 TASSchedule: TASScheduleBRaw
@@ -520,7 +559,10 @@ export const runGAV3 = async ({
                 chromosomeBClassScheduleWithTAS
             );
 
-            let {classSchedulesCopy: chromosomeBClassScheduleWithRooms, roomSchedule: roomScheduleB} = await assignRooms({
+            let {
+                classSchedulesCopy: chromosomeBClassScheduleWithRooms,
+                roomSchedule: roomScheduleB
+            } = await assignRooms({
                 classSchedules: chromosomeBClassScheduleWithTAS,
                 roomSchedule: roomScheduleBRaw
             });
@@ -540,8 +582,7 @@ export const runGAV3 = async ({
                 semester: 2
             });
 
-
-            console.log('b raw push', chromosomeBRaw)
+            console.log('b raw push', chromosomeBRaw);
             population.push({
                 classScheduleRaw: chromosomeBRaw,
                 classSchedule: chromosomeBClassScheduleWithRooms,
@@ -558,7 +599,7 @@ export const runGAV3 = async ({
                 isLocked
             });
 
-            console.log('tas locked sched', TASScheduleB)
+            console.log('tas locked sched', TASScheduleB);
             console.log('room conflict b', chromosomeBRoomConflicts);
             console.log('tas conflict b', chromosomeATASConflicts);
             console.log('score b', scoreB);
@@ -574,7 +615,9 @@ export const runGAV3 = async ({
         for (let i = 0; i < maxMutations; i++) {
             // tas mutation
             let chromosomeRan = structuredClone(population[i].classScheduleRaw);
-            let chromosomeRanRaw = structuredClone(population[i].classScheduleRaw);
+            let chromosomeRanRaw = structuredClone(
+                population[i].classScheduleRaw
+            );
             let TASScheduleRanRaw = structuredClone(TASScheduleLocked);
             let roomScheduleRanRaw = structuredClone(roomScheduleLocked);
             console.log('adding new chromosome b');
@@ -590,7 +633,10 @@ export const runGAV3 = async ({
                 chromosomeRan['IS'] = isSchedule;
             }
 
-            let {classSchedulesCopy: chromosomeRanClassScheduleWithTAS, TASSchedule: TASScheduleRan} = await assignTAS({
+            let {
+                classSchedulesCopy: chromosomeRanClassScheduleWithTAS,
+                TASSchedule: TASScheduleRan
+            } = await assignTAS({
                 isRandom: true,
                 classSchedules: chromosomeRan,
                 TASSchedule: TASScheduleRanRaw
@@ -599,7 +645,10 @@ export const runGAV3 = async ({
                 chromosomeRanClassScheduleWithTAS
             );
 
-            let {classSchedulesCopy: chromosomeRanClassScheduleWithRooms, roomSchedule: roomScheduleRan} = await assignRooms({
+            let {
+                classSchedulesCopy: chromosomeRanClassScheduleWithRooms,
+                roomSchedule: roomScheduleRan
+            } = await assignRooms({
                 classSchedules: chromosomeRanClassScheduleWithTAS,
                 roomSchedule: roomScheduleRanRaw
             });
@@ -619,7 +668,7 @@ export const runGAV3 = async ({
                 semester: 2
             });
 
-            console.log('ran raw push', chromosomeRanRaw)
+            console.log('ran raw push', chromosomeRanRaw);
             population.push({
                 classScheduleRaw: chromosomeRanRaw,
                 classSchedule: chromosomeRanClassScheduleWithRooms,
@@ -636,7 +685,7 @@ export const runGAV3 = async ({
                 isLocked
             });
 
-            console.log('tas locked sched', TASScheduleRan)
+            console.log('tas locked sched', TASScheduleRan);
             console.log('room conflict b', chromosomeRanRoomConflicts);
             console.log('tas conflict b', chromosomeRanTASConflicts);
             console.log('score b', scoreRan);
@@ -697,7 +746,10 @@ export const runGAV3 = async ({
 
             let TASScheduleCRaw = structuredClone(TASScheduleLocked);
             let roomScheduleCRaw = structuredClone(roomScheduleLocked);
-            let {classSchedulesCopy: chromosomeCClassScheduleWithTAS, TASSchedule: TASScheduleC} = await assignTAS({
+            let {
+                classSchedulesCopy: chromosomeCClassScheduleWithTAS,
+                TASSchedule: TASScheduleC
+            } = await assignTAS({
                 isRandom: sameCounter === 5,
                 classSchedules: chromosomeC,
                 TASSchedule: TASScheduleCRaw
@@ -706,7 +758,10 @@ export const runGAV3 = async ({
                 chromosomeCClassScheduleWithTAS
             );
 
-            let {classSchedulesCopy: chromosomeCClassScheduleWithRooms, roomSchedule: roomScheduleC} = await assignRooms({
+            let {
+                classSchedulesCopy: chromosomeCClassScheduleWithRooms,
+                roomSchedule: roomScheduleC
+            } = await assignRooms({
                 classSchedules: chromosomeCClassScheduleWithTAS,
                 roomSchedule: roomScheduleCRaw
             });
@@ -726,12 +781,12 @@ export const runGAV3 = async ({
                 semester: 2
             });
 
-            console.log('tas locked sched', TASScheduleC)
+            console.log('tas locked sched', TASScheduleC);
             console.log('room conflict C', chromosomeCRoomConflicts);
             console.log('tas conflict c', chromosomeCTASConflicts);
             console.log('score c', scoreC);
 
-            console.log('c raw push', chromosomeCRaw)
+            console.log('c raw push', chromosomeCRaw);
             population.push({
                 classScheduleRaw: chromosomeCRaw,
                 classSchedule: chromosomeCClassScheduleWithRooms,
@@ -764,12 +819,16 @@ export const runGAV3 = async ({
 
         for (let i = 0; i < population.length; i++) {
             let chromosome = population[i];
-            if (chromosome.roomConflicts === 0 && chromosome.TASConflicts === 0 && retObj.length < 10) {
+            if (
+                chromosome.roomConflicts === 0 &&
+                chromosome.TASConflicts === 0 &&
+                retObj.length < 10
+            ) {
                 retObj.push(chromosome);
             }
         }
 
-        if (retObj.length >= 10){
+        if (retObj.length >= 10) {
             break loop0;
         }
     }
@@ -779,10 +838,14 @@ export const runGAV3 = async ({
     // RETURN
     // let retObj = [];
 
-    if (retObj.length < 10){
+    if (retObj.length < 10) {
         for (let i = 0; i < population.length; i++) {
             let chromosome = population[i];
-            if (chromosome.roomConflicts === 0 && chromosome.TASConflicts === 0 && retObj.length < 10) {
+            if (
+                chromosome.roomConflicts === 0 &&
+                chromosome.TASConflicts === 0 &&
+                retObj.length < 10
+            ) {
                 retObj.push(chromosome);
             }
         }
@@ -960,8 +1023,9 @@ const generateV3 = async ({
     } else {
         const query =
             'SELECT courses FROM curriculum WHERE department = $1 AND year = $2 AND semester = $3';
+        console.log('sem', semester);
         const res = await client.query(query, [department, year, semester]);
-        const curriculum = res.rows[0].courses;
+        const curriculum = res.rows[0]?.courses;
 
         specializationsAndCurriculum['none'] = curriculum;
     }
@@ -973,6 +1037,9 @@ const generateV3 = async ({
     loop1: for (let i = 0; i < specializations.length; i++) {
         let sections = specializationsAndSections[specializations[i]];
 
+        // gened tracker
+        // let genedTracker = {}
+
         loop4: for (let j = 0; j < sections.length; ) {
             let specCurriculum = [
                 ...specializationsAndCurriculum[specializations[i]]
@@ -980,24 +1047,27 @@ const generateV3 = async ({
 
             let section = sections[j];
 
+            // console.log(specializations[i])
+            // console.log('section', section)
+
             let availableDays = await getAvailableDays({ year, department });
             let maxDays = await getMaxDays({ year, department });
             let availableTime = await getAvailableTime({ year, department });
 
-            let requiredCourses = await getRequiredCourses(specCurriculum);
+            // walang gened here kasi iaassign sila differently -- except pathfit sa gened
+            let { requiredCourses, majorCourses, genedCourses } =
+                await getRequiredMajorMinorCourses(specCurriculum);
+            specCurriculum = majorCourses;
+
             let daySched: any = [];
+            let genedTracker: any = [];
 
-            // console.log(section);
-            // console.log(specializationsAndCurriculum[specializations[i]]);
-            // console.log('ad', availableDays);
-            // console.log('md', maxDays);
-            // console.log(availableTime);
-            // console.log(requiredCourses);
-
+            console.log('required courses:', requiredCourses);
+            
             // loop thru the available days and max days
-
+            
             // start j range from 0-3 para ndi nag kkumpol sa start ng week ung assignments
-
+            
             // M T W TH F S
             let start;
             let skip;
@@ -1012,7 +1082,7 @@ const generateV3 = async ({
                 } else {
                     start = 3;
                 }
-            } else if (year == 4) {
+            } else if (year == 4 && semester == 2) {
                 let skipProb = Math.random();
                 if (skipProb <= 0.3) {
                     start = 0;
@@ -1024,13 +1094,22 @@ const generateV3 = async ({
             } else {
                 start = 0;
             }
+            
+            // pe naddoble
+            // ung 4csa wala (?)
 
+            // assignan ko na ng schedule gened tapos tanggalin na sa time
+            // schedules[section][schoolDay]
+            schedules[section] = await assignGened(year, start, genedCourses);
+            
             let consecutiveHours = 0;
             let assignedDays = 0;
             loop2: for (let k = start; k < availableDays.length; ) {
+                // console.log('day', availableDays[k])
+
                 // try random skip based on probability
                 let skipProb = Math.random();
-                if (skipProb >= 0.9 && year !== 4) {
+                if (skipProb >= 0.9 && year != 4) {
                     k++;
                     continue loop2;
                 }
@@ -1040,18 +1119,26 @@ const generateV3 = async ({
                 }
 
                 let schoolDay = availableDays[k];
-                daySched = [];
+                daySched = schedules[section]?.[availableDays[k]] ?? [];
+                genedTracker = [];
 
                 let startTime = getStartAndEndTime({
                     startRestriction: availableTime[availableDays[k]][0]?.start,
                     endRestriction: availableTime[availableDays[k]][0]?.end
                 }).start; // should change
+
+                // aalisin n toh since pang gened toh e
+                // if (daySched.length > 0){
+                //     startTime = daySched[0].timeBlock.end
+                //     consecutiveHours = subtractMilitaryTime(parseInt(daySched[0].timeBlock.end), parseInt(daySched[0].timeBlock.start))
+                // }
+
                 let maxEndTime = getStartAndEndTime({
                     startRestriction: availableTime[availableDays[k]][0]?.start,
                     endRestriction: availableTime[availableDays[k]][0]?.end
                 }).end; // should change
 
-                // console.log('school day', schoolDay);
+                // 'console.log(''school day', schoolDay);
                 // console.log('current day sched', daySched);
                 // console.log('required courses left: ', requiredCourses);
 
@@ -1072,9 +1159,12 @@ const generateV3 = async ({
                     currentTime < maxEndTime;
 
                 ) {
-                    if (tries >= 10) {
+                    // console.log('trying course', tries)
+                    if (tries >= 50) {
                         // console.log('too many tries');
-                        break loop3;
+                        // break loop3;
+                        j = 0;
+                        continue loop4;
                     }
 
                     tries++;
@@ -1082,6 +1172,21 @@ const generateV3 = async ({
                     // console.log('current time: ', currentTime);
                     // console.log('max end time: ', maxEndTime);
                     // console.log('consecutive hours: ', consecutiveHours);
+
+                    // check here if tumatama ung current time/ start time sa time assigned sa gened
+                    let genedDaySched = schedules[section][schoolDay];
+                    // console.log(schedules[section])
+                    // console.log(schedules[section][schoolDay])
+                    // let hitGened = getHitGenedSched(currentTime, genedDaySched);
+                    // if (hitGened){
+                    //     currentTime = hitGened.timeBlock.end
+                    //     consecutiveHours += 1.5;
+                    //     continue loop3;
+                    // }
+                    
+                    // if oo iusog ung current time sa end time nung natamaan na gened tapos add sa consec hours ung time taken nung gened
+
+                    // REMOVE GENED STUFF HERE
 
                     // add break if 3 consecutive hours na
                     if (consecutiveHours >= 3) {
@@ -1190,6 +1295,7 @@ const generateV3 = async ({
                         }
 
                         schedules[section][schoolDay] = daySched;
+
                         break loop2;
                     }
 
@@ -1219,7 +1325,7 @@ const generateV3 = async ({
                     let betterCourseProb = Math.random();
 
                     if (
-                        betterCourseProb > 0.1 &&
+                        betterCourseProb > 0.4 &&
                         intersectionBetterCourseAndCurriculum.length > 0
                     ) {
                         // console.log('better course')
@@ -1264,6 +1370,13 @@ const generateV3 = async ({
                     // console.log('etong course details')
                     let courseDetails = await getCourseDetails(randomCourse);
 
+                    let hitGened = getHitGenedSched(currentTime, courseDetails.unitsPerClass, courseDetails.type, genedDaySched);
+                    if (hitGened){
+                        currentTime = hitGened.timeBlock.end
+                        consecutiveHours += 1.5;
+                        continue loop3;
+                    }
+
                     // check baka complete na sa course na un
                     if (requiredCourses[courseDetails.subjectCode] <= 0) {
                         // console.log('puno na course na toh');
@@ -1273,6 +1386,34 @@ const generateV3 = async ({
                         specCurriculum.splice(courseIndex, 1);
                         continue loop3;
                     }
+
+                    // gened course baka
+                    // let genedPair;
+                    // if (courseDetails.category === 'gened' && !courseDetails.subjectCode.startsWith('PATHFIT')) {
+                    //     // assign na both days agad
+                    //     switch (schoolDay) {
+                    //         case 'M':
+                    //             genedPair = 'W';
+                    //             break;
+                    //         case 'T':
+                    //             genedPair = 'TH';
+                    //             break;
+                    //         case 'F':
+                    //             genedPair = 'S';
+                    //             break;
+                    //         default:
+                    //             continue loop3;
+                    //     }
+
+                    //     // category
+                    //     // if (genedTracker[courseDetails.subjectCode]){
+                    //     //     // courseDetails
+                    //     //     // day
+                    //     //     switch (genedTracker[courseDetails.subjectCode].day){
+                    //     //         case 'M':
+                    //     //     }
+                    //     // }
+                    // }
 
                     // console.log('getting end time');
                     let endTime = getEndTime({
@@ -1434,6 +1575,16 @@ const generateV3 = async ({
                     // console.log('generated sched block: ', schedBlock);
 
                     daySched.push(schedBlock);
+                    // if (genedPair) {
+                    //     // PANG SEARCH
+                    //     genedTracker.push(schedBlock);
+                    //     if (!schedules[section]){
+                    //         schedules[section] = {}
+                    //     }
+
+                    //     schedules[section][genedPair] = genedTracker;
+                    // }
+
                     // console.log('new day sched: ', daySched);
 
                     // add the units per class to the current time
@@ -1478,8 +1629,14 @@ const generateV3 = async ({
                     }
 
                     // minus the units
+                    // if (genedPair && !courseDetails.subjectCode.startsWith('PATHFIT')){
+                    //     requiredCourses[courseDetails.subjectCode] -=
+                    //         (courseDetails.unitsPerClass * 2);
+                    // }else{
+                    if (year === 4) console.log('nag bawas');
                     requiredCourses[courseDetails.subjectCode] -=
                         courseDetails.unitsPerClass;
+                    // }
 
                     // console.log('new current time: ', currentTime);
                     // console.log('new consecutive hours: ', consecutiveHours);
@@ -1500,7 +1657,8 @@ const generateV3 = async ({
 
                 // for max and available days
                 assignedDays++;
-                if (year == 4 && skip) {
+                if (year == 4 && skip && semester == 2) {
+                    console.log('second sem')
                     k += skip;
                 } else {
                     k++;
@@ -1525,6 +1683,21 @@ const generateV3 = async ({
                 j = 0;
                 continue loop4;
             }
+
+            // // check again
+            // for (let k = 0; k < requiredCoursesKeys.length; k++) {
+            //     if (requiredCourses[requiredCoursesKeys[k]] > 0) {
+            //         schedules[section] = {};
+            //         j = 0;
+            //         continue loop4;
+            //     }
+            // }
+
+            // console.log(schedules[section])
+            // console.log(requiredCourses)
+            // if (year === 4){
+            //     return;
+            // }
 
             sections.splice(j, 1);
             returnObj[section] = schedules[section];
@@ -1622,9 +1795,8 @@ const assignTAS = async ({
     classSchedules: any;
     TASSchedule: any;
 }) => {
-
-    if (TASSchedule == null){
-        TASSchedule = {}
+    if (TASSchedule == null) {
+        TASSchedule = {};
     }
 
     let classSchedulesCopy = structuredClone(classSchedules);
@@ -1853,7 +2025,7 @@ const assignTAS = async ({
         }
     }
 
-    return {classSchedulesCopy, TASSchedule};
+    return { classSchedulesCopy, TASSchedule };
 };
 
 const shuffleArray = <T>(array: T[]): T[] => {
@@ -2109,9 +2281,8 @@ const assignRooms = async ({
     classSchedules: any;
     roomSchedule: any;
 }) => {
-
-    if (roomSchedule == null){
-        roomSchedule = {}
+    if (roomSchedule == null) {
+        roomSchedule = {};
     }
 
     let classSchedulesCopy = structuredClone(classSchedules);
@@ -2189,7 +2360,7 @@ const assignRooms = async ({
         }
     }
 
-    return {classSchedulesCopy, roomSchedule};
+    return { classSchedulesCopy, roomSchedule };
     // before adding check if may conflict
     // if wala add if meron check ung next if pwede
     // loop until makakuha ng pwede
@@ -2557,4 +2728,433 @@ const getRequiredCourses = async (curriculum: any) => {
     }
 
     return requiredCourses;
+};
+
+const getRequiredMajorMinorCourses = async (curriculum: any) => {
+    let requiredCourses: any = {};
+    let genedCourses = new Set<string>();
+    let majorCourses = new Set<string>();
+
+    for (let i = 0; i < curriculum.length; i++) {
+        let course = curriculum[i];
+
+        // check if gened and skip if oo
+
+        const genedQuery =
+            'SELECT category FROM courses WHERE subject_code = $1';
+        const genedRes = await client.query(genedQuery, [course]);
+        const category = genedRes.rows[0].category;
+
+        if (category === 'gened' && !course.startsWith('PATHFIT')) {
+            genedCourses.add(course);
+            continue;
+        }
+
+        if (!requiredCourses[course]) {
+            requiredCourses[course] = 0;
+        }
+
+        // get the course
+        // console.log(course)
+        const query = 'SELECT total_units FROM courses WHERE subject_code = $1';
+        const res = await client.query(query, [course]);
+        const totalUnits = res.rows[0].total_units;
+
+        requiredCourses[course] = totalUnits;
+        majorCourses.add(course);
+    }
+
+    return {
+        requiredCourses,
+        majorCourses: [...majorCourses],
+        genedCourses: [...genedCourses]
+    };
+};
+
+const assignGened = async (yearLevel: number, start: number, genedCourses: string[]) => {
+    // MW | TTH | FS
+    // 7-8:30am | 8:30-10am | 10-11:30am | 11:30-1pm | 1-2:30pm | 2:30-4pm | 4-5:30pm | 5:30-7pm
+    let schedule: { [key: string]: any[] } = {
+        M: [],
+        T: [],
+        W: [],
+        TH: [],
+        F: [],
+        S: []
+    };
+
+    let dayPairs = [];
+    let days = [];
+
+    if (yearLevel < 4){
+
+        if (yearLevel > 1){
+            dayPairs = [
+                ['M', 'W'],
+                ['T', 'TH'],
+                ['F', 'S']
+            ];
+            days = ['M', 'T', 'W', 'TH', 'F', 'S']
+            
+        }else{
+            dayPairs = [
+                ['M', 'W'],
+                ['T', 'TH']
+            ];
+            days = ['M', 'T', 'W', 'TH', 'F']
+
+        }
+        
+    }else{
+        if (start === 4){
+            dayPairs = [['F', 'S']]
+            days = ['F', 'S']
+        }else{
+            dayPairs = [['M', 'S']]
+            days = ['M', 'S']
+        }
+    }
+
+    let availableSlots: { [key: string]: any[] } = {
+        M: [
+            {
+                start: '0700',
+                end: '0830'
+            },
+            {
+                start: '0830',
+                end: '1000'
+            },
+            {
+                start: '1000',
+                end: '1130'
+            },
+            {
+                start: '1130',
+                end: '1300'
+            },
+            {
+                start: '1300',
+                end: '1430'
+            },
+            {
+                start: '1430',
+                end: '1600'
+            },
+            {
+                start: '1600',
+                end: '1730'
+            },
+            {
+                start: '1730',
+                end: '1900'
+            }
+        ],
+        T: [
+            {
+                start: '0700',
+                end: '0830'
+            },
+            {
+                start: '0830',
+                end: '1000'
+            },
+            {
+                start: '1000',
+                end: '1130'
+            },
+            {
+                start: '1130',
+                end: '1300'
+            },
+            {
+                start: '1300',
+                end: '1430'
+            },
+            {
+                start: '1430',
+                end: '1600'
+            },
+            {
+                start: '1600',
+                end: '1730'
+            },
+            {
+                start: '1730',
+                end: '1900'
+            }
+        ],
+        W: [
+            {
+                start: '0700',
+                end: '0830'
+            },
+            {
+                start: '0830',
+                end: '1000'
+            },
+            {
+                start: '1000',
+                end: '1130'
+            },
+            {
+                start: '1130',
+                end: '1300'
+            },
+            {
+                start: '1300',
+                end: '1430'
+            },
+            {
+                start: '1430',
+                end: '1600'
+            },
+            {
+                start: '1600',
+                end: '1730'
+            },
+            {
+                start: '1730',
+                end: '1900'
+            }
+        ],
+        TH: [
+            {
+                start: '0700',
+                end: '0830'
+            },
+            {
+                start: '0830',
+                end: '1000'
+            },
+            {
+                start: '1000',
+                end: '1130'
+            },
+            {
+                start: '1130',
+                end: '1300'
+            },
+            {
+                start: '1300',
+                end: '1430'
+            },
+            {
+                start: '1430',
+                end: '1600'
+            },
+            {
+                start: '1600',
+                end: '1730'
+            },
+            {
+                start: '1730',
+                end: '1900'
+            }
+        ],
+        F: [
+            {
+                start: '0700',
+                end: '0830'
+            },
+            {
+                start: '0830',
+                end: '1000'
+            },
+            {
+                start: '1000',
+                end: '1130'
+            },
+            {
+                start: '1130',
+                end: '1300'
+            },
+            {
+                start: '1300',
+                end: '1430'
+            },
+            {
+                start: '1430',
+                end: '1600'
+            },
+            {
+                start: '1600',
+                end: '1730'
+            },
+            {
+                start: '1730',
+                end: '1900'
+            }
+        ],
+        S: [
+            {
+                start: '0700',
+                end: '0830'
+            },
+            {
+                start: '0830',
+                end: '1000'
+            },
+            {
+                start: '1000',
+                end: '1130'
+            },
+            {
+                start: '1130',
+                end: '1300'
+            },
+            {
+                start: '1300',
+                end: '1430'
+            },
+            {
+                start: '1430',
+                end: '1600'
+            },
+            {
+                start: '1600',
+                end: '1730'
+            },
+            {
+                start: '1730',
+                end: '1900'
+            }
+        ]
+    };
+
+    // loop thru the gened gened courses
+    for (let i = 0; i < genedCourses.length; i++) {
+        let genedCourse = genedCourses[i];
+
+        // first prob if split ba siya or no
+        let splitProb = Math.random();
+        let split = false;
+        if (splitProb > 0.5) split = true;
+
+        if (split && dayPairs.length > 0) {
+            // second prob what day or pair siya
+            let timeSet = false;
+            loop1: while (!timeSet) {
+                let dayPairIndex = Math.floor(Math.random() * dayPairs.length);
+                let dayPair = dayPairs[dayPairIndex];
+
+                let timeBlockIndex = Math.floor(
+                    Math.random() * availableSlots[dayPair[0]].length
+                );
+                for (let j = 0; j < dayPair.length; j++) {
+                    // third prob what time siya
+                    let day = dayPair[j];
+
+                    // console.log(day)
+                    // console.log(availableSlots[day])
+
+                    if (availableSlots[dayPair[0]].length > 0 && availableSlots[dayPair[1]].length > 0) {
+                        if (availableSlots[day][timeBlockIndex]){
+                            let timeBlock = availableSlots[day][timeBlockIndex];
+    
+                            let courseDetails = await getCourseDetails(genedCourse);
+    
+                            let schedBlock = {
+                                id: uuidv4(),
+                                course: courseDetails, // courseDetails.subjectCode
+                                timeBlock
+                            };
+    
+                            schedule[day].push(schedBlock);
+    
+                            // remove since ok na
+                            availableSlots[day].splice(timeBlockIndex, 1);
+                        }else{
+                            continue loop1;                            
+                        }
+
+                    } else {
+                        dayPairs.splice(dayPairIndex, 1);
+                        continue loop1;
+                    }
+                }
+
+                timeSet = true;
+            }
+        } else {
+            // second prob what day or pair siya
+            let timeSet = false;
+            loop2: while (!timeSet) {
+                let dayIndex = Math.floor(Math.random() * days.length);
+                let day = days[dayIndex];
+
+                console.log(availableSlots)
+                console.log(day)
+                console.log(dayIndex)
+
+                if (availableSlots[day].length > 0) {
+                    let timeBlockIndex = Math.floor(
+                        Math.random() * (availableSlots[day].length - 1)
+                    );
+                    let timeBlock = availableSlots[day][timeBlockIndex];
+                    let timeBlock2 = availableSlots[day][timeBlockIndex + 1];
+
+                    let courseDetails = await getCourseDetails(genedCourse);
+
+                    let schedBlock = {
+                        id: uuidv4(),
+                        course: courseDetails, // courseDetails.subjectCode
+                        timeBlock: timeBlock
+                    };
+
+                    let schedBlockNext = {
+                        id: uuidv4(),
+                        course: courseDetails, // courseDetails.subjectCode
+                        timeBlock: timeBlock2
+                    };
+
+                    schedule[day].push(schedBlock, schedBlockNext);
+
+                    // remove since ok na
+                    availableSlots[day].splice(timeBlockIndex, 2);
+
+                    timeSet = true;
+                } else {
+                    days.splice(dayIndex, 1);
+                    continue loop2;
+                }
+            }
+        }
+    }
+
+    return schedule;
+
+    // third prob what time siya
+
+    // remove from the day pairs array if wala na slot lol
+
+    // to check if meron na keep track nlng by removing sa const
+};
+
+let getHitGenedSched = (currentTime: number, units: number, type: string, genedDaySched: any) => {
+    console.log(genedDaySched)
+    for (let i = 0; i < genedDaySched.length; i++) {
+        let timeBlock = genedDaySched[i].timeBlock;
+
+        console.log(timeBlock)
+        console.log(genedDaySched[i])
+        console.log(genedDaySched)
+
+        let addedHours = 0;
+        if (type === 'lab'){
+            addedHours = units * 300;
+        }else{
+            addedHours = units * 100;
+        }
+
+        if (
+            (currentTime >= parseInt(timeBlock.start) &&
+            currentTime < parseInt(timeBlock.end)) || 
+            ((currentTime + addedHours) > parseInt(timeBlock.start) &&
+            (currentTime + addedHours) <= parseInt(timeBlock.end))
+        ) {
+            return genedDaySched[i];
+        }
+    }
+    return null;
 };

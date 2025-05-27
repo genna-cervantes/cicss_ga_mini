@@ -164,12 +164,12 @@ const generateRandomString = (length: number = 8): string => {
     return result;
 };
 
-export const insertToScheduleCache = async (chromosome: any) => {
+export const insertToScheduleCache = async (chromosome: any, semester: number) => {
     let miniClassSchedule = minimizeClassSchedule(chromosome.classSchedule);
 
     const id = `CH${generateRandomString(8)}`;
-    const query = `INSERT INTO generated_schedule_cache (generated_schedule_cache_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations, score, cs_locked, it_locked, is_locked) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+    const query = `INSERT INTO generated_schedule_cache (generated_schedule_cache_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations, score, cs_locked, it_locked, is_locked, semester) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
         )`;
     const res = await client.query(query, [
         id,
@@ -181,7 +181,8 @@ export const insertToScheduleCache = async (chromosome: any) => {
         chromosome.score,
         chromosome.csLocked,
         chromosome.itLocked,
-        chromosome.isLocked
+        chromosome.isLocked,
+        semester
     ]);
 
     return res.rowCount;
@@ -215,7 +216,8 @@ export const insertToSchedule = async ({
     tasViolations,
     csLocked,
     itLocked,
-    isLocked
+    isLocked,
+    semester
 }: {
     classSchedule: any;
     TASSchedule: any;
@@ -225,6 +227,7 @@ export const insertToSchedule = async ({
     csLocked: boolean;
     itLocked: boolean;
     isLocked: boolean;
+    semester: number
 }) => {
     const queryDelete = 'DELETE FROM schedules';
     const resDelete = await client.query(queryDelete);
@@ -234,7 +237,7 @@ export const insertToSchedule = async ({
 
     const id = `CH${generateRandomString(8)}`;
 
-    const query = `INSERT INTO schedules (schedule_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations, cs_locked, is_locked, it_locked) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`;
+    const query = `INSERT INTO schedules (schedule_id, class_schedule, tas_schedule, room_schedule, class_violations, tas_violations, cs_locked, is_locked, it_locked, semester) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`;
     const res = await client.query(query, [
         id,
         classSchedule,
@@ -244,7 +247,8 @@ export const insertToSchedule = async ({
         tasViolations,
         csLocked,
         isLocked,
-        itLocked
+        itLocked,
+        semester
     ]);
     const data = res.rowCount;
 
@@ -849,11 +853,15 @@ export const extractRoomScheduleFromClassSchedule = (classSchedule: any) => {
                             continue;
                         }
 
+                        if (schedBlock.room == undefined){
+                            continue;
+                        }
+
                         // if (schedBlock.room == undefined || schedBlock.room?.roomId == undefined) console.log(schedBlock)
                         // console.log(schedBlock.room)
 
-                        if (!roomSchedule[schedBlock.room.room_id]) {
-                            roomSchedule[schedBlock.room.room_id] = {
+                        if (!roomSchedule[schedBlock.room?.room_id]) {
+                            roomSchedule[schedBlock.room?.room_id] = {
                                 M: [],
                                 T: [],
                                 W: [],
@@ -992,6 +1000,14 @@ export const deploySchedule = async () => {
     const data = res.rowCount;
 
     return data;
+}
+
+export const checkScheduleSemester = async () => {
+    const query = 'SELECT semester FROM schedules WHERE is_active = TRUE LIMIT 1';
+    const res = await client.query(query)
+    const data = res.rows[0]?.semester ?? 2;
+
+    return data
 }
 
 export const editMultipleSchedBlockClassSchedule = async (classSchedule: any, newSchedBlocks: any) => {
